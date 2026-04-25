@@ -1,17 +1,13 @@
 """Render-friendly production entry point.
 
-Runs the FastAPI Mini App server on the Render-assigned port so the platform
-sees an active web service and serves the UI, while Telegram bot polling continues in parallel.
+Runs the FastAPI Mini App server on the Render-assigned port and integrates
+Telegram bot polling directly into the ASGI lifespan, solving conflict issues.
 """
 from __future__ import annotations
 
-import asyncio
 import os
 import sys
-import threading
 from pathlib import Path
-
-
 
 ROOT_DIR = Path(__file__).resolve().parent
 SRC_DIR = ROOT_DIR / "src"
@@ -24,51 +20,58 @@ from delivery_reports.db import Database
 from delivery_reports.repository import Repository
 from delivery_reports.services.transcription import TranscriptionService
 
-
-def _run_http_server(settings, repository) -> None:
-    import uvicorn
-    from delivery_reports.web_app import build_web_app
-
-    port = int(os.environ.get("PORT", "10000"))
-    app = build_web_app(settings, repository)
-    uvicorn.run(
-        app,
-        host="0.0.0.0",
-        port=port,
-        log_level="info",
-        proxy_headers=True,
-        forwarded_allow_ips="*"
-    )
-
+import uvicorn
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+from delivery_reports.web_app import build_web_app
 
 def main() -> None:
     settings = load_settings()
-    db = Database(settings.db_path)
+    # Resolve db path so it handles correctly in any directory
+    db_path = Path(settings.db_path)
+    if not db_path.is_absolute():
+        db_path = ROOT_DIR / db_path
+    
+    db = Database(db_path)
     repository = Repository(db)
     repository.ensure_default_project(
         settings.default_manager_name, settings.default_lead_name
     )
     repository.ensure_default_report_templates()
 
-    web_thread = threading.Thread(target=_run_http_server, args=(settings, repository), daemon=True)
-    web_thread.start()
-    print(f"HTTP server started on port {os.environ.get('PORT', '10000')}")
-
     transcription = TranscriptionService(
         mode=settings.transcribe_mode,
         whisper_model=settings.whisper_model,
     )
-    app = build_app(settings=settings, repository=repository, transcription=transcription)
+    tg_app = build_app(settings=settings, repository=repository, transcription=transcription)
 
-    print("Starting Telegram bot polling...")
-    event_loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(event_loop)
-    try:
-        app.run_polling()
-    finally:
-        if not event_loop.is_closed():
-            event_loop.close()
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        # Stop any pending or existing webhooks cleanly
+        await tg_app.bot.delete_webhook(drop_pending_updates=True)
+        await tg_app.initialize()
+        await tg_app.start()
+        # Start polling in the background without blocking the web loop
+        await tg_app.updater.start_polling(drop_pending_updates=True)
+        yield
+        # Graceful shutdown
+        await tg_app.updater.stop()
+        await tg_app.stop()
+        await tg_app.shutdown()
 
+    web_app = build_web_app(settings, repository)
+    web_app.router.lifespan_context = lifespan
+
+    port = int(os.environ.get("PORT", "10000"))
+    print(f"Starting Unified Server (Web on port {port} + Bot Polling)...")
+    uvicorn.run(
+        web_app,
+        host="0.0.0.0",
+        port=port,
+        log_level="info",
+        proxy_headers=True,
+        forwarded_allow_ips="*"
+    )
 
 if __name__ == "__main__":
     main()
