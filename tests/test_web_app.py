@@ -58,11 +58,11 @@ class WebAppTests(unittest.TestCase):
         self._tmp_dir.cleanup()
 
     def test_dashboard_requires_telegram_auth_initially(self) -> None:
-        response = self.client.get("/")
+        response = self.client.get("/dashboard")
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn("Личный <span class=\"accent-mark\">PM-кабинет</span> внутри Telegram", response.text)
-        self.assertIn("Как открыть Mini App правильно", response.text)
+        self.assertIn("Личный PM-кабинет", response.text)
+        self.assertIn("Ожидание Telegram-сессии", response.text)
 
     def test_auth_route_sets_personal_session(self) -> None:
         response = self._authenticate(self.client, user_id=42, username="grafkin", full_name="Анатолий Графкин")
@@ -70,9 +70,9 @@ class WebAppTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["ok"], True)
 
-        dashboard = self.client.get("/")
-        self.assertIn("Ваш <span class=\"accent-mark\">рабочий ритм</span> на день в одном экране", dashboard.text)
-        self.assertIn("Первые 20 секунд", dashboard.text)
+        dashboard = self.client.get("/dashboard")
+        self.assertIn("СИСТЕМНЫЙ СТАТУС", dashboard.text)
+        self.assertIn("DIGEST", dashboard.text)
 
     def test_can_add_note_and_build_team_style_draft(self) -> None:
         self._authenticate(self.client, user_id=42, username="grafkin", full_name="Анатолий Графкин")
@@ -214,7 +214,7 @@ class WebAppTests(unittest.TestCase):
 
         second_client = TestClient(build_web_app(self.settings, self.repository), base_url="https://testserver")
         self._authenticate(second_client, user_id=77, username="demo77", full_name="Второй Пользователь")
-        response = second_client.get("/")
+        response = second_client.get("/dashboard")
 
         self.assertEqual(response.status_code, 200)
         self.assertNotIn("секретный апдейт по первому пользователю", response.text)
