@@ -1,0 +1,29 @@
+# Secrets
+.env
+
+# Local datasets and generated data
+data/
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Packaging / build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# IDE / OS
+.DS_Store
+.idea/
+.vscode/
