@@ -145,6 +145,62 @@ def build_daily_draft(
     return "\n".join(lines).strip()
 
 
+def build_weekly_summary(
+    start_date: date,
+    end_date: date,
+    notes: list[Note],
+    projects: list[Project],
+    team_name: str
+) -> str:
+    """Builds a weekly executive summary for a team's activity."""
+    project_by_id = {project.id: project for project in projects}
+    fallback_project = Project(
+        id=0, owner_user_id=0, name="Без проекта", manager_name="", lead_name="", jira_base_url="", aliases=[], is_special_control=False
+    )
+    
+    grouped: dict[str, ProjectAggregate] = {}
+    for note in notes:
+        project = project_by_id.get(note.project_id) if note.project_id else None
+        if not project:
+            project = fallback_project
+        group_key = f"project:{project.id}"
+        
+        aggregate = grouped.get(group_key)
+        if aggregate is None:
+            grouped[group_key] = ProjectAggregate(project=project)
+            aggregate = grouped[group_key]
+        
+        _append_lines(aggregate.done_items, note.done_text)
+        _append_lines(aggregate.plan_items, note.plan_text)
+        _append_lines(aggregate.risk_items, note.risk_text)
+
+    lines: list[str] = []
+    lines.append(f"📈 <b>Weekly Executive Summary: {escape(team_name)}</b>")
+    lines.append(f"<b>Период:</b> {start_date.strftime('%d.%m.%Y')} - {end_date.strftime('%d.%m.%Y')}")
+    lines.append(f"<b>Сотрудников с отчетами:</b> {len(set(note.user_id for note in notes))}")
+    lines.append("")
+
+    if not grouped:
+        lines.append("За прошедшую неделю команда не оставила ни одного апдейта.")
+        return "\n".join(lines).strip()
+
+    for index, aggregate in enumerate(sorted(grouped.values(), key=lambda a: a.project.name.lower()), start=1):
+        done_items = _limit_items(_compact_items(aggregate.done_items, "done"), "standard", "done")
+        risk_items = _limit_items(_compact_items(aggregate.risk_items, "risk"), "standard", "risk")
+        
+        lines.append(f"<b>{index}. {escape(aggregate.project.name)}</b>")
+        if done_items:
+            lines.append("<b>Что сделано:</b>")
+            lines.extend(_render_bullets(done_items))
+        if risk_items and not _risk_items_are_empty(risk_items):
+            lines.append(f"<b>{_risk_label(risk_items)}:</b>")
+            lines.extend(_render_bullets(risk_items))
+        lines.append("")
+
+    lines.append("<i>Сгенерировано автоматически (PM Digest TEAM)</i>")
+    return "\n".join(lines).strip()
+
+
 def _render_team_examples_draft(
     title_date: str,
     header_manager: str,

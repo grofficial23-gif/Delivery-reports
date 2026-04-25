@@ -10,6 +10,7 @@ from zoneinfo import ZoneInfo
 from telegram import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
+    LabeledPrice,
     MenuButtonWebApp,
     ReplyKeyboardMarkup,
     Update,
@@ -21,12 +22,13 @@ from telegram.ext import (
     CommandHandler,
     ContextTypes,
     MessageHandler,
+    PreCheckoutQueryHandler,
     filters,
 )
 
 from .config import Settings
 from .repository import NewPMTask, Project, Repository, UserProfile
-from .services.draft_builder import build_daily_draft
+from .services.draft_builder import build_daily_draft, build_weekly_summary
 from .services.draft_revision import parse_revision_instruction, revision_help_text
 from .services.note_capture import (
     StoredNoteResult,
@@ -89,6 +91,7 @@ def build_app(settings: Settings, repository: Repository, transcription: Transcr
     app.add_handler(CommandHandler("add", cmd_add))
     app.add_handler(CommandHandler("status", cmd_status))
     app.add_handler(CommandHandler("draft", cmd_draft))
+    app.add_handler(CommandHandler("weekly", cmd_weekly))
     app.add_handler(CommandHandler("showdraft", cmd_show_draft))
     app.add_handler(CommandHandler("fixdraft", cmd_fix_draft))
     app.add_handler(CommandHandler("finalize", cmd_finalize))
@@ -107,10 +110,16 @@ def build_app(settings: Settings, repository: Repository, transcription: Transcr
     app.add_handler(CommandHandler("grantpro", cmd_grant_pro))
     app.add_handler(CommandHandler("grantteam", cmd_grant_team))
     app.add_handler(CommandHandler("revokeplan", cmd_revoke_plan))
+    app.add_handler(CommandHandler("buy", cmd_buy))
+    
+    # Payment handlers
+    app.add_handler(PreCheckoutQueryHandler(precheckout_callback))
+    app.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment_callback))
     app.add_handler(MessageHandler(filters.VOICE, on_voice_message))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_text_message))
 
     schedule_daily_draft(app, settings)
+    schedule_retention_job(app, settings)
     return app
 
 
@@ -125,50 +134,174 @@ def schedule_daily_draft(app: Application, settings: Settings) -> None:
     app.job_queue.run_daily(send_daily_draft_job, time=trigger_time, name="daily-draft")
 
 
+def schedule_retention_job(app: Application, settings: Settings) -> None:
+    if app.job_queue is None:
+        return
+    from datetime import time as dtime
+    from zoneinfo import ZoneInfo
+    trigger_time = dtime(hour=10, minute=0, tzinfo=ZoneInfo(settings.timezone))
+    app.job_queue.run_daily(retention_campaign_job, time=trigger_time, name="retention-campaign")
+
+
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not update.effective_chat or not update.effective_user or not update.message:
         return
     repository = _repo(context)
     user = _sync_user_profile(update, context)
+    
+    # Handle deep links (e.g., t.me/bot?start=team_123)
+    team_joined = False
+    joined_team_name = ""
+    if context.args and len(context.args) > 0:
+        arg = context.args[0]
+        if arg.startswith("team_"):
+            team_id = arg
+            with repository.db.connect() as conn:
+                team_row = conn.execute("SELECT id, name, max_members FROM teams WHERE id = ?", (team_id,)).fetchone()
+                if team_row:
+                    # Check current members count
+                    count_row = conn.execute("SELECT count(*) as cnt FROM team_members WHERE team_id = ?", (team_id,)).fetchone()
+                    if count_row["cnt"] < team_row["max_members"]:
+                        conn.execute(
+                            "INSERT OR IGNORE INTO team_members (team_id, user_id, role) VALUES (?, ?, 'member')",
+                            (team_id, user.telegram_user_id)
+                        )
+                        team_joined = True
+                        joined_team_name = team_row["name"]
+
+    if team_joined:
+        await update.message.reply_text(f"✅ Вы успешно вступили в команду <b>{escape(joined_team_name)}</b>!", parse_mode=ParseMode.HTML)
+
     text = (
-        "<b>PM Digest Bot готов</b>\n\n"
-        f"<b>Автор:</b> {escape(user.default_manager_name or user.display_name or user.telegram_full_name or '-')}\n"
-        f"<b>Руководитель:</b> {escape(user.default_lead_name or '-')}\n\n"
-        "<b>Как проще всего работать</b>\n"
-        "1. Откройте Mini App через menu button или команду <code>/app</code>.\n"
-        "2. Один апдейт = один проект, эпик или отдельный смысловой блок.\n"
-        "3. В течение дня добавляйте апдейты, а когда будете готовы, нажмите <b>📋 Собрать отчёт</b>.\n"
-        "4. Кнопка <b>📊 Статус</b> показывает, что уже собрано за день."
+        "🚀 <b>PM Digest Bot</b>\n\n"
+        "Умные отчёты для проектных менеджеров. Превратите хаос из задач и созвонов в идеальный вечерний отчет за один клик.\n\n"
+        "<b>Ваш профиль:</b>\n"
+        f"👤 {escape(user.display_name or user.telegram_full_name or '-')}\n\n"
+        "<b>Как начать:</b>\n"
+        "1. Откройте <b>Mini App</b> по кнопке ниже.\n"
+        "2. Пишите апдейты по проектам в течение дня.\n"
+        "3. В 17:30 бот сам соберет готовый digest.\n\n"
+        "Посмотреть тарифы и Premium: <code>/pro</code>\n"
+        "Инструкция и помощь: <code>/help</code>"
     )
-    await _reply_html(update.message, text, reply_markup=_base_keyboard())
+    url = _mini_app_url(_settings(context))
+    markup = InlineKeyboardMarkup([[InlineKeyboardButton("⚡️ Открыть Mini App", web_app=WebAppInfo(url=url))]])
+    
+    # Send a welcome image if available, else just text
+    welcome_path = Path("assets/welcome.jpg")
+    if welcome_path.exists():
+        with open(welcome_path, "rb") as photo:
+            await context.bot.send_photo(
+                chat_id=update.effective_chat.id,
+                photo=photo,
+                caption=text,
+                parse_mode=ParseMode.HTML,
+                reply_markup=markup
+            )
+    else:
+        await _reply_html(update.message, text, reply_markup=markup)
+        
     await _maybe_send_mini_app_entry(update, context, user)
+
+async def cmd_buy(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not update.effective_chat or not update.effective_user or not update.message:
+        return
+    
+    is_team = context.args and len(context.args) > 0 and context.args[0].lower() == "team"
+    
+    if is_team:
+        title = "Подписка PM Digest TEAM"
+        description = "Все фичи PRO + командная аналитика и админка. Подписка на 30 дней."
+        payload = "invoice_team_1m"
+        prices = [LabeledPrice("TEAM на 30 дней", 700)] # 700 Stars
+    else:
+        title = "Подписка PM Digest PRO"
+        description = "Неограниченные проекты, AI-аналитика и экспорт. Подписка на 30 дней."
+        payload = "invoice_pro_1m"
+        prices = [LabeledPrice("PRO на 30 дней", 250)] # 250 Stars
+        
+    currency = "XTR"
+    
+    await context.bot.send_invoice(
+        chat_id=update.effective_chat.id,
+        title=title,
+        description=description,
+        payload=payload,
+        provider_token="", # Empty for XTR (Telegram Stars)
+        currency=currency,
+        prices=prices,
+    )
+
+async def precheckout_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.pre_checkout_query
+    if query.invoice_payload not in ("invoice_pro_1m", "invoice_team_1m"):
+        await query.answer(ok=False, error_message="Что-то пошло не так...")
+    else:
+        await query.answer(ok=True)
+
+async def successful_payment_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not update.message or not update.effective_user:
+        return
+    
+    user_id = update.effective_user.id
+    payload = update.message.successful_payment.invoice_payload
+    is_team = payload == "invoice_team_1m"
+    plan_name = "team" if is_team else "pro"
+    
+    repository = _repo(context)
+    with repository.db.connect() as conn:
+        conn.execute(
+            """
+            INSERT INTO subscriptions (user_id, plan, expires_at)
+            VALUES (?, ?, date('now', '+30 days'))
+            """,
+            (user_id, plan_name)
+        )
+        if is_team:
+            team_id = f"team_{user_id}"
+            conn.execute(
+                "INSERT OR IGNORE INTO teams (id, owner_user_id, name) VALUES (?, ?, ?)",
+                (team_id, user_id, f"Команда {update.effective_user.first_name}")
+            )
+            
+    repository.log_event(user_id, "payment_success", payload)
+    
+    if is_team:
+        team_link = f"t.me/igest_bot?start=team_{user_id}"
+        await update.message.reply_text(f"🎉 Вы приобрели TEAM! Ваша ссылка-инвайт для коллег: \n\n<code>{team_link}</code>\n\nОтправьте её своей команде.")
+    else:
+        await update.message.reply_text("🎉 Ура! Вы успешно приобрели PM Digest PRO на 30 дней. Откройте /app чтобы проверить!")
 
 
 async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if not update.message:
+    if not update.message or not update.effective_user:
         return
     text = (
-        "<b>Минимальная инструкция</b>\n"
-        "1. Основной интерфейс: <code>/app</code> или menu button <b>Mini App</b>.\n"
-        "2. Один апдейт = один проект или эпик.\n"
-        "3. После сохранения апдейт попадает в список за день.\n"
-        "4. Когда готовы, нажмите <b>📋 Собрать отчёт</b>.\n\n"
-        "<b>Кнопки внизу</b>\n"
-        f"- <b>{escape(BTN_BUILD_DRAFT)}</b> — собрать digest из текущих апдейтов.\n"
-        f"- <b>{escape(BTN_STATUS)}</b> — показать, что уже собрано за сегодня.\n"
-        f"- <b>{escape(BTN_MY_TASKS)}</b> — follow-up список.\n"
-        f"- <b>{escape(BTN_PRO)}</b> — тарифы и Premium-возможности.\n\n"
-        "<b>Быстрые примеры</b>\n"
-        "<code>задача: согласовать окно ночных работ</code>\n"
-        "<code>готово 12</code>\n"
-        "<code>жду 7</code>\n"
-        "<code>разобрать 15 DC701</code>\n"
-        "<code>короче</code>\n\n"
-        "<b>Расширенные команды</b>\n"
-        "<code>/app</code>, <code>/status</code>, <code>/draft</code>, <code>/fixdraft</code>, "
-        "<code>/finalize</code>, <code>/final</code>, <code>/task</code>, <code>/mytasks</code>, "
-        "<code>/inbox</code>, <code>/pro</code>"
+        "<b>PM Digest Bot — Умные отчёты</b>\n\n"
+        "<b>Основные команды</b>\n"
+        "<code>/app</code> — Открыть Mini App (кабинет)\n"
+        "<code>/status</code> — Статус за сегодня\n"
+        "<code>/draft</code> — Собрать черновик\n"
+        "<code>/final</code> — Финальный отчёт\n"
+        "<code>/mytasks</code> — Мои задачи (follow-up)\n"
+        "<code>/inbox</code> — Неразобранные заметки\n"
+        "<code>/pro</code> — Тарифы и Premium-возможности\n"
+        "<code>/buy</code> — Оплатить подписку PRO/TEAM\n\n"
+        "<b>Как писать апдейты?</b>\n"
+        "Просто отправьте текст в бот, например:\n"
+        "<i>«Сделали интеграцию по проекту Альфа. Завтра тесты.»</i>\n\n"
+        "<i>Или отправьте голосовое сообщение!</i>"
     )
+    from .services.admin import AdminService
+    if update.effective_user.username and AdminService(_repo(context).db, _settings(context)).is_super_admin(update.effective_user.username):
+        text += (
+            "\n\n<b>👑 Админские команды</b>\n"
+            "<code>/admin</code> — Статистика платформы\n"
+            "<code>/adminuser @username</code> — Найти юзера\n"
+            "<code>/grantpro @username 1</code> — Выдать PRO (на 1 мес)\n"
+            "<code>/grantteam @username 1</code> — Выдать TEAM\n"
+            "<code>/revokeplan @username</code> — Забрать подписку\n"
+        )
     await _reply_html(update.message, text, reply_markup=_base_keyboard())
 
 
@@ -176,6 +309,7 @@ async def cmd_pro(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not update.message or not update.effective_user:
         return
     user = _sync_user_profile(update, context)
+    _repo(context).log_event(user.telegram_user_id, "cmd_pro")
     subscription = SubscriptionService(_repo(context).db)
     current_plan = subscription.get_user_plan(user.telegram_user_id)
     current_plan_label = subscription.plan_display_name(current_plan)
@@ -235,15 +369,99 @@ async def cmd_draft(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not update.message or not update.effective_user:
         return
     user = _sync_user_profile(update, context)
+    _repo(context).log_event(user.telegram_user_id, "cmd_draft")
     style = resolve_style_for_user(_repo(context), user.telegram_user_id)
     content = _build_and_store_today_draft_with_style(context, user, style=style)
     await update.message.reply_text(content, reply_markup=_base_keyboard(), parse_mode=ParseMode.HTML)
+
+
+async def cmd_weekly(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not update.message or not update.effective_user:
+        return
+    user = _sync_user_profile(update, context)
+    
+    sub_svc = SubscriptionService(_repo(context).db)
+    if sub_svc.get_user_plan(user.telegram_user_id) != "team":
+        await update.message.reply_text("Эта функция доступна только для тарифа TEAM. Обновитесь через /buy team")
+        return
+        
+    repository = _repo(context)
+    # Find team
+    with repository.db.connect() as conn:
+        team_row = conn.execute("SELECT id, name FROM teams WHERE owner_user_id = ?", (user.telegram_user_id,)).fetchone()
+        if not team_row:
+            await update.message.reply_text("Вы не являетесь владельцем команды. Функция доступна только для Директоров.")
+            return
+            
+        team_id = team_row["id"]
+        team_name = team_row["name"]
+        
+        # Get team notes for last 7 days
+        note_rows = conn.execute(
+            """
+            SELECT n.* 
+            FROM notes n
+            JOIN team_members tm ON n.user_id = tm.user_id
+            WHERE tm.team_id = ? AND date(n.note_date) >= date('now', '-7 days')
+            """,
+            (team_id,)
+        ).fetchall()
+        
+        if not note_rows:
+            await update.message.reply_text(f"За последние 7 дней в команде {escape(team_name)} нет ни одной заметки.", parse_mode=ParseMode.HTML)
+            return
+            
+        # We need Note objects
+        # To avoid duplicating parsing from DB, let's just construct them
+        notes = []
+        import json
+        for r in note_rows:
+            from .repository import Note
+            jira_links = []
+            if r["jira_links_json"]:
+                try:
+                    jira_links = list(json.loads(r["jira_links_json"]))
+                except Exception:
+                    pass
+            notes.append(Note(
+                id=r["id"],
+                note_date=r["note_date"],
+                user_id=r["user_id"],
+                source=r["source"],
+                raw_text=r["raw_text"],
+                project_id=r["project_id"],
+                manager_name=r["manager_name"],
+                lead_name=r["lead_name"],
+                epic=r["epic"],
+                status_text=r["status_text"],
+                done_text=r["done_text"],
+                plan_text=r["plan_text"],
+                risk_text=r["risk_text"],
+                jira_links=jira_links,
+                needs_review=bool(r["needs_review"])
+            ))
+
+    projects = repository.get_all_projects(user.telegram_user_id) # Using director's projects for mapping
+    end_date = today_date()
+    from datetime import timedelta
+    start_date = end_date - timedelta(days=7)
+    
+    summary = build_weekly_summary(
+        start_date=start_date,
+        end_date=end_date,
+        notes=notes,
+        projects=projects,
+        team_name=team_name
+    )
+    
+    await update.message.reply_text(summary, parse_mode=ParseMode.HTML)
 
 
 async def cmd_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not update.message or not update.effective_user:
         return
     user = _sync_user_profile(update, context)
+    _repo(context).log_event(user.telegram_user_id, "cmd_status")
     await update.message.reply_text(
         _build_status_message(context, user),
         reply_markup=_base_keyboard(),
@@ -696,6 +914,46 @@ async def send_daily_draft_job(context: ContextTypes.DEFAULT_TYPE) -> None:
         reply_markup=_base_keyboard(),
         parse_mode=ParseMode.HTML,
     )
+
+
+async def retention_campaign_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+    repository = _repo(context)
+    with repository.db.connect() as conn:
+        # Rule 1: Registered 2 days ago, no notes
+        users_2_days = conn.execute(
+            """
+            SELECT telegram_user_id FROM users 
+            WHERE date(created_at) = date('now', '-2 days')
+            AND telegram_user_id NOT IN (SELECT DISTINCT user_id FROM notes)
+            """
+        ).fetchall()
+        for u in users_2_days:
+            try:
+                await context.bot.send_message(
+                    chat_id=u["telegram_user_id"],
+                    text="👀 Завал с проектами?\n\nПопробуйте надиктовать отчет голосом прямо сюда — ИИ сам найдет нужный проект и структурирует задачи по шаблону Delivery Reports.",
+                )
+            except Exception:
+                pass
+                
+        # Rule 2: Subscription expires in 3 days
+        expiring_subs = conn.execute(
+            """
+            SELECT user_id, plan, expires_at FROM subscriptions
+            WHERE date(expires_at) = date('now', '+3 days') AND plan IN ('pro', 'team')
+            """
+        ).fetchall()
+        for sub in expiring_subs:
+            try:
+                plan_name = str(sub["plan"]).upper()
+                cmd_plan = "team" if plan_name == "TEAM" else ""
+                await context.bot.send_message(
+                    chat_id=sub["user_id"],
+                    text=f"⚠️ Ваша подписка <b>{plan_name}</b> истекает через 3 дня ({sub['expires_at']}).\n\nПродлите её прямо сейчас, чтобы сохранить доступ к командной аналитике и безлимитным проектам: /buy {cmd_plan}",
+                    parse_mode=ParseMode.HTML,
+                )
+            except Exception:
+                pass
 
 
 async def _handle_profile_settings_message(
@@ -1390,9 +1648,14 @@ def _mini_app_url(settings: Settings) -> str:
     url = settings.public_web_app_url.strip()
     if not url.startswith("https://"):
         return ""
-    if not url.endswith("/dashboard"):
-        url = url.rstrip("/") + "/dashboard"
-    return url
+    
+    from urllib.parse import urlparse, urlunparse
+    parsed = urlparse(url)
+    if not parsed.path.endswith("/dashboard"):
+        new_path = parsed.path.rstrip("/") + "/dashboard"
+        parsed = parsed._replace(path=new_path)
+    
+    return urlunparse(parsed)
 
 
 # resolve_or_create_project is imported from project_resolution.py

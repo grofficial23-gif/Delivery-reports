@@ -64,6 +64,8 @@ def build_web_app(settings: Settings, repository: Repository) -> FastAPI:
 
     @app.get("/", response_class=HTMLResponse)
     async def landing(request: Request) -> HTMLResponse:
+        # Simple anonymous event if no user context
+        repository.log_event(0, "visit_landing", request.client.host if request.client else "")
         return templates.TemplateResponse(request=request, name="landing.html", context={"request": request})
 
     @app.get("/admin", response_class=HTMLResponse)
@@ -71,20 +73,76 @@ def build_web_app(settings: Settings, repository: Repository) -> FastAPI:
         from .services.admin import AdminService
         user = _authenticated_user(request, repository, settings)
         is_admin = False
-        if user and user.telegram_username:
-            admin_svc = AdminService(repository.db, settings)
-            is_admin = admin_svc.is_super_admin(user.telegram_username)
+        is_team_admin = False
+        if user:
+            from .services.subscription import SubscriptionService
+            sub_svc = SubscriptionService(repository.db)
+            if sub_svc.get_user_plan(user.telegram_user_id) == "team":
+                is_team_admin = True
+            
+            if user.telegram_username:
+                admin_svc = AdminService(repository.db, settings)
+                is_admin = admin_svc.is_super_admin(user.telegram_username)
         
-        if not is_admin:
+        if not is_admin and not is_team_admin:
             return RedirectResponse(url="/dashboard?notice=" + quote_plus("Нет доступа к админке"))
             
         admin_svc = AdminService(repository.db, settings)
-        stats = admin_svc.get_platform_stats()
-        users = admin_svc.list_users(limit=50)
+        stats = admin_svc.get_platform_stats() if is_admin else None
+        
+        users = []
+        events = []
+        heatmap = []
+        team_name = ""
+        
+        if is_admin:
+            users = admin_svc.list_users(limit=50)
+            with repository.db.connect() as conn:
+                event_rows = conn.execute(
+                    "SELECT e.created_at, e.event_type, e.event_data, u.telegram_username, u.display_name "
+                    "FROM analytics_events e "
+                    "LEFT JOIN users u ON e.user_id = u.telegram_user_id "
+                    "ORDER BY e.created_at DESC LIMIT 50"
+                ).fetchall()
+                for r in event_rows:
+                    events.append(dict(r))
+        elif is_team_admin:
+            with repository.db.connect() as conn:
+                team_row = conn.execute("SELECT id, name FROM teams WHERE owner_user_id = ?", (user.telegram_user_id,)).fetchone()
+                if team_row:
+                    team_name = team_row["name"]
+                    team_id = team_row["id"]
+                    
+                    member_rows = conn.execute(
+                        """
+                        SELECT u.telegram_user_id, u.display_name, u.telegram_username, tm.role
+                        FROM team_members tm
+                        JOIN users u ON tm.user_id = u.telegram_user_id
+                        WHERE tm.team_id = ?
+                        """, (team_id,)
+                    ).fetchall()
+                    users = [dict(r) for r in member_rows]
+                    
+                    # Basic Heatmap data (notes count per user per day for last 7 days)
+                    heatmap_rows = conn.execute(
+                        """
+                        SELECT user_id, note_date, COUNT(id) as count
+                        FROM notes
+                        WHERE user_id IN (SELECT user_id FROM team_members WHERE team_id = ?)
+                          AND date(note_date) >= date('now', '-7 days')
+                        GROUP BY user_id, note_date
+                        """, (team_id,)
+                    ).fetchall()
+                    heatmap = [dict(r) for r in heatmap_rows]
+
         return templates.TemplateResponse(request=request, name="admin.html", context={
             "request": request, 
             "stats": stats, 
             "users": users,
+            "events": events,
+            "heatmap": heatmap,
+            "team_name": team_name,
+            "is_super_admin": is_admin,
             "user": user
         })
 
@@ -124,6 +182,7 @@ def build_web_app(settings: Settings, repository: Repository) -> FastAPI:
         raw_text = _compose_note_text(payload)
         if not raw_text:
             return _redirect_with_notice("Заполните хотя бы один блок апдейта.")
+        repository.log_event(user.telegram_user_id, "web_add_note", "source=mini_app")
         results, unresolved_note_ids = capture_notes(
             repository=repository,
             settings=settings,
@@ -177,6 +236,7 @@ def build_web_app(settings: Settings, repository: Repository) -> FastAPI:
         user = _authenticated_user(request, repository, settings)
         if user is None:
             return _redirect_with_notice("Откройте приложение из Telegram.")
+        repository.log_event(user.telegram_user_id, "web_build_draft")
         style = resolve_style_for_user(repository, user.telegram_user_id)
         build_and_store_daily_draft(
             repository,
@@ -391,17 +451,26 @@ def _build_dashboard_context(request: Request, repository: Repository, settings:
         "has_final": bool(final_report),
         "draft_chunks": len(draft_chunks),
         "final_chunks": len(final_chunks),
-    }
     is_super_admin = False
-    if user and user.telegram_username:
-        from .services.admin import AdminService
-        is_super_admin = AdminService(repository.db, settings).is_super_admin(user.telegram_username)
+    user_plan = "free"
+    days_left = None
+    if user:
+        from .services.subscription import SubscriptionService
+        sub_svc = SubscriptionService(repository.db)
+        user_plan = sub_svc.get_user_plan(user.telegram_user_id)
+        days_left = sub_svc.get_days_left(user.telegram_user_id)
+        
+        if user.telegram_username:
+            from .services.admin import AdminService
+            is_super_admin = AdminService(repository.db, settings).is_super_admin(user.telegram_username)
 
     return {
         **base_context,
         "auth_required": False,
         "user": user,
         "is_super_admin": is_super_admin,
+        "user_plan": user_plan,
+        "days_left": days_left,
         "summary": summary,
         "notes": note_cards,
         "recent_updates": note_cards[:6],

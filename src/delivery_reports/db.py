@@ -100,6 +100,14 @@ CREATE TABLE IF NOT EXISTS final_reports (
     style TEXT NOT NULL DEFAULT 'standard'
 );
 
+CREATE TABLE IF NOT EXISTS analytics_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    user_id INTEGER NOT NULL,
+    event_type TEXT NOT NULL,
+    event_data TEXT DEFAULT ''
+);
+
 CREATE TABLE IF NOT EXISTS report_templates (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     template_key TEXT NOT NULL UNIQUE,
@@ -150,6 +158,23 @@ CREATE TABLE IF NOT EXISTS subscriptions (
 );
 
 CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON subscriptions(user_id, status);
+
+CREATE TABLE IF NOT EXISTS teams (
+    id TEXT PRIMARY KEY,
+    owner_user_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    max_members INTEGER NOT NULL DEFAULT 5,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS team_members (
+    team_id TEXT NOT NULL,
+    user_id INTEGER NOT NULL,
+    role TEXT NOT NULL DEFAULT 'member',
+    joined_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (team_id, user_id),
+    FOREIGN KEY(team_id) REFERENCES teams(id) ON DELETE CASCADE
+);
 CREATE INDEX IF NOT EXISTS idx_pm_tasks_owner_status ON pm_tasks(owner_user_id, status);
 CREATE INDEX IF NOT EXISTS idx_notes_user_date ON notes(user_id, note_date);
 CREATE INDEX IF NOT EXISTS idx_final_reports_author_date ON final_reports(author_user_id, report_date);

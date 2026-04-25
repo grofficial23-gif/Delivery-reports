@@ -90,6 +90,11 @@
       showLoading();
 
       var initData = await waitForInitData(tg, 10);  // до 3 секунд
+      if (initData) {
+        sessionStorage.setItem('tg_init_data', initData);
+      } else {
+        initData = sessionStorage.getItem('tg_init_data');
+      }
       hideLoading();
 
       if (!initData) {
@@ -169,16 +174,17 @@
   function showToast(message, type) {
     var container = ensureToastContainer();
     var toast = document.createElement("div");
-    toast.className = "toast " + (type === "error" ? "toast-error" : "toast-success");
+    toast.className = "toast " + (type === "error" ? "error" : "success");
     toast.textContent = message;
     container.appendChild(toast);
     window.setTimeout(function () {
-      toast.classList.add("toast-out");
+      toast.classList.add("hide");
       window.setTimeout(function () {
         toast.remove();
       }, 300);
-    }, 3500);
+    }, 2000); // 2 seconds as requested by user
   }
+  window.showToast = showToast;
 
   /* ── Loading Overlay ── */
   function ensureLoadingOverlay() {

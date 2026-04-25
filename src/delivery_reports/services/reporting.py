@@ -43,8 +43,11 @@ def finalize_daily_report(
     content: str,
     author_user_id: int,
     style: str,
-    language: str = "ru",
 ) -> None:
+    footer = "\n\n<i>Сгенерировано в @igest_bot — Твои отчеты за 1 минуту</i>"
+    if footer not in content:
+        content += footer
+
     repository.save_final_report(
         target_date=target_date,
         content=content,

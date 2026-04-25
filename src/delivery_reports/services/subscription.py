@@ -94,9 +94,31 @@ class SubscriptionService:
             )
 
     def get_user_plan(self, user_id: int) -> str:
-        """Return the user's current plan name."""
+        """Return the user's current plan name, considering TEAM inheritance."""
+        # First, check if the user is in a team
+        with self._db.connect() as conn:
+            team_row = conn.execute(
+                """
+                SELECT t.owner_user_id 
+                FROM team_members tm
+                JOIN teams t ON tm.team_id = t.id
+                WHERE tm.user_id = ?
+                LIMIT 1
+                """,
+                (user_id,),
+            ).fetchone()
+            
+            if team_row:
+                owner_id = team_row["owner_user_id"]
+                owner_sub = self.get_active_subscription(owner_id)
+                if owner_sub and owner_sub.plan == Plan.TEAM:
+                    return Plan.TEAM
+
+        # If not in a team or owner doesn't have TEAM, check their personal plan
         sub = self.get_active_subscription(user_id)
-        return sub.plan if sub else Plan.FREE
+        if sub and sub.plan in (Plan.PRO, Plan.TEAM):
+            return sub.plan
+        return Plan.FREE
 
     def check_feature(self, user_id: int, feature: str) -> bool:
         """Check if the user has access to a specific feature."""
@@ -158,3 +180,20 @@ class SubscriptionService:
             Plan.ENTERPRISE: "Enterprise",
         }
         return names.get(plan, plan)
+
+    def get_days_left(self, user_id: int) -> int | None:
+        """Return the number of days left on the active subscription, or None if no expiry."""
+        sub = self.get_active_subscription(user_id)
+        if not sub or not sub.expires_at:
+            return None
+        try:
+            expires = datetime.fromisoformat(sub.expires_at)
+            # Make sure it's timezone-aware if comparing to UTC
+            if expires.tzinfo is None:
+                from datetime import timezone
+                expires = expires.replace(tzinfo=timezone.utc)
+            now = datetime.now(timezone.utc)
+            days = (expires - now).days
+            return max(0, days)
+        except Exception:
+            return None

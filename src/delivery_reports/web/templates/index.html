@@ -26,6 +26,12 @@
             <span>Личный контур</span>
             <span>Telegram native</span>
             <span>Daily report</span>
+            {% if user_plan != 'free' %}
+            <span style="color: var(--primary); border-color: var(--primary);">{{ user_plan | upper }}</span>
+            {% if days_left is not none %}
+            <span style="color: var(--muted-foreground); border-color: transparent;">Осталось дней: {{ days_left }}</span>
+            {% endif %}
+            {% endif %}
             {% if is_super_admin %}
             <a href="/admin" style="text-decoration: none;"><span style="color: var(--primary); border-color: var(--primary);">⚙️ Admin</span></a>
             {% endif %}
@@ -372,6 +378,7 @@
               <textarea id="draft-plain" class="copy-area" readonly>{{ draft_plain }}</textarea>
               <div class="button-row copy-row">
                 <button type="button" class="ghost copy-trigger" data-copy-target="draft-plain">Копировать текст</button>
+                <button type="button" class="ghost print-trigger" onclick="window.print()">Скачать PDF</button>
               </div>
             </div>
           </div>

@@ -897,6 +897,13 @@ class Repository:
                 ),
             )
 
+    def log_event(self, user_id: int, event_type: str, event_data: str = "") -> None:
+        with self.db.connect() as conn:
+            conn.execute(
+                "INSERT INTO analytics_events (user_id, event_type, event_data) VALUES (?, ?, ?)",
+                (user_id, event_type, event_data),
+            )
+
     def get_latest_final_report_for_date(self, target_date: date, author_user_id: int | None = None) -> str | None:
         with self.db.connect() as conn:
             if author_user_id is None:
