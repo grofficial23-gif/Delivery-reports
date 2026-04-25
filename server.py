@@ -39,21 +39,26 @@ def main() -> None:
     )
     repository.ensure_default_report_templates()
 
-    transcription = TranscriptionService(
-        mode=settings.transcribe_mode,
-        whisper_model=settings.whisper_model,
-    )
-    tg_app = build_app(settings=settings, repository=repository, transcription=transcription)
-
     @asynccontextmanager
     async def lifespan(app: FastAPI):
+        transcription = TranscriptionService(
+            mode=settings.transcribe_mode,
+            whisper_model=settings.whisper_model,
+        )
+        tg_app = build_app(settings=settings, repository=repository, transcription=transcription)
+        
         # Stop any pending or existing webhooks cleanly
         await tg_app.bot.delete_webhook(drop_pending_updates=True)
         await tg_app.initialize()
         await tg_app.start()
         # Start polling in the background without blocking the web loop
         await tg_app.updater.start_polling(drop_pending_updates=True)
+        
+        # Store tg_app in app.state if web_app needs to access it (e.g. for sending messages)
+        app.state.bot_app = tg_app
+        
         yield
+        
         # Graceful shutdown
         await tg_app.updater.stop()
         await tg_app.stop()

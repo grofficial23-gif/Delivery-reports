@@ -3,211 +3,183 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Delivery Reports Mini App</title>
+    <title>PM Digest | Luxury SaaS</title>
     <script src="https://telegram.org/js/telegram-web-app.js?62"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/static/app.css" />
     <script src="/static/app.js" defer></script>
   </head>
-  <body data-auth-required="{{ 'true' if auth_required else 'false' }}" data-color-scheme="light">
-    <div class="ambient ambient-one"></div>
-    <div class="ambient ambient-two"></div>
+  <!-- Включаем тему deep-space по умолчанию -->
+  <body data-auth-required="{{ 'true' if auth_required else 'false' }}" data-theme="deep-space">
+    <!-- Анимированная ДНК / Волна частиц -->
+    <canvas id="dna-canvas"></canvas>
 
-    <div class="page-shell">
-      <header class="hero">
-        <div class="hero-copy">
-          <p class="eyebrow">Delivery Reports Mini App</p>
-          <div class="hero-strip">
-            <span>Личный контур</span>
-            <span>Telegram native</span>
-            <span>Daily report</span>
-            {% if user_plan != 'free' %}
-            <span style="color: var(--primary); border-color: var(--primary);">{{ user_plan | upper }}</span>
-            {% if days_left is not none %}
-            <span style="color: var(--muted-foreground); border-color: transparent;">Осталось дней: {{ days_left }}</span>
-            {% endif %}
-            {% endif %}
-            {% if is_super_admin %}
-            <a href="/admin" style="text-decoration: none;"><span style="color: var(--primary); border-color: var(--primary);">⚙️ Admin</span></a>
-            {% endif %}
+    <div class="luxury-shell">
+      <!-- Навигация -->
+      <nav class="luxury-nav">
+        <div class="nav-logo">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 10V14M8 6V18M12 2V22M16 6V18M20 10V14"/></svg>
+          <div class="logo-text">
+            <strong>PM DIGEST</strong>
+            <span>DELIVERY REPORTS &bull;</span>
           </div>
-
-          {% if auth_required %}
-          <h1>Личный <span class="accent-mark">PM-кабинет</span> внутри Telegram</h1>
-          <p class="hero-lead">
-            Этот экран работает только внутри Telegram Mini App. Автор подтягивается автоматически,
-            а проекты и отчеты видите только вы.
-          </p>
-          <div class="auth-status" id="mini-auth-status">
-            Жду Telegram-сессию, чтобы открыть личное пространство.
-          </div>
-          {% else %}
-          <h1>Ваш <span class="accent-mark">рабочий ритм</span> на день в одном экране</h1>
-          <p class="hero-lead">
-            Короткий PM-цикл: написать апдейт, собрать digest, получить текст для Telegram и при
-            желании отправить его себе в чат.
-          </p>
-          <div class="hero-signal">
-            <span class="signal-dot"></span>
-            <span>Формат как в лучших async standup-инструментах: коротко, структурно, без простыней</span>
-          </div>
-
-          <div class="hero-facts">
-            <div class="fact-card">
-              <span>Апдейты</span>
-              <strong>{{ summary.notes_count }}</strong>
-            </div>
-            <div class="fact-card">
-              <span>Проекты</span>
-              <strong>{{ summary.project_count }}</strong>
-            </div>
-            <div class="fact-card">
-              <span>Нужно уточнить</span>
-              <strong>{{ summary.inbox_count }}</strong>
-            </div>
-            <div class="fact-card">
-              <span>Follow-up</span>
-              <strong>{{ summary.tasks_count }}</strong>
-            </div>
-          </div>
-          {% endif %}
         </div>
-
-        <aside class="hero-side">
-          <div class="preview-card">
-            {% if auth_required %}
-            <p class="preview-kicker">Запуск</p>
-            <div class="step-list">
-              <div class="step-card">
-                <span>01</span>
-                <strong>Откройте Mini App из бота</strong>
-                <p>Обычная ссылка в браузере не передает Telegram-профиль и не откроет личный режим.</p>
-              </div>
-              <div class="step-card">
-                <span>02</span>
-                <strong>Дождитесь входа</strong>
-                <p>Приложение само подтянет имя, фамилию и ваш персональный рабочий контур.</p>
-              </div>
-              <div class="step-card">
-                <span>03</span>
-                <strong>Начинайте с апдейта</strong>
-                <p>Дальше интерфейс сам проведет через заметку, digest и Telegram-ready текст.</p>
-              </div>
-            </div>
-            {% else %}
-            <p class="preview-kicker">Ритм дня</p>
-            <div class="step-list">
-              <div class="step-card">
-                <span>01</span>
-                <strong>Один апдейт = одна единица</strong>
-                <p>Один проект или эпик за раз. Сохранили один, сразу переходите к следующему.</p>
-              </div>
-              <div class="step-card">
-                <span>02</span>
-                <strong>Соберите digest под аудиторию</strong>
-                <p>Для команды, для руководителя или только самое важное без перегруза.</p>
-              </div>
-              <div class="step-card">
-                <span>03</span>
-                <strong>Скопируйте или отправьте</strong>
-                <p>Получите Telegram-ready текст. Если отчет длинный, приложение само разобьет его на части.</p>
-              </div>
-            </div>
-            <div class="preview-foot">
-              <span>1-3 пункта</span>
-              <span>Асинхронно</span>
-              <span>Блокеры отдельно</span>
-            </div>
-            {% endif %}
+        
+        <div class="nav-links">
+          <a href="#" class="active" onclick="switchTab('dashboard')">&bull; Dashboard</a>
+          <a href="#" onclick="switchTab('workspace')">Workspace</a>
+          <a href="#">Analytics</a>
+          <a href="#">Settings</a>
+        </div>
+        
+        <div class="nav-controls">
+          {% if user_plan != 'free' %}
+          <div class="pro-badge">{{ user_plan | upper }}</div>
+          {% endif %}
+          <button id="theme-toggle" class="icon-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          </button>
+          <div class="user-avatar">
+            {% if is_super_admin %}<a href="/admin">PM</a>{% else %}PM{% endif %}
           </div>
-        </aside>
-      </header>
-
-      {% if notice %}
-      <section class="notice-card">
-        <div class="notice-body">{{ notice | safe }}</div>
-      </section>
-      {% endif %}
+        </div>
+      </nav>
 
       {% if auth_required %}
-      <section class="panel gate-panel">
-        <div class="panel-head panel-head-tight">
-          <p class="section-label">Вход</p>
-          <h2>Как открыть Mini App правильно</h2>
-          <p>Если вы видите этот экран, значит страница открыта не из Telegram Mini App.</p>
-        </div>
-        <div class="mini-grid mini-grid-3">
-          <div class="gate-card">
-            <span>1</span>
-            <strong>Откройте чат с ботом</strong>
-            <p>Запустите Mini App из кнопки в Telegram, а не из Safari или другого браузера.</p>
-          </div>
-          <div class="gate-card">
-            <span>2</span>
-            <strong>Дождитесь авторизации</strong>
-            <p>После старта Telegram передаст профиль, и приложение откроет ваш личный кабинет.</p>
-          </div>
-          <div class="gate-card">
-            <span>3</span>
-            <strong>Используйте один аккаунт</strong>
-            <p>Каждый пользователь видит только свои проекты, заметки, задачи и финальные отчеты.</p>
-          </div>
-        </div>
-      </section>
+      <div class="luxury-auth glass-card">
+          <h1>Личный <span class="accent-text">PM-кабинет</span></h1>
+          <p>Этот экран работает только внутри Telegram Mini App. Автор подтягивается автоматически.</p>
+          <div class="auth-status" id="mini-auth-status">Ожидание Telegram-сессии...</div>
+      </div>
       {% else %}
-      {% if show_onboarding %}
-      <section class="panel onboarding-panel">
-        <div class="panel-head panel-head-tight">
-          <p class="section-label">Onboarding</p>
-          <h2>Первые 20 секунд</h2>
-          <p>Только самое важное, без лишней теории.</p>
-        </div>
-        <div class="mini-grid mini-grid-3">
-          <div class="onboarding-card">
-            <span>1</span>
-            <strong>Пишите коротко</strong>
-            <p>Лучше 1-3 пункта в каждом блоке, чем один длинный абзац.</p>
-          </div>
-          <div class="onboarding-card">
-            <span>2</span>
-            <strong>Держите блокеры отдельно</strong>
-            <p>Так проще собрать digest и быстро увидеть, где нужен follow-up.</p>
-          </div>
-          <div class="onboarding-card">
-            <span>3</span>
-            <strong>Используйте Telegram-text</strong>
-            <p>Это copy-ready версия отчета: удобно вставлять в чат, письмо или таск.</p>
-          </div>
-        </div>
-        <form method="post" action="/onboarding/complete" class="inline-form onboarding-cta">
-          <button type="submit">Понятно, начать работу</button>
-        </form>
-      </section>
-      {% endif %}
 
-      <main class="main-stack">
-        <section class="panel panel-primary">
+      <!-- Вкладка: Дашборд -->
+      <main id="tab-dashboard" class="luxury-main">
+        <div class="status-indicator">
+          <div class="dot"></div>
+          <div>
+            <strong>System Online</strong>
+            <span>All systems operational</span>
+            <span class="uptime">{{ summary.security_status }} uptime</span>
+          </div>
+        </div>
+        
+        <div class="time-display">
+          <span id="current-date"></span>
+          <strong id="current-time"></strong>
+        </div>
+
+        <!-- Центральные карточки-метрики над ДНК -->
+        <div class="metrics-overlay">
+          <!-- 1. Активность -->
+          <div class="metric-card glass-card">
+            <div class="metric-header">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+              <span>INPUT DATA &bull;</span>
+            </div>
+            <div class="metric-value">
+              <strong>{{ summary.activity_count }}</strong>
+              <span>notes</span>
+            </div>
+            <div class="metric-footer">
+              <span class="trend up">&uarr; {{ summary.activity_trend }} vs yesterday</span>
+              <div class="sparkline">[|||..||]</div>
+            </div>
+          </div>
+
+          <!-- 2. Точность ИИ -->
+          <div class="metric-card glass-card">
+            <div class="metric-header">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+              <span>AI ACCURACY &bull;</span>
+            </div>
+            <div class="metric-value">
+              <strong>{{ summary.ai_accuracy }}</strong>
+              <span>accuracy</span>
+            </div>
+            <div class="metric-footer">
+              <span class="trend up">&uarr; {{ summary.ai_accuracy_trend }} vs yesterday</span>
+              <div class="sparkline line-chart">~~~</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-slogan">
+          Turn messy updates into <span class="accent-text">structured delivery reports.</span>
+          <svg class="chevron" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-dock">
+          <!-- Главная кнопка Собрать отчет -->
+          <form method="post" action="/draft/build" class="action-form">
+            <button type="submit" class="glass-btn primary-glow massive-btn" onclick="pulseDNA()">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
+              <div class="btn-text">
+                <strong>Собрать отчет</strong>
+                <span>Анализировать и структурировать</span>
+              </div>
+            </button>
+          </form>
+
+          <!-- Кнопка Рабочей области -->
+          <button type="button" class="glass-btn secondary-btn" onclick="switchTab('workspace')">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+            <div class="btn-text">
+              <strong>Рабочая область</strong>
+              <span>Добавить апдейты</span>
+            </div>
+          </button>
+        </div>
+
+        <!-- Нижний статус-бар -->
+        <footer class="luxury-footer glass-card">
+          <div class="footer-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            <div>
+              <strong>Enterprise Security</strong>
+              <span>End-to-end encrypted</span>
+            </div>
+          </div>
+          <div class="footer-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+            <div>
+              <strong>Retention</strong>
+              <span>{{ summary.retention }} active</span>
+            </div>
+          </div>
+          <div class="footer-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <div>
+              <strong>Conversion</strong>
+              <span>{{ summary.conversion }} to PRO</span>
+            </div>
+          </div>
+          <div class="footer-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="1 4 1 10 7 10"></polyline><polyline points="23 20 23 14 17 14"></polyline><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>
+            <div>
+              <strong>Last Sync</strong>
+              <span>Real-time &bull;</span>
+            </div>
+          </div>
+        </footer>
+      </main>
+
+      <!-- Вкладка: Workspace (Текущий функционал) -->
+      <main id="tab-workspace" class="luxury-main" style="display: none; padding-top: 100px; padding-bottom: 50px;">
+        <!-- Секция добавления заметки -->
+        <section class="glass-card workspace-panel">
           <div class="panel-head">
-            <p class="section-label">Шаг 1</p>
-            <h2>Быстрый апдейт</h2>
-            <p>Одна форма = один проект, эпик или смысловой блок. Сохранили один апдейт, потом можно сразу добавить следующий.</p>
+            <h2>Добавить апдейт</h2>
+            <p>1-3 пункта на секцию, без воды.</p>
           </div>
-          <div class="helper-chips">
-            <span>1-3 пункта на секцию</span>
-            <span>Без длинных абзацев</span>
-            <span>Один пункт = один факт</span>
-          </div>
-
-          <form method="post" action="/notes" class="quick-form">
+          <form method="post" action="/notes" class="quick-form glass-form">
             <div class="field-row">
               <div class="field">
-                <label for="project_name">Проект</label>
-                <input id="project_name" name="project_name" list="project-list" placeholder="Например: DC701" />
+                <label>Проект</label>
+                <input name="project_name" list="project-list" placeholder="DC701" />
                 <datalist id="project-list">
                   {% for project in projects %}
                   <option value="{{ project.name }}"></option>
@@ -215,321 +187,73 @@
                 </datalist>
               </div>
               <div class="field">
-                <label for="epic_name">Эпик / поток</label>
-                <input id="epic_name" name="epic_name" list="epic-list" placeholder="Например: Caller ID" />
+                <label>Эпик / поток</label>
+                <input name="epic_name" list="epic-list" placeholder="Caller ID" />
                 <datalist id="epic-list">
                   {% for epic_name in epic_suggestions %}
                   <option value="{{ epic_name }}"></option>
                   {% endfor %}
                 </datalist>
               </div>
-              <div class="field">
-                <label for="status_text">Статус</label>
-                <input id="status_text" name="status_text" list="status-list" placeholder="Например: в работе, тесты, ждём ответ" />
-                <datalist id="status-list">
-                  {% for status in status_suggestions %}
-                  <option value="{{ status }}"></option>
-                  {% endfor %}
-                </datalist>
-              </div>
             </div>
-
             <div class="field">
-              <label for="done_text">Что сделали сегодня</label>
-              <textarea id="done_text" name="done_text" rows="4" placeholder="Например: согласовали окно ночных работ&#10;подтвердили теги по аналитике"></textarea>
+              <label>Что сделали сегодня</label>
+              <textarea name="done_text" rows="3" placeholder="согласовали работы..."></textarea>
             </div>
-
-            <div class="field-row field-row-stack">
+            <div class="field-row">
               <div class="field">
-                <label for="plan_text">Что дальше</label>
-                <textarea id="plan_text" name="plan_text" rows="3" placeholder="Например: отправить на ревью&#10;выйти на бизнес за датой запуска"></textarea>
+                <label>Что дальше</label>
+                <textarea name="plan_text" rows="2" placeholder="выйти на бизнес..."></textarea>
               </div>
               <div class="field">
-                <label for="risk_text">Блокеры / риски</label>
-                <textarea id="risk_text" name="risk_text" rows="3" placeholder="Если блокеров нет, можно написать: нет"></textarea>
+                <label>Блокеры / риски</label>
+                <textarea name="risk_text" rows="2" placeholder="нет"></textarea>
               </div>
             </div>
-
-            <div class="field">
-              <label for="links_text">Jira / ссылки</label>
-              <textarea id="links_text" name="links_text" rows="2" placeholder="OM-33824&#10;https://jira.example.com/browse/OM-33824"></textarea>
-            </div>
-
-            <div class="button-row">
-              <button type="submit" name="action" value="save">Сохранить апдейт</button>
-              <button type="submit" name="action" value="save_build" class="secondary">Сохранить и собрать черновик</button>
-            </div>
+            <button type="submit" class="glass-btn primary-btn" style="width: 100%;">Сохранить апдейт</button>
           </form>
-
-          <div class="flow-hint">
-            <strong>Что происходит дальше:</strong>
-            <span>апдейт попадет в блок ниже `Уже добавлено сегодня`. Оттуда можно быстро проверить день и потом собрать digest.</span>
-          </div>
-
-          <div class="day-progress">
-            <div class="day-progress-head">
-              <div>
-                <p class="section-label">Сегодня уже добавлено</p>
-                <h3>{{ summary.notes_count }} апдейт(ов) по {{ summary.project_count }} проект(ам)</h3>
-              </div>
-              <p>
-                {% if recent_updates %}
-                Вы можете продолжать добавлять новые апдейты, а digest собирать только когда будете готовы.
-                {% else %}
-                После первого сохранения здесь сразу появится краткий список апдейтов за день.
-                {% endif %}
-              </p>
-            </div>
-
-            {% if recent_updates %}
-            <div class="note-stream">
-              {% for item in recent_updates %}
-              <div class="note-card note-card-compact">
-                <div class="note-card-topline">
-                  <strong>{{ item.project_name }}</strong>
-                  <div class="meta-chip-row">
-                    {% if item.epic_name %}
-                    <span class="meta-chip">{{ item.epic_name }}</span>
-                    {% endif %}
-                    {% if item.note.status_text %}
-                    <span class="meta-chip">{{ item.note.status_text }}</span>
-                    {% endif %}
-                    {% if item.link_count %}
-                    <span class="meta-chip">{{ item.link_count }} link</span>
-                    {% endif %}
-                  </div>
-                </div>
-                <div class="note-preview">{{ item.preview_text }}</div>
-              </div>
-              {% endfor %}
-            </div>
-            {% endif %}
-          </div>
-
-          <details class="details-inline">
-            <summary>Или вставить свободный текст</summary>
-            <form method="post" action="/notes" class="raw-form">
-              <textarea name="text" rows="8" placeholder="Проект: DC701&#10;Статус: в работе&#10;Что сделано: ..."></textarea>
-              <div class="button-row">
-                <button type="submit" name="action" value="save">Сохранить текст</button>
-              </div>
-            </form>
-          </details>
         </section>
 
-        <section class="panel panel-output">
+        <!-- Рендер отчета -->
+        {% if draft %}
+        <section class="glass-card workspace-panel">
           <div class="panel-head">
-            <p class="section-label">Шаг 2</p>
-            <h2>Собрать и отправить digest</h2>
-            <p>Сначала проверьте читабельный preview, потом возьмите plain text для Telegram или отправьте его себе в чат.</p>
-          </div>
-
-          <div class="draft-toolbar">
-            <form method="post" action="/template" class="inline-form">
-              <label for="template_key">Стиль</label>
-              <select id="template_key" name="template_key">
-                {% for template in templates %}
-                <option value="{{ template.template_key }}" {% if template.template_key == current_template_key %}selected{% endif %}>
-                  {{ template.title }}
-                </option>
-                {% endfor %}
-              </select>
-              <button type="submit" class="ghost">Применить</button>
-            </form>
-
+            <h2>Готовый отчет</h2>
             <div class="button-row">
-              <form method="post" action="/draft/build">
-                <button type="submit">Собрать digest</button>
-              </form>
-              <form method="post" action="/draft/send">
-                <button type="submit" class="secondary">Отправить в Telegram</button>
-              </form>
-              <form method="post" action="/draft/finalize">
-                <button type="submit" class="ghost">Зафиксировать финальный</button>
-              </form>
+              <button class="ghost copy-trigger" data-copy-target="draft-plain">Копировать</button>
+              <button class="ghost print-trigger" onclick="window.print()">Скачать PDF</button>
             </div>
           </div>
-          <div class="style-hint">
-            <span><strong>Баланс</strong> для обычного daily</span>
-            <span><strong>Только главное</strong> если нужен короткий текст</span>
-            <span><strong>Для руководителя</strong> если важнее риски</span>
-            <span><strong>Для команды</strong> если нужен привычный daily-формат</span>
-          </div>
-
-          {% if draft %}
-          <div class="report-grid">
-            <div class="report-panel">
-              <div class="subpanel-head">
-                <h3>Читаемый preview</h3>
-                <p>Версия для просмотра внутри приложения.</p>
-              </div>
-              <div class="report-box">{{ draft | safe }}</div>
-            </div>
-            <div class="report-panel">
-              <div class="subpanel-head">
-                <h3>Готово для Telegram</h3>
-                <p>
-                  Plain text, который удобно копировать, вставлять и пересылать.
-                  {% if summary.draft_chunks > 1 %}
-                  В Telegram он уйдет {{ summary.draft_chunks }} сообщениями.
-                  {% endif %}
-                </p>
-              </div>
-              <textarea id="draft-plain" class="copy-area" readonly>{{ draft_plain }}</textarea>
-              <div class="button-row copy-row">
-                <button type="button" class="ghost copy-trigger" data-copy-target="draft-plain">Копировать текст</button>
-                <button type="button" class="ghost print-trigger" onclick="window.print()">Скачать PDF</button>
-              </div>
-            </div>
-          </div>
-          {% else %}
-          <p class="empty">Digest пока не собран.</p>
-          {% endif %}
+          <div class="report-box">{{ draft | safe }}</div>
+          <textarea id="draft-plain" style="display:none;">{{ draft_plain }}</textarea>
         </section>
-
-        <section class="panel panel-secondary">
-          <div class="panel-head panel-head-tight">
-            <p class="section-label">Шаг 3</p>
-            <h2>Контроль дня</h2>
-            <p>Здесь только то, что реально требует внимания: уточнения, follow-up и финальный текст.</p>
-          </div>
-
-          <div class="accordion-stack">
-            <details class="details-card" {% if inbox_cards %}open{% endif %}>
-              <summary class="details-summary">
-                <div class="summary-main">
-                  <span class="summary-kicker">Clarify</span>
-                  <strong>Нужно уточнить</strong>
-                </div>
-                <span class="summary-badge">{{ inbox_cards|length }}</span>
-              </summary>
-              <div class="details-content">
-                <p class="details-copy">Сюда попадают только те апдейты, где системе нужно ваше быстрое подтверждение проекта.</p>
-                {% if inbox_cards %}
-                  {% for item in inbox_cards %}
-                  <div class="inbox-card">
-                    <div class="inbox-meta">
-                      <span>{{ item.project_name }}</span>
-                      <span>{{ item.note.note_date }}</span>
-                    </div>
-                    <div class="note-card-topline">
-                      <strong>note#{{ item.note.id }}</strong>
-                      <div class="meta-chip-row">
-                        {% if item.epic_name %}
-                        <span class="meta-chip">{{ item.epic_name }}</span>
-                        {% endif %}
-                        {% if item.note.status_text %}
-                        <span class="meta-chip">{{ item.note.status_text }}</span>
-                        {% endif %}
-                      </div>
-                    </div>
-                    <div class="note-preview">{{ item.preview_text }}</div>
-                    <details class="raw-note-details">
-                      <summary>Показать исходный текст</summary>
-                      <pre class="raw-note-text">{{ item.note.raw_text }}</pre>
-                    </details>
-                    {% if item.candidates %}
-                    <div class="candidate-row">
-                      {% for candidate in item.candidates %}
-                      <form method="post" action="/inbox/{{ item.note.id }}/resolve">
-                        <input type="hidden" name="project_name" value="{{ candidate }}" />
-                        <button type="submit" class="mini">{{ candidate }}</button>
-                      </form>
-                      {% endfor %}
-                    </div>
-                    {% endif %}
-                    <form method="post" action="/inbox/{{ item.note.id }}/resolve" class="inline-form stretch">
-                      <input type="text" name="project_name" placeholder="Указать проект вручную" />
-                      <button type="submit" class="secondary">Привязать</button>
-                    </form>
-                  </div>
-                  {% endfor %}
-                {% else %}
-                <p class="empty">Все апдейты уже разобраны.</p>
-                {% endif %}
-              </div>
-            </details>
-
-            <details class="details-card">
-              <summary class="details-summary">
-                <div class="summary-main">
-                  <span class="summary-kicker">Follow-up</span>
-                  <strong>Мой список follow-up</strong>
-                </div>
-                <span class="summary-badge">{{ summary.tasks_count }}</span>
-              </summary>
-              <div class="details-content">
-                <p class="details-copy">Короткий список контроля: что в работе, что ждёт ответа, что нужно закрыть отдельно от daily-апдейтов.</p>
-                <form method="post" action="/tasks" class="inline-form stretch">
-                  <input type="text" name="title" placeholder="Согласовать ночное окно по DC701" />
-                  <button type="submit">Добавить задачу</button>
-                </form>
-                <div class="task-list">
-                  {% if tasks %}
-                    {% for task in tasks %}
-                    <div class="task-card">
-                      <div class="task-main">
-                        <span class="status-pill status-{{ task.status }}">{{ status_label(task.status) }}</span>
-                        <strong>#{{ task.id }} {{ task.title }}</strong>
-                      </div>
-                      <div class="task-actions">
-                        <form method="post" action="/tasks/{{ task.id }}/status"><input type="hidden" name="status" value="in_progress" /><button type="submit" class="mini">В работу</button></form>
-                        <form method="post" action="/tasks/{{ task.id }}/status"><input type="hidden" name="status" value="waiting" /><button type="submit" class="mini">Ждет</button></form>
-                        <form method="post" action="/tasks/{{ task.id }}/status"><input type="hidden" name="status" value="done" /><button type="submit" class="mini">Готово</button></form>
-                      </div>
-                    </div>
-                    {% endfor %}
-                  {% else %}
-                  <p class="empty">Активных задач пока нет.</p>
-                  {% endif %}
-                </div>
-              </div>
-            </details>
-
-            <details class="details-card" {% if final_report %}open{% endif %}>
-              <summary class="details-summary">
-                <div class="summary-main">
-                  <span class="summary-kicker">Output</span>
-                  <strong>Финальный отчет</strong>
-                </div>
-                <span class="summary-badge">{{ "готов" if final_report else "пусто" }}</span>
-              </summary>
-              <div class="details-content">
-                <div class="button-row">
-                  <form method="post" action="/final/send">
-                    <button type="submit" class="secondary">Отправить финальный</button>
-                  </form>
-                </div>
-                {% if final_report %}
-                <div class="report-grid report-grid-single">
-                  <div class="report-panel">
-                    <div class="report-box report-box-compact">{{ final_report | safe }}</div>
-                  </div>
-                  <div class="report-panel">
-                    <div class="subpanel-head">
-                      <h3>Финальный plain text</h3>
-                      <p>
-                        Удобно копировать в чат, письмо или Confluence.
-                        {% if summary.final_chunks > 1 %}
-                        При отправке в Telegram уйдет {{ summary.final_chunks }} сообщениями.
-                        {% endif %}
-                      </p>
-                    </div>
-                    <textarea id="final-plain" class="copy-area" readonly>{{ final_plain }}</textarea>
-                    <div class="button-row copy-row">
-                      <button type="button" class="ghost copy-trigger" data-copy-target="final-plain">Копировать текст</button>
-                    </div>
-                  </div>
-                </div>
-                {% else %}
-                <p class="empty">Финальный отчет пока не зафиксирован.</p>
-                {% endif %}
-              </div>
-            </details>
-          </div>
-        </section>
+        {% endif %}
       </main>
+
       {% endif %}
     </div>
+
+    <!-- Обновленный JS код вкладок -->
+    <script>
+      function switchTab(tabId) {
+        document.querySelectorAll('.luxury-main').forEach(el => el.style.display = 'none');
+        document.getElementById('tab-' + tabId).style.display = 'flex';
+        
+        document.querySelectorAll('.nav-links a').forEach(el => el.classList.remove('active'));
+        event.target.classList.add('active');
+      }
+
+      function updateTime() {
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        const timeStr = now.toLocaleTimeString('en-US', { hour12: false });
+        if(document.getElementById('current-date')) {
+          document.getElementById('current-date').innerText = dateStr;
+          document.getElementById('current-time').innerText = timeStr;
+        }
+      }
+      setInterval(updateTime, 1000);
+      updateTime();
+    </script>
   </body>
 </html>

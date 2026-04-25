@@ -49,12 +49,6 @@ def run() -> None:
     if args.command == "import-jira":
         _run_jira_import(repository, Path(args.csv_path), args.jira_base_url or "")
         return
-    transcription = TranscriptionService(
-        mode=settings.transcribe_mode,
-        whisper_model=settings.whisper_model,
-    )
-    tg_app = build_app(settings=settings, repository=repository, transcription=transcription)
-
     import uvicorn
     from contextlib import asynccontextmanager
     from fastapi import FastAPI
@@ -62,12 +56,22 @@ def run() -> None:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
+        transcription = TranscriptionService(
+            mode=settings.transcribe_mode,
+            whisper_model=settings.whisper_model,
+        )
+        tg_app = build_app(settings=settings, repository=repository, transcription=transcription)
+        
         # Drop webhook and pending updates to fix telegram.error.Conflict on Render
         await tg_app.bot.delete_webhook(drop_pending_updates=True)
         await tg_app.initialize()
         await tg_app.start()
         await tg_app.updater.start_polling(drop_pending_updates=True)
+        
+        app.state.bot_app = tg_app
+        
         yield
+        
         await tg_app.updater.stop()
         await tg_app.stop()
         await tg_app.shutdown()
