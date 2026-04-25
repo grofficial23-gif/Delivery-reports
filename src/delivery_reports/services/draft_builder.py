@@ -231,7 +231,9 @@ def _render_team_examples_draft(
     return "\n".join(lines).strip()
 
 
-def _append_lines(buffer: list[str], block_text: str) -> None:
+def _append_lines(buffer: list[str], block_text: str | None) -> None:
+    if not block_text:
+        return
     for line in (part.strip("-• \t") for part in block_text.splitlines()):
         if line:
             buffer.append(line)

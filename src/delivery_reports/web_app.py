@@ -137,6 +137,7 @@ def build_web_app(settings: Settings, repository: Repository) -> FastAPI:
 
         return templates.TemplateResponse(request=request, name="admin.html", context={
             "request": request, 
+            "notice": request.query_params.get("notice", ""),
             "stats": stats, 
             "users": users,
             "events": events,
@@ -145,6 +146,32 @@ def build_web_app(settings: Settings, repository: Repository) -> FastAPI:
             "is_super_admin": is_admin,
             "user": user
         })
+
+    @app.post("/admin/users/{target_user_id}/plan")
+    async def admin_update_user_plan(target_user_id: int, request: Request) -> RedirectResponse:
+        from .services.admin import AdminService
+        from .services.subscription import Plan
+
+        user = _authenticated_user(request, repository, settings)
+        if user is None or not user.telegram_username:
+            return _redirect_admin_with_notice("Откройте приложение из Telegram под admin-аккаунтом.")
+
+        admin_svc = AdminService(repository.db, settings)
+        if not admin_svc.is_super_admin(user.telegram_username):
+            return _redirect_admin_with_notice("Недостаточно прав для управления тарифами.")
+
+        payload = await _parse_payload(request)
+        plan = payload.get("plan", "").strip().lower()
+        if plan == Plan.PRO:
+            admin_svc.grant_pro(target_user_id)
+            return _redirect_admin_with_notice(f"Пользователю {target_user_id} выдан PRO.")
+        if plan == Plan.TEAM:
+            admin_svc.grant_team(target_user_id)
+            return _redirect_admin_with_notice(f"Пользователю {target_user_id} выдан TEAM.")
+        if plan == Plan.FREE:
+            admin_svc.revoke_subscription(target_user_id)
+            return _redirect_admin_with_notice(f"Пользователь {target_user_id} переведен на FREE.")
+        return _redirect_admin_with_notice("Неизвестный тариф.")
 
     @app.get("/dashboard", response_class=HTMLResponse)
     async def dashboard(request: Request) -> HTMLResponse:
@@ -510,6 +537,10 @@ async def _parse_payload(request: Request) -> dict[str, str]:
 
 def _redirect_with_notice(text: str) -> RedirectResponse:
     return RedirectResponse(url=f"/dashboard?notice={quote_plus(text)}", status_code=303)
+
+
+def _redirect_admin_with_notice(text: str) -> RedirectResponse:
+    return RedirectResponse(url=f"/admin?notice={quote_plus(text)}", status_code=303)
 
 
 def _authenticated_user(request: Request, repository: Repository, settings: Settings) -> UserProfile | None:

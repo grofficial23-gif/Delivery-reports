@@ -29,21 +29,21 @@ def _read_optional_int(name: str) -> int | None:
 
 @dataclass(frozen=True)
 class Settings:
-    telegram_bot_token: str
-    owner_user_id: int | None
-    timezone: str
-    db_path: Path
-    default_manager_name: str
-    default_lead_name: str
-    daily_draft_hour: int
-    daily_draft_minute: int
-    transcribe_mode: str
-    whisper_model: str
-    web_host: str
-    web_port: int
-    public_web_app_url: str
-    web_session_secret: str
-    super_admin_usernames: frozenset[str]  # e.g. {'PM_vibe'}
+    telegram_bot_token: str = ""
+    owner_user_id: int | None = None
+    timezone: str = "Asia/Bishkek"
+    db_path: Path = Path("data/delivery_reports.db")
+    default_manager_name: str = ""
+    default_lead_name: str = ""
+    daily_draft_hour: int = 17
+    daily_draft_minute: int = 30
+    transcribe_mode: str = "local_whisper"
+    whisper_model: str = "base"
+    web_host: str = "127.0.0.1"
+    web_port: int = 8787
+    public_web_app_url: str = ""
+    web_session_secret: str = ""
+    super_admin_usernames: frozenset[str] = frozenset({"pm_vibe"})  # e.g. {'PM_vibe'}
 
 
 def load_settings() -> Settings:

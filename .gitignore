@@ -15,6 +15,7 @@ __pycache__/
 .coverage
 .coverage.*
 htmlcov/
+pytest_out*.txt
 
 # Packaging / build artifacts
 build/
