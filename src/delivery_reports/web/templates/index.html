@@ -26,6 +26,9 @@
             <span>Личный контур</span>
             <span>Telegram native</span>
             <span>Daily report</span>
+            {% if is_super_admin %}
+            <a href="/admin" style="text-decoration: none;"><span style="color: var(--primary); border-color: var(--primary);">⚙️ Admin</span></a>
+            {% endif %}
           </div>
 
           {% if auth_required %}

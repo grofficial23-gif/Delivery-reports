@@ -110,7 +110,7 @@
       }
 
       // Успех — убираем auth экран без полного reload
-      window.location.replace("/");
+      window.location.replace("/dashboard");
 
     } catch (error) {
       hideLoading();

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <title>⚙️ Админ-панель</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/app.css" />
+    <style>
+      .admin-layout {
+        display: grid;
+        gap: 24px;
+      }
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+      }
+      .stat-card {
+        padding: 24px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-xl);
+        background: var(--surface);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .stat-card span {
+        font-size: 11px;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: var(--muted-foreground);
+        letter-spacing: 0.05em;
+      }
+      .stat-card strong {
+        font-size: 32px;
+        line-height: 1;
+        letter-spacing: -0.03em;
+      }
+      .user-table-wrapper {
+        overflow-x: auto;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-xl);
+        background: var(--surface);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+      }
+      th, td {
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border);
+      }
+      th {
+        font-size: 11px;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: var(--muted-foreground);
+        letter-spacing: 0.05em;
+        background: var(--surface-elevated);
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      .plan-badge {
+        display: inline-flex;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .plan-free { background: var(--muted); color: var(--muted-foreground); }
+      .plan-pro { background: rgba(163, 230, 53, 0.2); color: var(--primary-hover); }
+      .plan-team { background: rgba(124, 58, 237, 0.2); color: var(--accent-light); }
+      
+      body[data-color-scheme="dark"] .plan-pro { color: var(--primary); }
+      body[data-color-scheme="dark"] .plan-team { color: var(--accent-light); }
+    </style>
+  </head>
+  <body data-color-scheme="dark">
+    <div class="page-shell">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <h2>⚙️ Админ-панель</h2>
+        <a href="/dashboard" class="button ghost mini" style="text-decoration: none;">В приложение</a>
+      </div>
+
+      <div class="admin-layout">
+        <section>
+          <div style="margin-bottom: 16px;">
+            <p class="section-label">СТАТИСТИКА</p>
+            <h3 style="margin: 4px 0 0;">Дашборд</h3>
+          </div>
+          
+          <div class="stat-grid">
+            <div class="stat-card">
+              <span>Всего юзеров</span>
+              <strong>{{ stats.total_users }}</strong>
+            </div>
+            <div class="stat-card">
+              <span>Активны сегодня</span>
+              <strong>{{ stats.active_today }}</strong>
+            </div>
+            <div class="stat-card">
+              <span>PRO / TEAM</span>
+              <strong>{{ stats.plans_breakdown.get('pro', 0) }} / {{ stats.plans_breakdown.get('team', 0) }}</strong>
+            </div>
+            <div class="stat-card">
+              <span>MRR (расчетный)</span>
+              <strong style="color: var(--primary);">${{ (stats.plans_breakdown.get('pro', 0) * 2.49 + stats.plans_breakdown.get('team', 0) * 6.99) | round(2) }}</strong>
+            </div>
+            <div class="stat-card">
+              <span>Всего заметок</span>
+              <strong>{{ stats.total_notes }}</strong>
+            </div>
+          </div>
+        </section>
+
+        <section style="margin-top: 40px;">
+          <div style="margin-bottom: 16px;">
+            <p class="section-label">ПОЛЬЗОВАТЕЛИ</p>
+            <h3 style="margin: 4px 0 0;">Список</h3>
+          </div>
+          
+          <div class="user-table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Пользователь</th>
+                  <th>Тариф</th>
+                  <th>Заметок</th>
+                  <th>Задач</th>
+                  <th>Регистрация</th>
+                  <th>Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for u in users %}
+                <tr>
+                  <td>
+                    <div style="font-weight: 600;">{{ u.display_name }}</div>
+                    <div style="font-size: 12px; color: var(--muted-foreground);">
+                      {{ '@' ~ u.telegram_username if u.telegram_username else 'id: ' ~ u.telegram_user_id }}
+                    </div>
+                  </td>
+                  <td>
+                    <span class="plan-badge plan-{{ u.plan }}">{{ u.plan }}</span>
+                  </td>
+                  <td>{{ u.notes_count }}</td>
+                  <td>{{ u.tasks_count }}</td>
+                  <td style="font-size: 13px; color: var(--muted-foreground);">{{ u.registered_at[:10] }}</td>
+                  <td>
+                    <div style="display: flex; gap: 8px;">
+                      <a href="https://t.me/igest_bot?start=admin" class="button mini" style="text-decoration: none;" title="Выдать PRO (через бота)">Управление в боте</a>
+                    </div>
+                  </td>
+                </tr>
+                {% else %}
+                <tr>
+                  <td colspan="6" style="text-align: center; color: var(--muted-foreground);">Нет пользователей</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </div>
+  </body>
+</html>

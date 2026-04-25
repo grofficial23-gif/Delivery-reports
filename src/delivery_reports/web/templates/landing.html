@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <title>PM Delivery Reports — Умные отчёты для менеджеров</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/app.css" />
+    <style>
+      .landing-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 24px 0;
+      }
+      .landing-logo {
+        font-weight: 800;
+        font-size: 20px;
+        letter-spacing: -0.02em;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+      }
+      .landing-nav-links {
+        display: flex;
+        gap: 24px;
+        align-items: center;
+      }
+      .landing-nav-links a {
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--muted-foreground);
+        transition: color 0.2s ease;
+      }
+      .landing-nav-links a:hover {
+        color: var(--foreground);
+      }
+      .pricing-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 24px;
+        margin-top: 40px;
+      }
+      .pricing-card {
+        padding: 32px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-2xl);
+        background: var(--surface);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .pricing-card.pro {
+        border-color: var(--primary);
+        box-shadow: 0 0 40px rgba(163, 230, 53, 0.1);
+        position: relative;
+      }
+      .pricing-card.pro::before {
+        content: "Популярный";
+        position: absolute;
+        top: -12px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--primary);
+        color: var(--primary-foreground);
+        font-size: 11px;
+        font-weight: 800;
+        padding: 4px 12px;
+        border-radius: 999px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .price {
+        font-size: 48px;
+        font-weight: 800;
+        letter-spacing: -0.04em;
+        line-height: 1;
+      }
+      .price span {
+        font-size: 16px;
+        color: var(--muted-foreground);
+        font-weight: 500;
+      }
+      .pricing-features {
+        list-style: none;
+        padding: 0;
+        margin: 16px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .pricing-features li {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: var(--muted-foreground);
+      }
+      .pricing-features li svg {
+        color: var(--primary);
+        flex-shrink: 0;
+      }
+      .step-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 16px;
+        margin-top: 24px;
+      }
+    </style>
+  </head>
+  <body data-color-scheme="dark">
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+
+    <div class="page-shell">
+      <nav class="landing-nav">
+        <a href="/" class="landing-logo">
+          🚀 PM Digest
+        </a>
+        <div class="landing-nav-links">
+          <a href="#features">Возможности</a>
+          <a href="#pricing">Тарифы</a>
+          <a href="#how-it-works">Инструкция</a>
+          <a href="https://t.me/igest_bot" class="button mini" style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none;">Открыть бота</a>
+        </div>
+      </nav>
+
+      <main>
+        <section class="hero" style="display: block; text-align: center; margin: 80px 0 100px;">
+          <div class="hero-signal" style="margin: 0 auto;">
+            <div class="signal-dot"></div>
+            Бот работает 24/7
+          </div>
+          <h1 style="margin: 24px auto; max-width: 900px; font-size: clamp(48px, 8vw, 80px);">
+            Умные отчёты для <span class="accent-mark">проектных менеджеров</span>
+          </h1>
+          <p class="hero-lead" style="margin: 0 auto; text-align: center; max-width: 600px;">
+            Превратите хаос из задач и созвонов в идеальный вечерний отчет за один клик. Пишите заметки весь день, а в 17:30 получите готовый digest.
+          </p>
+          <div style="margin-top: 40px; display: flex; gap: 16px; justify-content: center;">
+            <a href="https://t.me/igest_bot" class="button" style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none; min-width: 200px; font-size: 16px;">
+              Попробовать бесплатно
+            </a>
+            <a href="#pricing" class="button ghost" style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none; min-width: 140px; font-size: 16px;">
+              Тарифы
+            </a>
+          </div>
+        </section>
+
+        <section id="features" class="panel panel-primary" style="margin-top: 80px; border-radius: var(--radius-2xl); border: 1px solid var(--border);">
+          <div class="panel-head" style="text-align: center;">
+            <p class="section-label">ВОЗМОЖНОСТИ</p>
+            <h2>Что умеет бот</h2>
+          </div>
+          <div class="hero-facts" style="margin-top: 40px;">
+            <div class="fact-card">
+              <span>СБОРКА</span>
+              <strong>Заметки → Отчёт за 1 клик</strong>
+              <p style="font-size: 13px; color: var(--muted-foreground); margin-top: 8px;">Забудьте про сбор статусов в конце дня. Бот соберет всё сам.</p>
+            </div>
+            <div class="fact-card">
+              <span>VOICE</span>
+              <strong>Голосовые → Текст автоматически</strong>
+              <p style="font-size: 13px; color: var(--muted-foreground); margin-top: 8px;">Наговаривайте апдейты на ходу, бот всё расшифрует и разложит по проектам.</p>
+            </div>
+            <div class="fact-card">
+              <span>АНАЛИТИКА (PRO)</span>
+              <strong>Weekly / Monthly отчёты</strong>
+              <p style="font-size: 13px; color: var(--muted-foreground); margin-top: 8px;">Автоматическая генерация еженедельных саммари для руководства.</p>
+            </div>
+            <div class="fact-card">
+              <span>ЭКСПОРТ (PRO)</span>
+              <strong>Экспорт в PDF, Word, Canva</strong>
+              <p style="font-size: 13px; color: var(--muted-foreground); margin-top: 8px;">Выгружайте готовые документы для рассылки клиентам.</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="how-it-works" style="margin-top: 100px;">
+          <div class="panel-head" style="text-align: center;">
+            <p class="section-label">ИНСТРУКЦИЯ</p>
+            <h2>Как это работает</h2>
+          </div>
+          <div class="step-grid">
+            <div class="step-card">
+              <span>ШАГ 1</span>
+              <strong>Откройте бота</strong>
+              <p>Перейдите в <a href="https://t.me/igest_bot" style="color: var(--primary);">@igest_bot</a> и нажмите <code>/start</code>.</p>
+            </div>
+            <div class="step-card">
+              <span>ШАГ 2</span>
+              <strong>Пишите заметки</strong>
+              <p>Скидывайте боту апдейты по проектам в течение дня. Можно текстом или голосом.</p>
+            </div>
+            <div class="step-card">
+              <span>ШАГ 3</span>
+              <strong>Умная сортировка</strong>
+              <p>AI сам поймет, к какому проекту относится заметка и какой у нее статус.</p>
+            </div>
+            <div class="step-card">
+              <span>ШАГ 4</span>
+              <strong>Готовый отчёт</strong>
+              <p>Вечером нажмите "Собрать отчёт" и получите красивый digest.</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="pricing" style="margin-top: 100px;">
+          <div class="panel-head" style="text-align: center;">
+            <p class="section-label">ТАРИФЫ</p>
+            <h2>Простое ценообразование</h2>
+          </div>
+          <div class="pricing-grid">
+            <div class="pricing-card">
+              <h3 style="margin: 0; font-size: 20px;">FREE</h3>
+              <p style="margin: 0; color: var(--muted-foreground); font-size: 14px;">Для личного использования</p>
+              <div class="price">
+                $0<span>/мес</span>
+              </div>
+              <a href="https://t.me/igest_bot" class="button ghost" style="text-align: center; text-decoration: none;">Начать бесплатно</a>
+              <ul class="pricing-features">
+                <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> До 3 проектов</li>
+                <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> До 10 заметок в день</li>
+                <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> История 7 дней</li>
+                <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Простой формат отчетов</li>
+              </ul>
+            </div>
+
+            <div class="pricing-card pro">
+              <h3 style="margin: 0; font-size: 20px; color: var(--primary);">PRO</h3>
+              <p style="margin: 0; color: var(--muted-foreground); font-size: 14px;">Для профессионалов</p>
+              <div class="price">
+                $2.49<span>/мес</span>
+              </div>
+              <a href="https://t.me/igest_bot" class="button" style="text-align: center; text-decoration: none;">Купить PRO в Telegram</a>
+              <ul class="pricing-features">
+                <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> <b>Безлимит</b> проектов и заметок</li>
+                <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> История 90 дней</li>
+                <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Rich-форматирование отчетов</li>
+                <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Weekly-отчеты</li>
+                <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Транскрипция голосовых (AI)</li>
+                <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Экспорт PDF, Word, Canva</li>
+              </ul>
+            </div>
+
+            <div class="pricing-card">
+              <h3 style="margin: 0; font-size: 20px;">TEAM</h3>
+              <p style="margin: 0; color: var(--muted-foreground); font-size: 14px;">Для команд и агентств</p>
+              <div class="price">
+                $6.99<span>/мес</span>
+              </div>
+              <a href="https://t.me/igest_bot" class="button ghost" style="text-align: center; text-decoration: none;">Подключить команду</a>
+              <ul class="pricing-features">
+                <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Все фичи PRO</li>
+                <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> История 365 дней</li>
+                <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Monthly презентации</li>
+                <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Генерация ТЗ, PRD, Брифов</li>
+                <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Web-админка для команды</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+      <footer style="margin-top: 100px; padding-top: 40px; border-top: 1px solid var(--border); text-align: center; color: var(--muted-foreground); font-size: 14px;">
+        <p>&copy; 2026 PM Delivery Reports. Разработано для проектных менеджеров.</p>
+      </footer>
+    </div>
+  </body>
+</html>

@@ -1390,6 +1390,8 @@ def _mini_app_url(settings: Settings) -> str:
     url = settings.public_web_app_url.strip()
     if not url.startswith("https://"):
         return ""
+    if not url.endswith("/dashboard"):
+        url = url.rstrip("/") + "/dashboard"
     return url
 
 

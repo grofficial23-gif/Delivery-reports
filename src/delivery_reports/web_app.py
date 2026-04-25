@@ -63,6 +63,32 @@ def build_web_app(settings: Settings, repository: Repository) -> FastAPI:
     templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
     @app.get("/", response_class=HTMLResponse)
+    async def landing(request: Request) -> HTMLResponse:
+        return templates.TemplateResponse(request=request, name="landing.html", context={"request": request})
+
+    @app.get("/admin", response_class=HTMLResponse)
+    async def admin_page(request: Request) -> HTMLResponse:
+        from .services.admin import AdminService
+        user = _authenticated_user(request, repository, settings)
+        is_admin = False
+        if user and user.telegram_username:
+            admin_svc = AdminService(repository.db, settings)
+            is_admin = admin_svc.is_super_admin(user.telegram_username)
+        
+        if not is_admin:
+            return RedirectResponse(url="/dashboard?notice=" + quote_plus("Нет доступа к админке"))
+            
+        admin_svc = AdminService(repository.db, settings)
+        stats = admin_svc.get_platform_stats()
+        users = admin_svc.list_users(limit=50)
+        return templates.TemplateResponse(request=request, name="admin.html", context={
+            "request": request, 
+            "stats": stats, 
+            "users": users,
+            "user": user
+        })
+
+    @app.get("/dashboard", response_class=HTMLResponse)
     async def dashboard(request: Request) -> HTMLResponse:
         context = _build_dashboard_context(request, repository, settings)
         return templates.TemplateResponse(request=request, name="index.html", context=context)
@@ -366,10 +392,16 @@ def _build_dashboard_context(request: Request, repository: Repository, settings:
         "draft_chunks": len(draft_chunks),
         "final_chunks": len(final_chunks),
     }
+    is_super_admin = False
+    if user and user.telegram_username:
+        from .services.admin import AdminService
+        is_super_admin = AdminService(repository.db, settings).is_super_admin(user.telegram_username)
+
     return {
         **base_context,
         "auth_required": False,
         "user": user,
+        "is_super_admin": is_super_admin,
         "summary": summary,
         "notes": note_cards,
         "recent_updates": note_cards[:6],
@@ -399,7 +431,7 @@ async def _parse_payload(request: Request) -> dict[str, str]:
 
 
 def _redirect_with_notice(text: str) -> RedirectResponse:
-    return RedirectResponse(url=f"/?notice={quote_plus(text)}", status_code=303)
+    return RedirectResponse(url=f"/dashboard?notice={quote_plus(text)}", status_code=303)
 
 
 def _authenticated_user(request: Request, repository: Repository, settings: Settings) -> UserProfile | None:
