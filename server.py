@@ -31,7 +31,14 @@ def _run_http_server(settings, repository) -> None:
 
     port = int(os.environ.get("PORT", "10000"))
     app = build_web_app(settings, repository)
-    uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=port,
+        log_level="info",
+        proxy_headers=True,
+        forwarded_allow_ips="*"
+    )
 
 
 def main() -> None:
