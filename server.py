@@ -6,10 +6,16 @@ concurrently in a single process — ideal for Railway / Render / Fly.io.
 from __future__ import annotations
 
 import asyncio
-import signal
+import sys
 import threading
+from pathlib import Path
 
 import uvicorn
+
+ROOT_DIR = Path(__file__).resolve().parent
+SRC_DIR = ROOT_DIR / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
 
 from delivery_reports.bot_app import build_app
 from delivery_reports.config import load_settings
@@ -55,7 +61,13 @@ def main() -> None:
     app = build_app(settings=settings, repository=repository, transcription=transcription)
 
     print("Starting Telegram bot polling...")
-    app.run_polling()
+    event_loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(event_loop)
+    try:
+        app.run_polling()
+    finally:
+        if not event_loop.is_closed():
+            event_loop.close()
 
 
 if __name__ == "__main__":
