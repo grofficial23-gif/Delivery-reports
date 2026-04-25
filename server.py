@@ -1,7 +1,7 @@
 """Render-friendly production entry point.
 
-Runs a small Flask HTTP server on the Render-assigned port so the platform
-sees an active web service, while Telegram bot polling continues in parallel.
+Runs the FastAPI Mini App server on the Render-assigned port so the platform
+sees an active web service and serves the UI, while Telegram bot polling continues in parallel.
 """
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ import sys
 import threading
 from pathlib import Path
 
-from flask import Flask
+
 
 ROOT_DIR = Path(__file__).resolve().parent
 SRC_DIR = ROOT_DIR / "src"
@@ -25,26 +25,13 @@ from delivery_reports.repository import Repository
 from delivery_reports.services.transcription import TranscriptionService
 
 
-flask_app = Flask(__name__)
+def _run_http_server(settings, repository) -> None:
+    import uvicorn
+    from delivery_reports.web_app import build_web_app
 
-
-@flask_app.get("/")
-def index():
-    return {
-        "ok": True,
-        "service": "delivery-reports-bot",
-        "status": "running",
-    }
-
-
-@flask_app.get("/health")
-def health():
-    return {"ok": True}
-
-
-def _run_http_server() -> None:
     port = int(os.environ.get("PORT", "10000"))
-    flask_app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
+    app = build_web_app(settings, repository)
+    uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
 
 
 def main() -> None:
@@ -56,7 +43,7 @@ def main() -> None:
     )
     repository.ensure_default_report_templates()
 
-    web_thread = threading.Thread(target=_run_http_server, daemon=True)
+    web_thread = threading.Thread(target=_run_http_server, args=(settings, repository), daemon=True)
     web_thread.start()
     print(f"HTTP server started on port {os.environ.get('PORT', '10000')}")
 

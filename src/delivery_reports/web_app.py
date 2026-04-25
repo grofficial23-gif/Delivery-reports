@@ -65,7 +65,7 @@ def build_web_app(settings: Settings, repository: Repository) -> FastAPI:
     @app.get("/", response_class=HTMLResponse)
     async def dashboard(request: Request) -> HTMLResponse:
         context = _build_dashboard_context(request, repository, settings)
-        return templates.TemplateResponse(request=request, name="dashboard.html", context=context)
+        return templates.TemplateResponse(request=request, name="index.html", context=context)
 
     @app.post("/auth/telegram")
     async def auth_telegram(request: Request) -> JSONResponse:
