@@ -1,16 +1,17 @@
-"""Combined entry point for production deployment.
+"""Render-friendly production entry point.
 
-Runs both the Telegram bot (polling) and the web server (uvicorn)
-concurrently in a single process — ideal for Railway / Render / Fly.io.
+Runs a small Flask HTTP server on the Render-assigned port so the platform
+sees an active web service, while Telegram bot polling continues in parallel.
 """
 from __future__ import annotations
 
 import asyncio
+import os
 import sys
 import threading
 from pathlib import Path
 
-import uvicorn
+from flask import Flask
 
 ROOT_DIR = Path(__file__).resolve().parent
 SRC_DIR = ROOT_DIR / "src"
@@ -22,7 +23,28 @@ from delivery_reports.config import load_settings
 from delivery_reports.db import Database
 from delivery_reports.repository import Repository
 from delivery_reports.services.transcription import TranscriptionService
-from delivery_reports.web_app import build_web_app
+
+
+flask_app = Flask(__name__)
+
+
+@flask_app.get("/")
+def index():
+    return {
+        "ok": True,
+        "service": "delivery-reports-bot",
+        "status": "running",
+    }
+
+
+@flask_app.get("/health")
+def health():
+    return {"ok": True}
+
+
+def _run_http_server() -> None:
+    port = int(os.environ.get("PORT", "10000"))
+    flask_app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
 
 
 def main() -> None:
@@ -34,26 +56,10 @@ def main() -> None:
     )
     repository.ensure_default_report_templates()
 
-    # Build web app
-    web_app = build_web_app(settings=settings, repository=repository)
-
-    # Run uvicorn in a background thread
-    web_host = settings.web_host
-    web_port = settings.web_port
-
-    config = uvicorn.Config(
-        web_app,
-        host=web_host,
-        port=web_port,
-        log_level="info",
-    )
-    server = uvicorn.Server(config)
-
-    web_thread = threading.Thread(target=server.run, daemon=True)
+    web_thread = threading.Thread(target=_run_http_server, daemon=True)
     web_thread.start()
-    print(f"Web server started on http://{web_host}:{web_port}")
+    print(f"HTTP server started on port {os.environ.get('PORT', '10000')}")
 
-    # Build and run Telegram bot in main thread
     transcription = TranscriptionService(
         mode=settings.transcribe_mode,
         whisper_model=settings.whisper_model,
