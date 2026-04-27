@@ -250,15 +250,20 @@
     var titleEl = document.getElementById('demo-title');
     var descEl  = document.getElementById('demo-desc');
     var prevBtn = document.getElementById('demo-prev');
-    var nextBtn = document.getElementById('demo-next');
+    var nextLabel = document.getElementById('demo-next-label');
     if (icoEl)   icoEl.textContent  = s.ico;
     if (titleEl) titleEl.innerHTML  = s.title;
     if (descEl)  descEl.textContent = s.desc;
     document.querySelectorAll('.demo-pip').forEach(function (pip, i) {
       pip.classList.toggle('active', i === demoIdx);
     });
-    if (prevBtn) prevBtn.style.visibility = demoIdx === 0 ? 'hidden' : 'visible';
-    if (nextBtn) nextBtn.textContent = demoIdx === DEMO_STEPS.length - 1 ? 'Открыть бота →' : 'Далее →';
+    if (prevBtn) {
+      if (demoIdx === 0) prevBtn.classList.add('is-hidden');
+      else prevBtn.classList.remove('is-hidden');
+    }
+    if (nextLabel) {
+      nextLabel.textContent = (demoIdx === DEMO_STEPS.length - 1) ? 'Открыть бота' : 'Далее';
+    }
   }
 
   function demoOpen() {

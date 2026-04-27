@@ -267,7 +267,7 @@ async def successful_payment_callback(update: Update, context: ContextTypes.DEFA
     repository.log_event(user_id, "payment_success", payload)
     
     if is_team:
-        team_link = f"t.me/igest_bot?start=team_{user_id}"
+        team_link = f"t.me/{_settings(context).bot_username}?start=team_{user_id}"
         await update.message.reply_text(f"🎉 Вы приобрели TEAM! Ваша ссылка-инвайт для коллег: \n\n<code>{team_link}</code>\n\nОтправьте её своей команде.")
     else:
         await update.message.reply_text("🎉 Ура! Вы успешно приобрели PM Digest PRO на 30 дней. Откройте /app чтобы проверить!")
@@ -503,7 +503,15 @@ async def cmd_finalize(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     style = resolve_style_for_user(_repo(context), user.telegram_user_id)
     if not draft:
         draft = _build_and_store_today_draft_with_style(context, user, style=style)
-    finalize_daily_report(repository, target_date, draft, user.telegram_user_id, style=style, language="ru")
+    finalize_daily_report(
+        repository,
+        target_date,
+        draft,
+        user.telegram_user_id,
+        style=style,
+        language="ru",
+        bot_username=_settings(context).bot_username,
+    )
     await update.message.reply_text(
         f"<b>Финальный отчет за {target_date.strftime('%d.%m.%Y')} зафиксирован.</b>\n\n{draft}",
         reply_markup=_base_keyboard(),

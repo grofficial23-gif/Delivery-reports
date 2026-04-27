@@ -225,6 +225,60 @@
         <!-- Left: note form + recent notes -->
         <div class="v2-studio-main">
 
+          <div class="v2-panel v2-studio-intro">
+            <div class="v2-sec-row">
+              <div>
+                <div class="v2-sec-row-title">Report Studio</div>
+                <div class="v2-studio-subtitle">Шаблоны, черновик, отправка и PRO-действия</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="v2-panel v2-studio-panel">
+            <div class="v2-card-title">
+              <span class="v2-card-title-dot"></span>
+              Шаблон отчёта
+            </div>
+            <form method="post" action="/template" class="v2-template-form">
+              <select name="template_key" class="v2-select" aria-label="Выбор шаблона отчёта">
+                {% for t in templates %}
+                <option value="{{ t.template_key }}" {% if t.template_key == current_template_key %}selected{% endif %}>
+                  {{ t.title }} ({{ t.template_key }})
+                </option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="v2-btn primary">Применить шаблон</button>
+            </form>
+          </div>
+
+          <div class="v2-panel v2-studio-panel">
+            <div class="v2-card-title">
+              <span class="v2-card-title-dot"></span>
+              Черновик (Preview)
+            </div>
+            {% if draft_plain %}
+            <div class="v2-draft-preview">{{ draft_plain[:700] }}</div>
+            <div class="v2-draft-actions">
+              <form method="post" action="/draft/build" style="display:contents;">
+                <button type="submit" class="v2-btn ghost">Пересобрать</button>
+              </form>
+              <form method="post" action="/draft/send" style="display:contents;">
+                <button type="submit" class="v2-btn primary">Отправить себе</button>
+              </form>
+              <form method="post" action="/draft/finalize" style="display:contents;">
+                <button type="submit" class="v2-btn mint">Зафиксировать финал</button>
+              </form>
+            </div>
+            {% else %}
+            <div class="v2-draft-empty">Черновик ещё не собран</div>
+            <div class="v2-draft-actions">
+              <form method="post" action="/draft/build" style="display:contents;">
+                <button type="submit" class="v2-btn primary">Собрать черновик</button>
+              </form>
+            </div>
+            {% endif %}
+          </div>
+
           <!-- Add note -->
           <div class="v2-panel">
             <div class="v2-card-title">
@@ -233,7 +287,7 @@
             </div>
             <form method="post" action="/notes" class="v2-note-form">
               <textarea
-                name="update_text"
+                name="text"
                 placeholder="Что сделано, какие риски, следующий шаг…"
                 rows="3"
                 aria-label="Текст апдейта"
@@ -291,10 +345,8 @@
                 {% if card.candidates %}
                 <div class="v2-inbox-candidates">
                   {% for name in card.candidates %}
-                  <form method="post" action="/notes" style="display:contents;">
-                    <input type="hidden" name="update_text" value="{{ card.raw_text or '' }}" />
-                    <input type="hidden" name="project_name" value="{{ name }}" />
-                    <button type="submit" class="v2-inbox-candidate" title="Привязать к {{ name }}">{{ name }}</button>
+                  <form method="post" action="/inbox/{{ card.note.id }}/resolve" style="display:contents;">
+                    <button type="submit" name="project_name" value="{{ name }}" class="v2-inbox-candidate" title="Привязать к {{ name }}">{{ name }}</button>
                   </form>
                   {% endfor %}
                 </div>
@@ -309,6 +361,67 @@
 
         <!-- Right: recent updates, tasks, quick links -->
         <div class="v2-studio-aside">
+
+          <div class="v2-panel v2-studio-panel">
+            <div class="v2-card-title">
+              <span class="v2-card-title-dot"></span>
+              AI-действия
+            </div>
+            <div class="v2-disabled-grid v2-ai-actions">
+              {% if draft_plain %}
+              <form method="post" action="/draft/revise" style="display:contents;">
+                <input type="hidden" name="instruction" value="concise" />
+                <button type="submit" class="v2-btn ghost v2-ai-btn-premium">Сделать короче</button>
+              </form>
+              <form method="post" action="/draft/revise" style="display:contents;">
+                <input type="hidden" name="instruction" value="executive" />
+                <button type="submit" class="v2-btn ghost v2-ai-btn-premium">Executive style</button>
+              </form>
+              <form method="post" action="/draft/revise" style="display:contents;">
+                <input type="hidden" name="instruction" value="risk_focus" />
+                <button type="submit" class="v2-btn ghost v2-ai-btn-premium">Выделить риски</button>
+              </form>
+              {% else %}
+              <button type="button" class="v2-btn ghost v2-btn-disabled" disabled aria-disabled="true" title="Сначала соберите черновик">Сделать короче</button>
+              <button type="button" class="v2-btn ghost v2-btn-disabled" disabled aria-disabled="true" title="Сначала соберите черновик">Executive style</button>
+              <button type="button" class="v2-btn ghost v2-btn-disabled" disabled aria-disabled="true" title="Сначала соберите черновик">Выделить риски</button>
+              {% endif %}
+              <button type="button" class="v2-btn ghost v2-btn-disabled" disabled aria-disabled="true" title="Скоро: будет подключено через /draft/revise">Перевести на EN</button>
+              <button type="button" class="v2-btn ghost v2-btn-disabled" disabled aria-disabled="true" title="Скоро: будет подключено через /draft/revise">Проверить грамматику</button>
+            </div>
+            <div class="v2-disabled-note">
+              Эти действия используют /draft/revise. Остальные PRO-действия будут подключены позже.
+            </div>
+          </div>
+
+          <div class="v2-panel v2-studio-panel">
+            <div class="v2-card-title">
+              <span class="v2-card-title-dot"></span>
+              Экспорт
+            </div>
+            <div class="v2-disabled-grid v2-disabled-grid--small">
+              <button type="button" class="v2-btn ghost v2-btn-disabled" disabled aria-disabled="true" title="Экспорт появится в PRO после подключения export endpoint">PDF</button>
+              <button type="button" class="v2-btn ghost v2-btn-disabled" disabled aria-disabled="true" title="Экспорт появится в PRO после подключения export endpoint">Word</button>
+              <button type="button" class="v2-btn ghost v2-btn-disabled" disabled aria-disabled="true" title="Экспорт появится в PRO после подключения export endpoint">Excel</button>
+              <button type="button" class="v2-btn ghost v2-btn-disabled" disabled aria-disabled="true" title="Экспорт появится в PRO после подключения export endpoint">Canva</button>
+            </div>
+          </div>
+
+          <div class="v2-panel v2-studio-panel">
+            <div class="v2-card-title">
+              <span class="v2-card-title-dot"></span>
+              History / Versions
+            </div>
+            <div class="v2-disabled-cards">
+              <button type="button" class="v2-stub-card" disabled aria-disabled="true" title="Скоро: история и версии будут подключены отдельным endpoint.">
+                История отчётов
+              </button>
+              <button type="button" class="v2-stub-card" disabled aria-disabled="true" title="Скоро: история и версии будут подключены отдельным endpoint.">
+                Версии черновика
+              </button>
+            </div>
+            <div class="v2-disabled-note">Скоро: история и версии будут подключены отдельным endpoint.</div>
+          </div>
 
           <!-- Recent updates -->
           {% if recent_updates %}
@@ -395,7 +508,7 @@
             </div>
             <div class="v2-draft-preview">{{ final_plain[:300] if final_plain else (final_report | striptags)[:300] }}</div>
             <div class="v2-draft-actions" style="margin-top:12px;">
-              <form method="post" action="/draft/send" style="display:contents;">
+              <form method="post" action="/final/send" style="display:contents;">
                 <button type="submit" class="v2-btn mint">Отправить ещё раз</button>
               </form>
             </div>

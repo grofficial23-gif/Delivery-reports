@@ -42,9 +42,11 @@ def finalize_daily_report(
     target_date: date,
     content: str,
     author_user_id: int,
+    language: str,
     style: str,
+    bot_username: str = "igest_bot",
 ) -> None:
-    footer = "\n\n<i>Сгенерировано в @igest_bot — Твои отчеты за 1 минуту</i>"
+    footer = f"\n\n<i>Сгенерировано в @{bot_username} — Твои отчеты за 1 минуту</i>"
     if footer not in content:
         content += footer
 

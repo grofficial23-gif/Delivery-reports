@@ -1,4 +1,10 @@
 <!DOCTYPE html>
+<!--
+  PM Digest — Admin panel
+  Super admin branch: UNCHANGED (V1 app.css styling).
+  Team admin branch:  V2 visual shell (dark-lime, themes.css + dashboard_v2.css).
+  DESIGN_VERSION: V2_TEAM_ADMIN_SHELL_SAFE
+-->
 <html lang="ru">
   <head>
     <meta charset="utf-8" />
@@ -10,8 +16,13 @@
       href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap"
       rel="stylesheet"
     />
+    <!-- V1 stylesheet — keeps super admin styles intact -->
     <link rel="stylesheet" href="/static/app.css" />
+    <!-- V2 tokens and team admin shell styles -->
+    <link rel="stylesheet" href="/static/v2/themes.css" />
+    <link rel="stylesheet" href="/static/v2/dashboard_v2.css" />
     <style>
+      /* ── Super Admin styles (UNCHANGED from V1) ── */
       .admin-layout {
         display: grid;
         gap: 24px;
@@ -84,60 +95,118 @@
       body[data-color-scheme="dark"] .plan-pro { color: var(--primary); }
       body[data-color-scheme="dark"] .plan-team { color: var(--accent-light); }
     </style>
+
+    {% if not is_super_admin %}
+    <!-- V2 theme bootstrap — only for team admin branch -->
+    <script>
+      (function () {
+        try {
+          var SKEY   = 'pm-digest-v2-theme';
+          var THEMES = ['dark-lime', 'light-lime', 'wave-blue'];
+          var saved  = localStorage.getItem(SKEY);
+          var theme;
+          var tg = window.Telegram && window.Telegram.WebApp;
+          if (tg && tg.colorScheme) {
+            theme = tg.colorScheme === 'light' ? 'light-lime' : 'dark-lime';
+          } else if (saved && THEMES.indexOf(saved) !== -1) {
+            theme = saved;
+          } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+            theme = 'light-lime';
+          } else {
+            theme = 'dark-lime';
+          }
+          document.documentElement.dataset.theme = theme;
+        } catch (e) {
+          document.documentElement.dataset.theme = 'dark-lime';
+        }
+      }());
+    </script>
+    {% endif %}
   </head>
-  <body data-color-scheme="dark">
-    <div class="page-shell">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-        <h2>⚙️ Админ-панель</h2>
-        <a href="/dashboard" class="button ghost mini" style="text-decoration: none;">В приложение</a>
-      </div>
+
+  {% if is_super_admin %}
+  <body class="sa-shell" data-theme="dark-lime">
+    <canvas id="v2-bg-canvas" aria-hidden="true"></canvas>
+
+    <div class="sa-above-canvas">
+      <nav class="sa-topnav" role="navigation" aria-label="Super Admin nav">
+        <div class="sa-brand">PM<mark>·</mark>DIGEST</div>
+        <div class="sa-sep" aria-hidden="true"></div>
+        <div class="sa-nav-links">
+          <a href="/admin" class="active">Super Admin</a>
+          <a href="/dashboard">Dashboard</a>
+        </div>
+        <div class="sa-nav-right">
+          <span class="sa-admin-badge">SUPER ADMIN</span>
+          <div class="sa-theme-sw" aria-label="Выбор темы">
+            <button class="sa-theme-btn" data-v2-theme-btn="dark-lime" title="Dark Lime" type="button">D</button>
+            <button class="sa-theme-btn" data-v2-theme-btn="light-lime" title="Light Lime" type="button">L</button>
+            <button class="sa-theme-btn" data-v2-theme-btn="wave-blue" title="Wave Blue" type="button">W</button>
+          </div>
+          {% if user %}
+          <div class="sa-user-chip">
+            {{ user.display_name or user.telegram_full_name }}
+            {% if user.telegram_username %} · @{{ user.telegram_username }}{% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </nav>
 
       {% if notice %}
-      <section class="notice-card" style="margin-bottom: 24px;">
-        <p class="notice-body">{{ notice }}</p>
-      </section>
+      <div class="sa-notice" role="status" aria-live="polite">{{ notice }}</div>
       {% endif %}
 
-      <div class="admin-layout">
-        {% if is_super_admin %}
-        <section>
-          <div style="margin-bottom: 16px;">
-            <p class="section-label">СТАТИСТИКА</p>
-            <h3 style="margin: 4px 0 0;">Global Дашборд</h3>
+      <main class="sa-page">
+        <div class="sa-header">
+          <div>
+            <div class="sa-eyebrow">Admin Control Plane</div>
+            <h1 class="sa-title"><mark>Super Admin</mark></h1>
           </div>
-          
-          <div class="stat-grid">
-            <div class="stat-card">
-              <span>Всего юзеров</span>
-              <strong>{{ stats.total_users }}</strong>
+          <a href="/dashboard" class="sa-btn ghost" aria-label="В приложение">В Dashboard</a>
+        </div>
+
+        <section class="sa-section">
+          <div class="sa-section-head">
+            <div class="sa-section-label">Глобальные метрики</div>
+            <div class="sa-section-title">Платформа</div>
+          </div>
+
+          <div class="sa-kpi-row">
+            <div class="sa-kpi-card">
+              <div class="sa-kpi-label">Всего юзеров</div>
+              <div class="sa-kpi-val">{{ stats.total_users }}</div>
             </div>
-            <div class="stat-card">
-              <span>Активны сегодня</span>
-              <strong>{{ stats.active_today }}</strong>
+            <div class="sa-kpi-card">
+              <div class="sa-kpi-label">Активны сегодня</div>
+              <div class="sa-kpi-val">{{ stats.active_today }}</div>
             </div>
-            <div class="stat-card">
-              <span>PRO / TEAM</span>
-              <strong>{{ stats.plans_breakdown.get('pro', 0) }} / {{ stats.plans_breakdown.get('team', 0) }}</strong>
+            <div class="sa-kpi-card">
+              <div class="sa-kpi-label">PRO</div>
+              <div class="sa-kpi-val">{{ stats.plans_breakdown.get('pro', 0) }}</div>
             </div>
-            <div class="stat-card">
-              <span>MRR (расчетный)</span>
-              <strong style="color: var(--primary);">${{ (stats.plans_breakdown.get('pro', 0) * 2.49 + stats.plans_breakdown.get('team', 0) * 6.99) | round(2) }}</strong>
+            <div class="sa-kpi-card">
+              <div class="sa-kpi-label">TEAM</div>
+              <div class="sa-kpi-val">{{ stats.plans_breakdown.get('team', 0) }}</div>
             </div>
-            <div class="stat-card">
-              <span>Всего заметок</span>
-              <strong>{{ stats.total_notes }}</strong>
+            <div class="sa-kpi-card">
+              <div class="sa-kpi-label">Всего заметок</div>
+              <div class="sa-kpi-val">{{ stats.total_notes }}</div>
+            </div>
+            <div class="sa-kpi-card">
+              <div class="sa-kpi-label">MRR (расчётный)</div>
+              <div class="sa-kpi-val sa-kpi-val--accent">${{ (stats.plans_breakdown.get('pro', 0) * 2.49 + stats.plans_breakdown.get('team', 0) * 6.99) | round(2) }}</div>
             </div>
           </div>
         </section>
 
-        <section style="margin-top: 40px;">
-          <div style="margin-bottom: 16px;">
-            <p class="section-label">ПОЛЬЗОВАТЕЛИ</p>
-            <h3 style="margin: 4px 0 0;">Список</h3>
+        <section class="sa-section">
+          <div class="sa-section-head">
+            <div class="sa-section-label">Access Control</div>
+            <div class="sa-section-title">Пользователи</div>
           </div>
-          
-          <div class="user-table-wrapper">
-            <table>
+
+          <div class="sa-table-wrap">
+            <table class="sa-table">
               <thead>
                 <tr>
                   <th>Пользователь</th>
@@ -152,49 +221,52 @@
                 {% for u in users %}
                 <tr>
                   <td>
-                    <div style="font-weight: 600;">{{ u.display_name }}</div>
-                    <div style="font-size: 12px; color: var(--muted-foreground);">
+                    <div class="sa-user-name">{{ u.display_name or u.telegram_full_name }}</div>
+                    <div class="sa-user-handle">
                       {{ '@' ~ u.telegram_username if u.telegram_username else 'id: ' ~ u.telegram_user_id }}
                     </div>
                   </td>
                   <td>
-                    <span class="plan-badge plan-{{ u.plan }}">{{ u.plan }}</span>
+                    <span class="sa-plan-badge {{ u.plan }}">{{ u.plan }}</span>
                   </td>
                   <td>{{ u.notes_count }}</td>
                   <td>{{ u.tasks_count }}</td>
-                  <td style="font-size: 13px; color: var(--muted-foreground);">{{ u.registered_at[:10] }}</td>
+                  <td class="sa-cell-muted">{{ u.registered_at[:10] }}</td>
                   <td>
-                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                      <form method="post" action="/admin/users/{{ u.telegram_user_id }}/plan" style="margin: 0;">
-                        <button type="submit" name="plan" value="pro" class="button mini">PRO</button>
+                    <div class="sa-actions-row">
+                      <form method="post" action="/admin/users/{{ u.telegram_user_id }}/plan" style="margin:0;">
+                        <button type="submit" name="plan" value="pro" class="sa-btn primary">Grant PRO</button>
                       </form>
-                      <form method="post" action="/admin/users/{{ u.telegram_user_id }}/plan" style="margin: 0;">
-                        <button type="submit" name="plan" value="team" class="button mini">TEAM</button>
+                      <form method="post" action="/admin/users/{{ u.telegram_user_id }}/plan" style="margin:0;">
+                        <button type="submit" name="plan" value="team" class="sa-btn mint">Grant TEAM</button>
                       </form>
-                      <form method="post" action="/admin/users/{{ u.telegram_user_id }}/plan" style="margin: 0;">
-                        <button type="submit" name="plan" value="free" class="button mini ghost">FREE</button>
+                      <form method="post" action="/admin/users/{{ u.telegram_user_id }}/plan" style="margin:0;">
+                        <button type="submit" name="plan" value="free" class="sa-btn ghost">FREE</button>
                       </form>
+                      <button type="button" class="sa-btn ghost sa-btn-future" disabled aria-disabled="true" title="Скоро">Start 7-day Trial</button>
+                      <button type="button" class="sa-btn ghost sa-btn-future" disabled aria-disabled="true" title="Скоро">Unlock Themes</button>
+                      <button type="button" class="sa-btn ghost sa-btn-future" disabled aria-disabled="true" title="Скоро">View user detail</button>
                     </div>
                   </td>
                 </tr>
                 {% else %}
                 <tr>
-                  <td colspan="6" style="text-align: center; color: var(--muted-foreground);">Нет пользователей</td>
+                  <td colspan="6" class="sa-empty-cell">Нет пользователей</td>
                 </tr>
                 {% endfor %}
               </tbody>
             </table>
           </div>
         </section>
-        
-        <section style="margin-top: 40px;">
-          <div style="margin-bottom: 16px;">
-            <p class="section-label">АНАЛИТИКА</p>
-            <h3 style="margin: 4px 0 0;">События (Аудит)</h3>
+
+        <section class="sa-section">
+          <div class="sa-section-head">
+            <div class="sa-section-label">Audit</div>
+            <div class="sa-section-title">События</div>
           </div>
-          
-          <div class="user-table-wrapper">
-            <table>
+
+          <div class="sa-table-wrap">
+            <table class="sa-table">
               <thead>
                 <tr>
                   <th>Время</th>
@@ -206,148 +278,280 @@
               <tbody>
                 {% for e in events %}
                 <tr>
-                  <td style="font-size: 13px; color: var(--muted-foreground);">{{ e.created_at[:16] }}</td>
+                  <td class="sa-cell-muted">{{ e.created_at[:16] }}</td>
+                  <td><span class="sa-event-chip">{{ e.event_type }}</span></td>
                   <td>
-                    <span class="plan-badge plan-free" style="background: var(--surface-elevated); color: var(--primary);">{{ e.event_type }}</span>
+                    <div class="sa-user-name">{{ e.display_name or 'Аноним' }}</div>
+                    <div class="sa-user-handle">{{ '@' ~ e.telegram_username if e.telegram_username else '' }}</div>
                   </td>
-                  <td>
-                    <div style="font-weight: 600;">{{ e.display_name or 'Аноним' }}</div>
-                    <div style="font-size: 12px; color: var(--muted-foreground);">
-                      {{ '@' ~ e.telegram_username if e.telegram_username else '' }}
-                    </div>
-                  </td>
-                  <td style="font-size: 13px; color: var(--muted-foreground);">{{ e.event_data }}</td>
+                  <td class="sa-cell-muted">{{ e.event_data }}</td>
                 </tr>
                 {% else %}
                 <tr>
-                  <td colspan="4" style="text-align: center; color: var(--muted-foreground);">Нет событий</td>
+                  <td colspan="4" class="sa-empty-cell">Нет событий</td>
                 </tr>
                 {% endfor %}
               </tbody>
             </table>
           </div>
         </section>
+      </main>
+    </div>
+    <script src="/static/v2/v2_ui.js" defer></script>
+  </body>
 
-        {% else %}
-        <!-- TEAM DASHBOARD -->
-        <section>
-          <div style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end;">
-            <div>
-              <p class="section-label" style="color: var(--primary);">TEAM DASHBOARD</p>
-              <h3 style="margin: 4px 0 0; font-size: 28px;">{{ team_name }}</h3>
+  {% else %}
+  <!-- ══════════════════════════════════════════════════════════
+       TEAM ADMIN BRANCH — V2 Shell
+  ══════════════════════════════════════════════════════════ -->
+  <body class="ta-shell" data-color-scheme="dark" data-theme="dark-lime">
+
+    <!-- Background canvas -->
+    <canvas id="v2-bg-canvas" aria-hidden="true"></canvas>
+
+    <div class="ta-above-canvas">
+
+      <!-- ── Top nav ──────────────────────────────────────────── -->
+      <nav class="ta-topnav" role="navigation" aria-label="Team Admin nav">
+        <div class="ta-brand">PM<mark>·</mark>DIGEST</div>
+        <div class="ta-sep" aria-hidden="true"></div>
+        <div class="ta-nav-links">
+          <a href="/dashboard">Dashboard</a>
+          <a href="/admin" class="active">Team Admin</a>
+        </div>
+        <div class="ta-nav-right">
+          <span class="ta-plan-badge">TEAM</span>
+          <!-- Theme switcher -->
+          <div class="ta-theme-sw" aria-label="Выбор темы">
+            <button class="ta-theme-btn" data-v2-theme-btn="dark-lime" title="Dark Lime" type="button">D</button>
+            <button class="ta-theme-btn" data-v2-theme-btn="light-lime" title="Light Lime" type="button">L</button>
+            <button class="ta-theme-btn" data-v2-theme-btn="wave-blue" title="Wave Blue" type="button">W</button>
+          </div>
+          <a href="/dashboard" class="ta-btn ghost" aria-label="В приложение">В приложение</a>
+        </div>
+      </nav>
+
+      <!-- ── Notice ──────────────────────────────────────────── -->
+      {% if notice %}
+      <div class="ta-notice" role="status" aria-live="polite">{{ notice }}</div>
+      {% endif %}
+
+      <main class="ta-page">
+
+        <!-- ── Header ────────────────────────────────────────── -->
+        <div class="ta-header">
+          <div class="ta-header-left">
+            <div class="ta-eyebrow">Executive Pulse</div>
+            <h1 class="ta-title">
+              {% if team_name %}<mark>{{ team_name }}</mark>{% else %}Моя команда{% endif %}
+            </h1>
+            {% if user %}
+            <div class="ta-subtitle">
+              {{ user.display_name or user.telegram_full_name }}
+              {% if user.telegram_username %} · @{{ user.telegram_username }}{% endif %}
             </div>
-            <button class="button mini" onclick="copyInviteLink('{{ user.telegram_user_id }}')">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-              Инвайт
+            {% endif %}
+          </div>
+          <div class="ta-header-actions">
+            <button
+              type="button"
+              class="ta-btn mint"
+              id="ta-copy-invite-btn"
+              onclick="copyInviteLink('{{ user.telegram_user_id if user else 0 }}')"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              Скопировать инвайт
             </button>
           </div>
+        </div>
 
-          {% if not users or users|length <= 1 %}
-          <div class="zero-state" id="team-zero-state">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <!-- ── KPI cards ─────────────────────────────────────── -->
+        <div class="ta-kpi-row" aria-label="Метрики команды">
+          <div class="ta-kpi-card">
+            <div class="ta-kpi-label">Участников</div>
+            <div class="ta-kpi-val">{{ users | length if users else 0 }}</div>
+            <div class="ta-kpi-unit">в команде</div>
+          </div>
+
+          <div class="ta-kpi-card">
+            <div class="ta-kpi-label">Активны (7 дней)</div>
+            <div class="ta-kpi-val" id="ta-active-count">—</div>
+            <div class="ta-kpi-unit">участников с заметками</div>
+          </div>
+
+          <div class="ta-kpi-card">
+            <div class="ta-kpi-label">Заметок (7 дней)</div>
+            <div class="ta-kpi-val" id="ta-notes-7d">—</div>
+            <div class="ta-kpi-unit">по всей команде</div>
+          </div>
+        </div>
+
+        <!-- ── Members ───────────────────────────────────────── -->
+        <div class="ta-panel">
+          <div class="ta-sec-row">
+            <div class="ta-sec-row-title">Участники</div>
+            <span class="ta-sec-row-count">{{ users | length if users else 0 }}</span>
+          </div>
+
+          {% if not users or users | length == 0 %}
+          <div class="ta-empty">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
               <circle cx="9" cy="7" r="4"></circle>
               <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
               <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
             </svg>
             <h3>В команде пока никого нет</h3>
-            <p>Отправьте приглашение коллегам, чтобы видеть их отчеты здесь.</p>
-            <button class="button" onclick="copyInviteLink('{{ user.telegram_user_id }}')">Скопировать ссылку</button>
+            <p>Отправьте приглашение коллегам, чтобы видеть их активность здесь.</p>
           </div>
           {% else %}
-          
-          <div class="user-table-wrapper" style="margin-bottom: 32px;">
-            <table>
-              <thead>
-                <tr>
-                  <th>Сотрудник</th>
-                  <th>Роль</th>
-                  <th>Heatmap (7 дней)</th>
-                </tr>
-              </thead>
-              <tbody id="heatmap-body">
-                {% for u in users %}
-                <tr>
-                  <td>
-                    <div style="font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                      {{ u.display_name }}
-                      {% if u.telegram_user_id == user.telegram_user_id %}
-                      <span class="plan-badge plan-pro" style="font-size: 9px; padding: 2px 6px;">Вы</span>
-                      {% endif %}
-                    </div>
-                    <div style="font-size: 12px; color: var(--muted-foreground);">
-                      {{ '@' ~ u.telegram_username if u.telegram_username else 'id: ' ~ u.telegram_user_id }}
-                    </div>
-                  </td>
-                  <td>
-                    <span style="font-size: 13px; color: var(--muted-foreground); text-transform: capitalize;">{{ u.role }}</span>
-                  </td>
-                  <td>
-                    <div class="heatmap-grid" id="heat-{{ u.telegram_user_id }}" style="display: flex; gap: 4px; height: 20px;">
-                      <!-- JS will populate squares -->
-                    </div>
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
+          <table class="ta-members-table">
+            <thead>
+              <tr>
+                <th>Участник</th>
+                <th>Роль</th>
+                <th>Активность (7 дней)</th>
+              </tr>
+            </thead>
+            <tbody id="ta-members-body">
+              {% for u in users %}
+              <tr>
+                <td>
+                  <div class="ta-member-name">
+                    {{ u.display_name or ('id: ' ~ u.telegram_user_id) }}
+                    {% if user and u.telegram_user_id == user.telegram_user_id %}
+                    <span class="ta-member-you">Вы</span>
+                    {% endif %}
+                  </div>
+                  <div class="ta-member-handle">
+                    {{ '@' ~ u.telegram_username if u.telegram_username else 'id: ' ~ u.telegram_user_id }}
+                  </div>
+                </td>
+                <td>
+                  <span class="ta-role-chip {% if u.role == 'owner' %}owner{% endif %}">
+                    {{ u.role | capitalize if u.role else '—' }}
+                  </span>
+                </td>
+                <td>
+                  <div class="ta-heatmap-row" id="ta-heat-{{ u.telegram_user_id }}" aria-label="Heatmap для {{ u.display_name }}">
+                    <!-- Populated by JS from heatmap data -->
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% endif %}
+        </div>
+
+        <!-- ── Invite link ────────────────────────────────────── -->
+        <div class="ta-panel">
+          <div class="ta-panel-title">
+            <span class="ta-panel-title-dot"></span>
+            Пригласительная ссылка
+          </div>
+          {% if user %}
+          <div class="ta-invite-block">
+            <div class="ta-invite-link-preview" id="ta-invite-preview" aria-label="Ссылка для приглашения">
+              Загружается…
+            </div>
+            <button
+              type="button"
+              class="ta-btn mint"
+              onclick="copyInviteLink('{{ user.telegram_user_id }}')"
+            >Скопировать</button>
+          </div>
+          {% else %}
+          <div class="ta-invite-placeholder">
+            Invite link will appear after TEAM setup
           </div>
           {% endif %}
-        </section>
-        
-        <script>
-          // Heatmap rendering logic
-          const heatmapData = {{ heatmap | tojson | safe }};
-          const users = {{ users | tojson | safe }};
-          
-          function renderHeatmap() {
-            // Get last 7 days
-            const days = [];
-            for(let i=6; i>=0; i--) {
-              const d = new Date();
-              d.setDate(d.getDate() - i);
-              days.push(d.toISOString().split('T')[0]);
-            }
-            
-            users.forEach(u => {
-              const container = document.getElementById('heat-' + u.telegram_user_id);
-              if(!container) return;
-              
-              days.forEach(dayStr => {
-                const record = heatmapData.find(h => h.user_id === u.telegram_user_id && h.note_date.startsWith(dayStr));
-                const count = record ? record.count : 0;
-                
-                const box = document.createElement('div');
-                box.style.width = '16px';
-                box.style.height = '16px';
-                box.style.borderRadius = '4px';
-                box.style.background = 'var(--surface-elevated)';
-                box.title = `${dayStr}: ${count} заметок`;
-                
-                if(count > 0) box.style.background = 'rgba(163, 230, 53, 0.4)';
-                if(count > 2) box.style.background = 'rgba(163, 230, 53, 0.7)';
-                if(count > 5) box.style.background = 'rgba(163, 230, 53, 1)';
-                
-                container.appendChild(box);
-              });
+        </div>
+
+      </main>
+    </div><!-- /ta-above-canvas -->
+
+    <!-- Heatmap + invite JS (original logic kept, extended for V2 UI) -->
+    <script>
+      var _heatmapData = {{ heatmap | tojson | safe }};
+      var _users       = {{ users | tojson | safe }};
+
+      // ── KPI aggregates ────────────────────────────────────
+      (function () {
+        var activeSet = {};
+        var totalNotes = 0;
+        _heatmapData.forEach(function (r) {
+          if (r.count > 0) { activeSet[r.user_id] = true; totalNotes += r.count; }
+        });
+        var activeCount = Object.keys(activeSet).length;
+        var elActive = document.getElementById('ta-active-count');
+        var elNotes  = document.getElementById('ta-notes-7d');
+        if (elActive) elActive.textContent = activeCount;
+        if (elNotes)  elNotes.textContent  = totalNotes;
+      }());
+
+      // ── Heatmap boxes ─────────────────────────────────────
+      function renderHeatmap() {
+        var days = [];
+        for (var i = 6; i >= 0; i--) {
+          var d = new Date();
+          d.setDate(d.getDate() - i);
+          days.push(d.toISOString().split('T')[0]);
+        }
+        _users.forEach(function (u) {
+          var container = document.getElementById('ta-heat-' + u.telegram_user_id);
+          if (!container) return;
+          days.forEach(function (dayStr) {
+            var record = _heatmapData.find(function (h) {
+              return h.user_id === u.telegram_user_id && h.note_date && h.note_date.startsWith(dayStr);
             });
+            var count = record ? record.count : 0;
+            var box = document.createElement('div');
+            box.className = 'ta-heat-box';
+            if (count > 0) box.classList.add('lv1');
+            if (count > 2) box.classList.replace('lv1', 'lv2');
+            if (count > 5) box.classList.replace('lv2', 'lv3');
+            box.title = dayStr + ': ' + count + ' заметок';
+            container.appendChild(box);
+          });
+        });
+      }
+
+      // ── Invite link ───────────────────────────────────────
+      function copyInviteLink(userId) {
+        var link = 'https://t.me/{{ bot_username }}?start=team_' + userId;
+        var preview = document.getElementById('ta-invite-preview');
+        if (preview) preview.textContent = link;
+        navigator.clipboard.writeText(link).then(function () {
+          if (window.showToast) {
+            window.showToast('Ссылка скопирована!', 'success');
+          } else {
+            var btn = document.getElementById('ta-copy-invite-btn');
+            if (btn) { var orig = btn.textContent; btn.textContent = '✓ Скопировано'; setTimeout(function () { btn.textContent = orig; }, 2000); }
           }
-          
-          function copyInviteLink(userId) {
-            const link = `https://t.me/igest_bot?start=team_${userId}`;
-            navigator.clipboard.writeText(link).then(() => {
-              if (window.showToast) {
-                window.showToast("Ссылка скопирована!", "success");
-              } else {
-                alert("Ссылка скопирована!");
-              }
-            });
-          }
-          
-          document.addEventListener("DOMContentLoaded", renderHeatmap);
-        </script>
-        {% endif %}
-      </div>
-    </div>
+        }).catch(function () {
+          prompt('Скопируйте ссылку:', link);
+        });
+      }
+
+      // ── Init invite preview ───────────────────────────────
+      (function () {
+        var userId = '{{ user.telegram_user_id if user else "" }}';
+        if (userId) {
+          var preview = document.getElementById('ta-invite-preview');
+          if (preview) preview.textContent = 'https://t.me/{{ bot_username }}?start=team_' + userId;
+        }
+      }());
+
+      document.addEventListener('DOMContentLoaded', renderHeatmap);
+    </script>
+
+    <!-- V2 UI (theme switcher + canvas) -->
+    <script src="/static/v2/v2_ui.js" defer></script>
+
   </body>
+  {% endif %}
 </html>

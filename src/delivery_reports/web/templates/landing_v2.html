@@ -69,11 +69,13 @@
       </div>
 
       <div class="s1-nav-right">
-        <!-- Theme switcher: D = dark-lime, L = light-lime, W = wave-blue -->
-        <div class="s1-theme-sw" aria-label="Выбор темы">
-          <button class="s1-theme-btn" data-v2-theme-btn="dark-lime" title="Dark Lime">D</button>
-          <button class="s1-theme-btn" data-v2-theme-btn="light-lime" title="Light Lime">L</button>
-          <button class="s1-theme-btn" data-v2-theme-btn="wave-blue" title="Wave Blue">W</button>
+        <!-- FREE themes: D/L only. Wave blue is PRO (see hint). -->
+        <div class="s1-theme-row">
+          <div class="s1-theme-sw" aria-label="Бесплатные темы: тёмная и светлая">
+            <button class="s1-theme-btn" type="button" data-v2-theme-btn="dark-lime" title="Dark Lime — FREE">D</button>
+            <button class="s1-theme-btn" type="button" data-v2-theme-btn="light-lime" title="Light Lime — FREE">L</button>
+          </div>
+          <span class="s1-theme-pro-hint">Premium themes в PRO</span>
         </div>
         {% if bot_url %}
         <a
@@ -83,10 +85,10 @@
           class="s1-open-btn"
           aria-label="Открыть бота @{{ bot_username }} в Telegram"
         >
-          Открыть бота →
+          Открыть бота <span class="s1-btn-arrow" aria-hidden="true">→</span>
         </a>
         {% else %}
-        <span class="s1-open-btn" style="opacity:.5;cursor:default;" aria-hidden="true">Открыть бота →</span>
+        <span class="s1-open-btn" style="opacity:.5;cursor:default;" aria-hidden="true">Открыть бота <span class="s1-btn-arrow">→</span></span>
         {% endif %}
       </div>
     </nav>
@@ -120,12 +122,15 @@
               <span class="s1-hero-cta-line">Открыть в Telegram</span>
               <span class="s1-hero-cta-sub">@{{ bot_username }}</span>
             </span>
+            <span class="s1-btn-arrow s1-hero-cta-fwd" aria-hidden="true">→</span>
           </a>
           {% endif %}
-          <button class="s1-btn-ghost" id="demo-btn" type="button">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <button class="s1-btn-ghost s1-btn-demo" id="demo-btn" type="button">
+            <span class="s1-demo-play-ico" aria-hidden="true">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polygon points="5 3 19 12 5 21 5 3"/>
             </svg>
+            </span>
             Смотреть демо
           </button>
         </div>
@@ -475,9 +480,18 @@
       <p class="demo-step-desc" id="demo-desc">
         Пишите текстовую заметку прямо в Telegram или отправьте голосовое — бот распознает и запомнит всё.
       </p>
-      <div class="demo-nav-row">
-        <button class="demo-nav-btn" id="demo-prev" type="button" style="visibility:hidden;">← Назад</button>
-        <button class="demo-nav-btn pri" id="demo-next" type="button">Далее →</button>
+      <div class="demo-nav-row" id="demo-nav-row">
+        <div class="demo-nav-l">
+          <button class="demo-nav-btn demo-nav-btn--back is-hidden" id="demo-prev" type="button" aria-label="Назад">
+            <span class="demo-back-arrow" aria-hidden="true">←</span><span> Назад</span>
+          </button>
+        </div>
+        <div class="demo-nav-c">
+          <button class="demo-nav-btn pri" id="demo-next" type="button">
+            <span id="demo-next-label">Далее</span><span class="s1-btn-arrow demo-fwd-arrow" id="demo-next-arrow" aria-hidden="true">→</span>
+          </button>
+        </div>
+        <div class="demo-nav-r" aria-hidden="true"></div>
       </div>
     </div>
   </div>

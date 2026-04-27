@@ -25,6 +25,7 @@ from .services.note_capture import (
     render_saved_notes_message,
     store_notes as capture_notes,
 )
+from .services.draft_revision import parse_revision_instruction
 from .services.parsing import parse_note_text
 from .services.project_resolution import (
     fallback_project_ids,
@@ -154,7 +155,9 @@ def build_web_app(settings: Settings, repository: Repository) -> FastAPI:
             "heatmap": heatmap,
             "team_name": team_name,
             "is_super_admin": is_admin,
-            "user": user
+            "user": user,
+            "bot_username": settings.bot_username,
+            "bot_url": f"https://t.me/{settings.bot_username}",
         })
 
     @app.post("/admin/users/{target_user_id}/plan")
@@ -285,6 +288,38 @@ def build_web_app(settings: Settings, repository: Repository) -> FastAPI:
         )
         return _redirect_with_notice("Черновик собран.")
 
+    @app.post("/draft/revise")
+    async def revise_draft(request: Request) -> RedirectResponse:
+        user = _authenticated_user(request, repository, settings)
+        if user is None:
+            return _redirect_with_notice("Откройте приложение из Telegram.")
+
+        payload = await _parse_payload(request)
+        instruction = payload.get("instruction", "").strip().lower()
+        instruction_map = {
+            "concise": "сделать короче",
+            "executive": "командный",
+            "risk_focus": "акцент на риск",
+        }
+        mapped_instruction = instruction_map.get(instruction, "")
+        revision = parse_revision_instruction(mapped_instruction)
+        if revision is None:
+            return _redirect_with_notice("Неизвестная команда правки")
+
+        target_date = _today(settings)
+        draft = repository.get_latest_draft_for_date(target_date, owner_user_id=user.telegram_user_id)
+        if not draft:
+            return _redirect_with_notice("Сначала соберите черновик")
+
+        build_and_store_daily_draft(
+            repository,
+            settings,
+            target_date,
+            user_id=user.telegram_user_id,
+            style=revision.style,
+        )
+        return _redirect_with_notice("Черновик обновлён")
+
     @app.post("/draft/finalize")
     async def finalize_draft(request: Request) -> RedirectResponse:
         user = _authenticated_user(request, repository, settings)
@@ -301,7 +336,15 @@ def build_web_app(settings: Settings, repository: Repository) -> FastAPI:
                 user_id=user.telegram_user_id,
                 style=style,
             )
-        finalize_daily_report(repository, target_date, draft, user.telegram_user_id, style=style, language="ru")
+        finalize_daily_report(
+            repository,
+            target_date,
+            draft,
+            user.telegram_user_id,
+            style=style,
+            language="ru",
+            bot_username=settings.bot_username,
+        )
         return _redirect_with_notice("Финальный отчет зафиксирован.")
 
     @app.post("/draft/send")
@@ -400,6 +443,8 @@ def _build_dashboard_context(request: Request, repository: Repository, settings:
         "today": target_date.strftime("%d.%m.%Y"),
         "notice": request.query_params.get("notice", ""),
         "public_web_app_url": settings.public_web_app_url,
+        "bot_username": settings.bot_username,
+        "bot_url": f"https://t.me/{settings.bot_username}",
         "status_label": task_status_label,
     }
     if user is None:
