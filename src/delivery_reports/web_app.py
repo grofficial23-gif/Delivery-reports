@@ -472,8 +472,14 @@ def _build_dashboard_context(request: Request, repository: Repository, settings:
                 "draft_chunks": 0,
                 "final_chunks": 0,
             },
+            "next_action": {
+                "kind": "auth",
+                "title": "Откройте Mini App из Telegram",
+                "description": "Авторизуйтесь через Telegram, чтобы увидеть дашборд.",
+                "primary_label": "",
+                "target": "",
+            },
             "notes": [],
-            "recent_updates": [],
             "inbox_cards": [],
             "tasks": [],
             "projects": [],
@@ -598,6 +604,60 @@ def _build_dashboard_context(request: Request, repository: Repository, settings:
         if owns:
             is_team_owner = True
 
+    # Determine the single most important next action for the user.
+    if summary["notes_count"] == 0:
+        next_action = {
+            "kind": "add_note",
+            "title": "Добавьте первую заметку",
+            "description": (
+                "Отправьте текст или голосовое сообщение боту — "
+                "или напишите заметку прямо здесь."
+            ),
+            "primary_label": "Добавить заметку",
+            "target": "#add-note",
+        }
+    elif summary["inbox_count"] > 0 and not draft_plain:
+        next_action = {
+            "kind": "triage_inbox",
+            "title": f"Разберите {summary['inbox_count']} заметок без проекта",
+            "description": "Без проекта заметки не попадут в нужный блок отчёта.",
+            "primary_label": "Разобрать",
+            "target": "#inbox",
+            "count": summary["inbox_count"],
+        }
+    elif summary["notes_count"] > 0 and not draft_plain:
+        next_action = {
+            "kind": "build_draft",
+            "title": "Соберите черновик",
+            "description": f"Есть {summary['notes_count']} заметок — соберите черновик отчёта.",
+            "primary_label": "Собрать черновик",
+            "target": "#draft",
+        }
+    elif draft_plain and not final_report:
+        next_action = {
+            "kind": "review_draft",
+            "title": "Проверьте и отправьте черновик",
+            "description": "Черновик готов. Отправьте себе в Telegram для проверки.",
+            "primary_label": "Отправить себе в Telegram",
+            "target": "#draft",
+        }
+    elif final_report:
+        next_action = {
+            "kind": "done_today",
+            "title": "Готово на сегодня",
+            "description": "Финальный отчёт зафиксирован. Можно отправить ещё раз.",
+            "primary_label": "Отправить финал ещё раз",
+            "target": "#draft",
+        }
+    else:
+        next_action = {
+            "kind": "build_draft",
+            "title": "Соберите черновик",
+            "description": "Нажмите, чтобы собрать черновик из заметок.",
+            "primary_label": "Собрать черновик",
+            "target": "#draft",
+        }
+
     return {
         **base_context,
         "auth_required": False,
@@ -607,8 +667,8 @@ def _build_dashboard_context(request: Request, repository: Repository, settings:
         "user_plan": user_plan,
         "days_left": days_left,
         "summary": summary,
+        "next_action": next_action,
         "notes": note_cards,
-        "recent_updates": note_cards[:6],
         "inbox_cards": inbox_cards,
         "tasks": tasks,
         "projects": projects,
