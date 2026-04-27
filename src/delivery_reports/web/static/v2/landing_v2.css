@@ -61,9 +61,10 @@ html { scroll-behavior: smooth; }
 }
 .s1-brand {
   font-size: 20px; font-weight: 900; letter-spacing: -0.055em; flex-shrink: 0;
-  color: var(--text);
+  color: var(--text); text-decoration: none;
 }
 .s1-brand mark { background: none; color: var(--primary); }
+.s1-brand:hover { opacity: 0.82; }
 .s1-nav-links {
   display: flex; gap: 2px; flex: 1; justify-content: center;
 }
@@ -142,10 +143,11 @@ html { scroll-behavior: smooth; }
   display: inline-flex; align-items: center; justify-content: center; gap: 4px;
   height: 38px; padding: 0 18px; border-radius: 10px;
   background: var(--primary); color: #080f02;
-  font-size: 13px; font-weight: 700;
+  font-size: 13px; font-weight: 800;
   line-height: 1.2;
   box-shadow: 0 3px 14px color-mix(in srgb, var(--glow) 40%, transparent);
   transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+  white-space: nowrap; flex-shrink: 0;
 }
 .s1-open-btn:hover {
   box-shadow: 0 8px 32px var(--glow);
@@ -750,7 +752,11 @@ html { scroll-behavior: smooth; }
   .s1-hero { padding: 32px 20px 48px; }
   .s1-steps-grid { grid-template-columns: repeat(2, 1fr); }
   .s1-feat-grid { grid-template-columns: repeat(2, 1fr); }
-  .s1-theme-pro-hint { white-space: normal; max-width: 92px; line-height: 1.2; }
+  /* Hide the PRO hint on narrow screens to prevent overlap with the CTA button */
+  .s1-theme-pro-hint { display: none; }
+  /* Keep nav-right from wrapping awkwardly */
+  .s1-nav-right { gap: 8px; flex-shrink: 0; flex-wrap: nowrap; }
+  .s1-theme-row { flex-wrap: nowrap; }
 }
 @media (max-width: 480px) {
   .demo-card { padding: 32px 18px 24px; }

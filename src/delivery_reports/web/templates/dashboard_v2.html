@@ -77,11 +77,13 @@
         {% endif %}
         {% endif %}
 
-        <!-- Theme switcher -->
+        <!-- Theme switcher — W gated to PRO/TEAM/super admin -->
         <div class="v2-theme-sw" aria-label="Выбор темы">
           <button class="v2-theme-btn" data-v2-theme-btn="dark-lime" title="Dark Lime" type="button">D</button>
           <button class="v2-theme-btn" data-v2-theme-btn="light-lime" title="Light Lime" type="button">L</button>
-          <button class="v2-theme-btn" data-v2-theme-btn="wave-blue" title="Wave Blue" type="button">W</button>
+          {% if user_plan in ('pro', 'team') or is_super_admin %}
+          <button class="v2-theme-btn" data-v2-theme-btn="wave-blue" title="Wave Blue — PRO" type="button">W</button>
+          {% endif %}
         </div>
 
         {% if not auth_required and user %}
@@ -219,42 +221,37 @@
         {% endif %}
       </div>
 
-      <!-- ── Studio grid ─────────────────────────────────────── -->
-      <div id="studio" class="v2-studio-grid">
+      <!-- ── Report Studio ───────────────────────────────────── -->
+      <!-- 3-column: mini-nav | editor | AI panel -->
+      <div id="studio" class="v2-studio-shell">
 
-        <!-- Left: note form + recent notes -->
-        <div class="v2-studio-main">
+        <!-- Left mini-nav -->
+        <nav class="v2-studio-sidenav" aria-label="Report Studio навигация">
+          <div class="v2-studio-sidenav-label">Report Studio</div>
+          <a href="#s-editor" class="v2-studio-nav-link">
+            <span aria-hidden="true">✏️</span> Редактор отчёта
+          </a>
+          <a href="#s-templates" class="v2-studio-nav-link">
+            <span aria-hidden="true">📋</span> Шаблоны
+          </a>
+          <a href="#s-export" class="v2-studio-nav-link v2-studio-nav-link--pro" aria-label="Экспорт — PRO">
+            <span aria-hidden="true">📤</span> Экспорт
+            <span class="v2-studio-pro-tag">PRO</span>
+          </a>
+          <a href="#s-history" class="v2-studio-nav-link v2-studio-nav-link--pro" aria-label="История версий — PRO">
+            <span aria-hidden="true">🕐</span> История
+            <span class="v2-studio-pro-tag">PRO</span>
+          </a>
+        </nav>
 
-          <div class="v2-panel v2-studio-intro">
-            <div class="v2-sec-row">
-              <div>
-                <div class="v2-sec-row-title">Report Studio</div>
-                <div class="v2-studio-subtitle">Шаблоны, черновик, отправка и PRO-действия</div>
-              </div>
-            </div>
-          </div>
+        <!-- Center: draft editor / note form / updates list -->
+        <div class="v2-studio-editor">
 
-          <div class="v2-panel v2-studio-panel">
+          <!-- Draft preview -->
+          <div class="v2-panel v2-studio-panel" id="s-editor">
             <div class="v2-card-title">
               <span class="v2-card-title-dot"></span>
-              Шаблон отчёта
-            </div>
-            <form method="post" action="/template" class="v2-template-form">
-              <select name="template_key" class="v2-select" aria-label="Выбор шаблона отчёта">
-                {% for t in templates %}
-                <option value="{{ t.template_key }}" {% if t.template_key == current_template_key %}selected{% endif %}>
-                  {{ t.title }} ({{ t.template_key }})
-                </option>
-                {% endfor %}
-              </select>
-              <button type="submit" class="v2-btn primary">Применить шаблон</button>
-            </form>
-          </div>
-
-          <div class="v2-panel v2-studio-panel">
-            <div class="v2-card-title">
-              <span class="v2-card-title-dot"></span>
-              Черновик (Preview)
+              Черновик отчёта
             </div>
             {% if draft_plain %}
             <div class="v2-draft-preview">{{ draft_plain[:700] }}</div>
@@ -270,13 +267,31 @@
               </form>
             </div>
             {% else %}
-            <div class="v2-draft-empty">Черновик ещё не собран</div>
+            <div class="v2-draft-empty">Черновик ещё не собран. Добавьте заметки и нажмите «Собрать черновик».</div>
             <div class="v2-draft-actions">
               <form method="post" action="/draft/build" style="display:contents;">
                 <button type="submit" class="v2-btn primary">Собрать черновик</button>
               </form>
             </div>
             {% endif %}
+          </div>
+
+          <!-- Template select -->
+          <div class="v2-panel v2-studio-panel" id="s-templates">
+            <div class="v2-card-title">
+              <span class="v2-card-title-dot"></span>
+              Шаблон отчёта
+            </div>
+            <form method="post" action="/template" class="v2-template-form">
+              <select name="template_key" class="v2-select" aria-label="Выбор шаблона отчёта">
+                {% for t in templates %}
+                <option value="{{ t.template_key }}" {% if t.template_key == current_template_key %}selected{% endif %}>
+                  {{ t.title }} ({{ t.template_key }})
+                </option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="v2-btn primary">Применить шаблон</button>
+            </form>
           </div>
 
           <!-- Add note -->
@@ -311,7 +326,7 @@
             </form>
           </div>
 
-          <!-- Recent notes -->
+          <!-- Recent notes (today) -->
           {% if notes %}
           <div class="v2-panel">
             <div class="v2-sec-row">
@@ -331,7 +346,7 @@
           </div>
           {% endif %}
 
-          <!-- Inbox (unresolved notes) -->
+          <!-- Inbox (unresolved notes without project) -->
           {% if inbox_cards %}
           <div class="v2-panel">
             <div class="v2-sec-row">
@@ -357,11 +372,12 @@
           </div>
           {% endif %}
 
-        </div><!-- /studio-main -->
+        </div><!-- /studio-editor -->
 
-        <!-- Right: recent updates, tasks, quick links -->
-        <div class="v2-studio-aside">
+        <!-- Right: AI actions + export + history + tasks + recent updates -->
+        <div class="v2-studio-ai-panel">
 
+          <!-- AI actions -->
           <div class="v2-panel v2-studio-panel">
             <div class="v2-card-title">
               <span class="v2-card-title-dot"></span>
@@ -394,7 +410,8 @@
             </div>
           </div>
 
-          <div class="v2-panel v2-studio-panel">
+          <!-- Export -->
+          <div class="v2-panel v2-studio-panel" id="s-export">
             <div class="v2-card-title">
               <span class="v2-card-title-dot"></span>
               Экспорт
@@ -407,10 +424,11 @@
             </div>
           </div>
 
-          <div class="v2-panel v2-studio-panel">
+          <!-- History / Versions -->
+          <div class="v2-panel v2-studio-panel" id="s-history">
             <div class="v2-card-title">
               <span class="v2-card-title-dot"></span>
-              History / Versions
+              История версий
             </div>
             <div class="v2-disabled-cards">
               <button type="button" class="v2-stub-card" disabled aria-disabled="true" title="Скоро: история и версии будут подключены отдельным endpoint.">
@@ -466,8 +484,6 @@
               </div>
               {% endfor %}
             </div>
-
-            <!-- Add task -->
             <form method="post" action="/tasks" style="margin-top:12px;display:flex;gap:6px;">
               <input
                 type="text"
@@ -480,7 +496,6 @@
               <button type="submit" class="v2-btn primary" style="height:34px;padding:0 12px;">+</button>
             </form>
           </div>
-
           {% else %}
           <div class="v2-panel">
             <div class="v2-sec-row-title" style="margin-bottom:10px;">Задачи</div>
@@ -515,9 +530,9 @@
           </div>
           {% endif %}
 
-        </div><!-- /studio-aside -->
+        </div><!-- /studio-ai-panel -->
 
-      </div><!-- /studio-grid -->
+      </div><!-- /studio-shell -->
 
     </main>
 
