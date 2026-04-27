@@ -187,6 +187,90 @@
         </div>
       </div>
 
+      <!-- ── Plan Center ────────────────────────────────────── -->
+      <div class="v2-plan-center" id="plan-center" aria-label="Информация о тарифе">
+        <div class="v2-pc-main">
+
+          <!-- Left: plan badge + days + theme note -->
+          <div class="v2-pc-left">
+            <span class="v2-pc-label">Ваш план</span>
+            <span class="v2-pc-chip {{ user_plan or 'free' }}">{{ (user_plan or 'free') | upper }}</span>
+            {% if days_left is not none %}
+            <span class="v2-pc-days">⏳ {{ days_left }} дней</span>
+            {% endif %}
+            <div class="v2-pc-theme-note">
+              {% if user_plan in ('pro', 'team') or is_super_admin %}
+              <span class="v2-pc-theme-unlocked">✓ Тема W разблокирована</span>
+              {% else %}
+              <span class="v2-pc-theme-locked">D/L доступны · W открывается в PRO</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Right: capabilities list -->
+          <div class="v2-pc-cap-col">
+            {% if user_plan in ('pro', 'team') or is_super_admin %}
+            <ul class="v2-pc-list">
+              <li class="v2-pc-on">Ежедневные отчёты</li>
+              <li class="v2-pc-on">AI-действия</li>
+              <li class="v2-pc-on">Тема W разблокирована</li>
+              <li class="v2-pc-on">Шаблоны</li>
+              <li class="v2-pc-dim">Экспорт — скоро</li>
+              <li class="v2-pc-dim">История 90 дней — скоро</li>
+              {% if user_plan == 'team' or is_super_admin %}
+              <li class="v2-pc-on">Team workspace</li>
+              <li class="v2-pc-on">Team Admin</li>
+              {% endif %}
+            </ul>
+            {% else %}
+            <ul class="v2-pc-list">
+              <li class="v2-pc-on">Ежедневные отчёты</li>
+              <li class="v2-pc-on">До 3 проектов</li>
+              <li class="v2-pc-on">10 заметок/день</li>
+              <li class="v2-pc-on">Темы D / L</li>
+              <li class="v2-pc-off">Тема W (PRO)</li>
+              <li class="v2-pc-off">AI-действия (PRO)</li>
+              <li class="v2-pc-off">Экспорт (PRO)</li>
+              <li class="v2-pc-off">Команда (TEAM)</li>
+            </ul>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Footer: upgrade CTA -->
+        <div class="v2-pc-footer">
+          {% if is_super_admin %}
+          <a href="/admin"
+             class="v2-btn ghost v2-pc-cta"
+             aria-label="Открыть Super Admin">
+            Открыть Super Admin <span class="v2-arrow" aria-hidden="true">→</span>
+          </a>
+          {% elif user_plan == 'team' %}
+          <a href="/admin"
+             class="v2-btn ghost v2-pc-cta"
+             aria-label="Открыть Team Admin">
+            Открыть Team Admin <span class="v2-arrow" aria-hidden="true">→</span>
+          </a>
+          {% elif user_plan == 'pro' %}
+          <a href="{{ bot_url or ('https://t.me/' ~ bot_username) }}"
+             target="_blank" rel="noopener"
+             class="v2-btn primary v2-pc-cta"
+             title="Откройте бота и отправьте /buy team"
+             aria-label="Подключить TEAM">
+            Подключить TEAM <span class="v2-arrow" aria-hidden="true">→</span>
+          </a>
+          {% else %}
+          <a href="{{ bot_url or ('https://t.me/' ~ bot_username) }}"
+             target="_blank" rel="noopener"
+             class="v2-btn primary v2-pc-cta"
+             title="Откройте бота и отправьте /buy"
+             aria-label="Перейти на PRO">
+            Перейти на PRO <span class="v2-arrow" aria-hidden="true">→</span>
+          </a>
+          {% endif %}
+        </div>
+      </div>
+
       <!-- ── Draft status ────────────────────────────────────── -->
       <div class="v2-draft-card {% if draft %}has-draft{% endif %}">
         <div class="v2-card-title">

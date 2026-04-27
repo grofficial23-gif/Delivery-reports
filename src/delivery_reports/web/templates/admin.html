@@ -471,6 +471,47 @@
           {% endif %}
         </div>
 
+        <!-- ── Billing ───────────────────────────────────────── -->
+        <div class="ta-panel ta-billing-panel">
+          <div class="ta-panel-title">
+            <span class="ta-panel-title-dot"></span>
+            Billing
+          </div>
+          <div class="ta-billing-grid">
+            <div class="ta-billing-row">
+              <span class="ta-billing-label">Тарифный план</span>
+              <span class="ta-billing-val"><span class="ta-plan-badge">TEAM</span></span>
+            </div>
+            <div class="ta-billing-row">
+              <span class="ta-billing-label">Участников</span>
+              <span class="ta-billing-val">{{ users | length if users else 0 }}</span>
+            </div>
+            <div class="ta-billing-row">
+              <span class="ta-billing-label">Инвайт-ссылка</span>
+              <span class="ta-billing-val ok">✓ Активна</span>
+            </div>
+          </div>
+          <div class="ta-billing-actions">
+            <a href="{{ bot_url or ('https://t.me/' ~ bot_username) }}"
+               target="_blank" rel="noopener"
+               class="ta-btn mint"
+               title="Продлить план через Telegram-бота"
+               aria-label="Продлить подписку">
+              Продлить в Telegram
+            </a>
+            <button type="button" class="ta-btn ghost ta-btn-future" disabled aria-disabled="true" title="Скоро">
+              📄 Счета
+            </button>
+            <button type="button" class="ta-btn ghost ta-btn-future" disabled aria-disabled="true" title="Скоро">
+              📊 История платежей
+            </button>
+            <button type="button" class="ta-btn ghost ta-btn-future" disabled aria-disabled="true" title="Скоро">
+              ⚙️ Настройки workspace
+            </button>
+          </div>
+          <div class="ta-tools-note">Полный биллинг появится в следующих обновлениях.</div>
+        </div>
+
         <!-- ── Team tools (future) ───────────────────────────── -->
         <div class="ta-panel">
           <div class="ta-panel-title">
@@ -480,9 +521,6 @@
           <div class="ta-tools-row">
             <button type="button" class="ta-btn ghost ta-btn-future" disabled aria-disabled="true" title="Скоро">
               📋 Шаблоны команды
-            </button>
-            <button type="button" class="ta-btn ghost ta-btn-future" disabled aria-disabled="true" title="Скоро">
-              💳 Billing
             </button>
             <button type="button" class="ta-btn ghost ta-btn-future" disabled aria-disabled="true" title="Скоро">
               ⚙️ Settings

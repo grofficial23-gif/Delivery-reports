@@ -1038,3 +1038,153 @@
 @media (max-width: 400px) {
   .ta-kpi-row { grid-template-columns: 1fr; }
 }
+
+/* ══════════════════════════════════════════════════════════
+   PMD:V2:PLAN_CENTER
+══════════════════════════════════════════════════════════ */
+.v2-plan-center {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.v2-pc-main {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+.v2-pc-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.v2-pc-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.v2-pc-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  width: fit-content;
+}
+.v2-pc-chip.free  { background: var(--primary-bg); color: var(--text2); border: 1px solid var(--border2); }
+.v2-pc-chip.pro   { background: var(--primary); color: #080f02; }
+.v2-pc-chip.team  { background: color-mix(in srgb, var(--primary) 75%, #6c8eff); color: #080f02; }
+.v2-pc-days {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.v2-pc-theme-note {
+  margin-top: 4px;
+}
+.v2-pc-theme-unlocked {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--primary);
+}
+.v2-pc-theme-locked {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  line-height: 1.45;
+  display: block;
+}
+/* Capabilities list */
+.v2-pc-cap-col { flex: 1; }
+.v2-pc-list {
+  list-style: none;
+  margin: 0; padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px 16px;
+}
+.v2-pc-list li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  padding: 2px 0;
+}
+.v2-pc-list li::before {
+  content: '';
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.v2-pc-on::before  { background: var(--primary); box-shadow: 0 0 6px var(--glow); }
+.v2-pc-off         { color: var(--muted); opacity: 0.6; }
+.v2-pc-off::before { background: var(--border2); }
+.v2-pc-dim         { color: var(--muted); font-style: italic; }
+.v2-pc-dim::before { background: var(--border2); opacity: 0.5; }
+/* Footer CTA row */
+.v2-pc-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+.v2-pc-cta {
+  height: 34px;
+  padding: 0 16px;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+/* Responsive Plan Center */
+@media (max-width: 600px) {
+  .v2-pc-main { grid-template-columns: 1fr; gap: 12px; }
+  .v2-pc-list { grid-template-columns: 1fr; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   PMD:V2:TEAM_ADMIN_BILLING
+══════════════════════════════════════════════════════════ */
+.ta-billing-panel { border-color: color-mix(in srgb, var(--primary) 30%, var(--border)); }
+.ta-billing-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.ta-billing-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.ta-billing-row:last-child { border-bottom: none; }
+.ta-billing-label { color: var(--muted); font-weight: 500; }
+.ta-billing-val   { font-weight: 700; color: var(--text); }
+.ta-billing-val.ok { color: var(--primary); }
+.ta-billing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
