@@ -1,0 +1,3588 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <title>PM DIGEST V2 — Design Prototype · 4 Surfaces</title>
+  <style>
+
+    /* PMD:V2:THEME_TOKENS:start */
+    :root {
+      --font-ui:   "Geist", Inter, ui-sans-serif, system-ui, -apple-system,
+                   BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --ease:      cubic-bezier(0.22, 1, 0.36, 1);
+      --chrome-h:  48px;
+    }
+
+    body[data-theme="dark-lime"] {
+      --bg:          #040506;
+      --bg2:         #080a08;
+      --surface:     rgba(5, 7, 5, 0.68);
+      --surface-2:   rgba(8, 11, 8, 0.86);
+      --surface-nav: rgba(3, 4, 3, 0.93);
+      --sidebar-bg:  rgba(3, 4, 3, 0.98);
+      --text:        #f2f4ef;
+      --text2:       #c6cac3;
+      --muted:       #8b9287;
+      --primary:     #a3e635;
+      --primary2:    #92e000;
+      --primary-bg:  rgba(163, 230, 53, 0.14);
+      --primary-dim: rgba(163, 230, 53, 0.07);
+      --glow:        rgba(163, 230, 53, 0.58);
+      --border:      rgba(255, 255, 255, 0.06);
+      --border2:     rgba(255, 255, 255, 0.13);
+      --card-shd:    0 28px 72px rgba(0, 0, 0, 0.62),
+                     inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      --danger:      #f87171;
+      --warn:        #dfff5a;
+      --ok:          #4ade80;
+      --c-dot:       rgba(163, 230, 53, 0.88);
+      --c-line:      rgba(163, 230, 53, 0.20);
+      --c-ambient:   rgba(200, 212, 200, 0.32);
+      /* PMD:V2:STATUS_TOKENS */
+      --status-ok:              #a3e635;
+      --status-ok-2:            #7cff00;
+      --status-wait:            #a6ff4d;
+      --status-wait-bg:         rgba(166, 255, 77, 0.10);
+      --status-wait-border:     rgba(166, 255, 77, 0.38);
+      --status-risk:            #dfff5a;
+      --status-risk-2:          #b9ff00;
+      --status-risk-bg:         rgba(185, 255, 0, 0.10);
+      --status-risk-border:     rgba(223, 255, 90, 0.45);
+      --status-blocked:         #00f5c8;
+      --status-blocked-2:       #004d3a;
+      --status-blocked-bg:      rgba(0, 245, 200, 0.10);
+      --status-blocked-border:  rgba(0, 245, 200, 0.42);
+      --status-critical:        #ff4d4d;
+      --status-critical-2:      #ff6b6b;
+      --status-critical-bg:     rgba(255, 77, 77, 0.10);
+      --status-critical-border: rgba(255, 77, 77, 0.35);
+    }
+
+    body[data-theme="light-lime"] {
+      --bg:          #f4f7ee;
+      --bg2:         #eef2e4;
+      --surface:     rgba(255, 255, 255, 0.72);
+      --surface-2:   rgba(255, 255, 255, 0.92);
+      --surface-nav: rgba(255, 255, 255, 0.95);
+      --sidebar-bg:  rgba(244, 248, 238, 0.98);
+      --text:        #101812;
+      --text2:       #2c3828;
+      --muted:       #697268;
+      --primary:     #84cc16;
+      --primary2:    #65a30d;
+      --primary-bg:  rgba(132, 204, 22, 0.12);
+      --primary-dim: rgba(132, 204, 22, 0.06);
+      --glow:        rgba(132, 204, 22, 0.30);
+      --border:      rgba(16, 24, 12, 0.10);
+      --border2:     rgba(16, 24, 12, 0.20);
+      --card-shd:    0 20px 60px rgba(20, 40, 18, 0.10),
+                     inset 0 1px 0 rgba(255, 255, 255, 0.80);
+      --danger:      #dc2626;
+      --warn:        #ea580c;
+      --ok:          #16a34a;
+      --c-dot:       rgba(98, 168, 18, 0.82);
+      --c-line:      rgba(92, 158, 22, 0.34);
+      --c-ambient:   rgba(78, 108, 58, 0.42);
+      /* PMD:V2:STATUS_TOKENS */
+      --status-ok:              #4d8c00;
+      --status-ok-2:            #5fa300;
+      --status-wait:            #5a7a00;
+      --status-wait-bg:         rgba(90, 122, 0, 0.08);
+      --status-wait-border:     rgba(90, 122, 0, 0.30);
+      --status-risk:            #7a8800;
+      --status-risk-2:          #6a7600;
+      --status-risk-bg:         rgba(122, 136, 0, 0.08);
+      --status-risk-border:     rgba(122, 136, 0, 0.34);
+      --status-blocked:         #007a64;
+      --status-blocked-2:       #005a4a;
+      --status-blocked-bg:      rgba(0, 122, 100, 0.08);
+      --status-blocked-border:  rgba(0, 122, 100, 0.30);
+      --status-critical:        #cc1a1a;
+      --status-critical-2:      #e03232;
+      --status-critical-bg:     rgba(204, 26, 26, 0.08);
+      --status-critical-border: rgba(204, 26, 26, 0.28);
+    }
+
+    body[data-theme="wave-blue"] {
+      --bg:          #f1f6ff;
+      --bg2:         #e8f0ff;
+      --surface:     rgba(255, 255, 255, 0.70);
+      --surface-2:   rgba(255, 255, 255, 0.92);
+      --surface-nav: rgba(255, 255, 255, 0.96);
+      --sidebar-bg:  rgba(240, 246, 255, 0.98);
+      --text:        #182a44;
+      --text2:       #2a3f60;
+      --muted:       #6378a0;
+      --primary:     #2f7dff;
+      --primary2:    #0f62fe;
+      --primary-bg:  rgba(47, 125, 255, 0.12);
+      --primary-dim: rgba(47, 125, 255, 0.06);
+      --glow:        rgba(47, 125, 255, 0.28);
+      --border:      rgba(47, 125, 255, 0.14);
+      --border2:     rgba(47, 125, 255, 0.28);
+      --card-shd:    0 20px 60px rgba(20, 50, 120, 0.12),
+                     inset 0 1px 0 rgba(255, 255, 255, 0.80);
+      --danger:      #dc2626;
+      --warn:        #ea580c;
+      --ok:          #0ea5e9;
+      --c-dot:       rgba(47, 125, 255, 0.65);
+      --c-line:      rgba(47, 125, 255, 0.13);
+      --c-ambient:   rgba(80, 100, 160, 0.20);
+      /* PMD:V2:STATUS_TOKENS */
+      --status-ok:              #0a7a50;
+      --status-ok-2:            #0d9864;
+      --status-wait:            #3a6600;
+      --status-wait-bg:         rgba(58, 102, 0, 0.08);
+      --status-wait-border:     rgba(58, 102, 0, 0.26);
+      --status-risk:            #7a8a00;
+      --status-risk-2:          #6a7800;
+      --status-risk-bg:         rgba(122, 138, 0, 0.08);
+      --status-risk-border:     rgba(122, 138, 0, 0.30);
+      --status-blocked:         #00688a;
+      --status-blocked-2:       #004e6a;
+      --status-blocked-bg:      rgba(0, 104, 138, 0.08);
+      --status-blocked-border:  rgba(0, 104, 138, 0.28);
+      --status-critical:        #cc1a1a;
+      --status-critical-2:      #e03232;
+      --status-critical-bg:     rgba(204, 26, 26, 0.08);
+      --status-critical-border: rgba(204, 26, 26, 0.26);
+    }
+    /* PMD:V2:THEME_TOKENS:end */
+
+    /* ── Reset ──────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--text);
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
+      transition: background 0.25s var(--ease), color 0.25s var(--ease);
+    }
+    button { font: inherit; cursor: pointer; background: none; border: none; padding: 0; }
+    a { font: inherit; text-decoration: none; }
+    p, h1, h2, h3, h4 { margin: 0; }
+    ul { margin: 0; padding: 0; list-style: disc; }
+    table { border-collapse: collapse; width: 100%; }
+    input, textarea { font: inherit; color: inherit; }
+
+    /* ── PMD:V2:BACKGROUND_CANVAS_LAYER_CSS:start ───────────── */
+    #bg-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      display: block;
+    }
+    /* PMD:V2:BACKGROUND_CANVAS_LAYER_CSS:end */
+
+    /* ── PMD:V2:PROTO_CHROME_CSS:start ──────────────────────── */
+    .proto-chrome {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--chrome-h);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 18px;
+      background: var(--surface-nav);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(28px) saturate(140%);
+      -webkit-backdrop-filter: blur(28px) saturate(140%);
+    }
+    .proto-label {
+      font-size: 11px; font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--primary);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .proto-sep {
+      width: 1px; height: 20px;
+      background: var(--border2);
+      flex-shrink: 0;
+    }
+    .surface-tabs { display: flex; gap: 2px; }
+    .surface-tabs button {
+      height: 30px; padding: 0 12px;
+      border-radius: 8px;
+      font-size: 12px; font-weight: 600;
+      color: var(--muted);
+      transition: color 0.15s, background 0.15s;
+      white-space: nowrap;
+    }
+    .surface-tabs button:hover { color: var(--text); background: var(--primary-dim); }
+    .surface-tabs button.active { color: var(--text); background: var(--primary-bg); }
+    .proto-right { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .theme-sw {
+      display: flex; gap: 3px; padding: 3px;
+      border: 1px solid var(--border2);
+      border-radius: 999px;
+      background: var(--surface);
+    }
+    .theme-sw button {
+      min-width: 28px; height: 28px; padding: 0 9px; border-radius: 999px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 800; letter-spacing: 0.02em;
+      color: var(--muted);
+      transition: background 0.16s, color 0.16s, box-shadow 0.16s;
+    }
+    .theme-sw button:hover { color: var(--text); background: var(--primary-dim); }
+    .theme-sw button.active {
+      background: var(--primary-bg);
+      color: var(--text);
+      box-shadow: 0 0 0 1px var(--primary), 0 0 12px var(--glow);
+    }
+    /* PRO theme chips row */
+    .theme-pro-row {
+      display: flex; align-items: center; gap: 5px; flex-wrap: wrap; flex-shrink: 0;
+    }
+    .theme-pro-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      height: 26px; padding: 0 8px; border-radius: 7px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.01em;
+      border: 1px solid rgba(163,230,53,0.18);
+      background: rgba(163,230,53,0.05);
+      color: var(--muted);
+      cursor: not-allowed;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+    .theme-pro-chip:hover {
+      border-color: rgba(163,230,53,0.38);
+      background: rgba(163,230,53,0.10);
+      color: var(--primary);
+    }
+    .theme-pro-chip .tpc-dot {
+      width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+    }
+    .theme-pro-chip .tpc-lock {
+      font-size: 9px; opacity: 0.70;
+    }
+    .theme-pro-sep {
+      width: 1px; height: 20px; background: var(--border2); flex-shrink: 0;
+    }
+    .theme-gate-legend {
+      font-size: 10px; color: var(--muted); white-space: nowrap; flex-shrink: 0;
+    }
+    .theme-gate-legend b { color: var(--primary); font-weight: 700; }
+    /* PRO toast */
+    .theme-pro-toast {
+      position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(6px);
+      background: var(--surface-nav); border: 1px solid var(--primary);
+      border-radius: 10px; padding: 8px 18px;
+      font-size: 12px; font-weight: 700; color: var(--primary);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.40), 0 0 18px var(--glow);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      opacity: 0; pointer-events: none; z-index: 4000;
+      transition: opacity 0.18s, transform 0.18s;
+      white-space: nowrap;
+    }
+    .theme-pro-toast.show {
+      opacity: 1; transform: translateX(-50%) translateY(0);
+    }
+    /* PMD:V2:PROTO_CHROME_CSS:end */
+
+    /* ── Surface container ──────────────────────────────────── */
+    .surface {
+      display: none;
+      position: relative;
+      z-index: 2;
+      padding-top: var(--chrome-h);
+      min-height: 100vh;
+    }
+    .surface.active { display: block; }
+
+    /* ── Shared components ──────────────────────────────────── */
+    .pro-badge {
+      height: 26px; padding: 0 10px;
+      border: 1px solid var(--primary);
+      border-radius: 999px;
+      font-size: 10px; font-weight: 800;
+      letter-spacing: 0.10em;
+      color: var(--primary);
+      background: var(--primary-bg);
+      display: inline-flex; align-items: center;
+    }
+    .sidebar-nav-item {
+      display: flex; align-items: center; gap: 10px;
+      height: 38px; padding: 0 18px;
+      font-size: 13px; font-weight: 500;
+      color: var(--muted); cursor: pointer;
+      transition: color 0.14s, background 0.14s;
+    }
+    .sidebar-nav-item:hover { color: var(--text); background: var(--primary-dim); }
+    .sidebar-nav-item.active {
+      color: var(--text);
+      background: var(--primary-bg);
+      border-right: 2px solid var(--primary);
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       PMD:V2:SURFACE1_CSS:start  — LANDING PAGE
+    ══════════════════════════════════════════════════════════ */
+    .s1-nav {
+      position: sticky; top: var(--chrome-h); z-index: 50;
+      height: 68px; padding: 0 48px;
+      display: flex; align-items: center; gap: 28px;
+      background: var(--surface-nav);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+    }
+    .s1-brand { font-size: 20px; font-weight: 900; letter-spacing: -0.055em; flex-shrink: 0; }
+    .s1-brand mark { background: none; color: var(--primary); }
+    .s1-nav-links { display: flex; gap: 2px; flex: 1; justify-content: center; }
+    .s1-nav-links a {
+      height: 36px; padding: 0 14px; border-radius: 8px;
+      display: flex; align-items: center;
+      font-size: 13px; font-weight: 500; color: var(--muted);
+      transition: color 0.14s, background 0.14s;
+    }
+    .s1-nav-links a:hover { color: var(--text); background: var(--primary-dim); }
+    .s1-nav-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .s1-lang-btn {
+      height: 32px; padding: 0 12px;
+      border: 1px solid var(--border2); border-radius: 8px;
+      font-size: 12px; font-weight: 600; color: var(--muted);
+      transition: color 0.14s, border-color 0.14s;
+    }
+    .s1-lang-btn:hover { color: var(--text); border-color: var(--primary); }
+    .s1-open-btn {
+      height: 38px; padding: 0 18px; border-radius: 10px;
+      background: var(--primary); color: #080f02;
+      font-size: 13px; font-weight: 700;
+      transition: opacity 0.15s, box-shadow 0.15s;
+    }
+    .s1-open-btn:hover { opacity: 0.88; box-shadow: 0 6px 24px var(--glow); }
+
+    .s1-hero {
+      min-height: calc(100vh - 68px - var(--chrome-h));
+      display: grid; grid-template-columns: 1fr 460px;
+      gap: 48px; align-items: center;
+      padding: 72px 80px 64px;
+      max-width: 1400px; margin: 0 auto;
+    }
+    .s1-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      height: 26px; padding: 0 12px; margin-bottom: 28px;
+      border: 1px solid var(--border2); border-radius: 999px;
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--muted);
+    }
+    .s1-eyebrow::before {
+      content: "";
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--primary); box-shadow: 0 0 8px var(--glow);
+    }
+    .s1-h1 {
+      font-size: clamp(42px, 5.4vw, 78px);
+      font-weight: 900; font-style: italic;
+      letter-spacing: -0.055em; line-height: 1.0;
+      margin-bottom: 26px;
+    }
+    .s1-h1 mark { background: none; color: var(--primary); text-shadow: 0 0 40px var(--glow); }
+    .s1-sub {
+      font-size: 17px; line-height: 1.7; color: var(--text2);
+      font-weight: 400;
+      max-width: 500px; margin-bottom: 40px;
+    }
+    .s1-actions { display: flex; gap: 14px; flex-wrap: wrap; }
+    .s1-btn-primary {
+      height: 52px; padding: 0 28px; border-radius: 14px;
+      background: var(--primary); color: #080f02;
+      font-size: 15px; font-weight: 700;
+      display: inline-flex; align-items: center; gap: 10px;
+      box-shadow: 0 8px 32px var(--glow);
+      transition: transform 0.18s var(--ease), box-shadow 0.18s var(--ease);
+    }
+    .s1-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 14px 40px var(--glow); }
+    .s1-btn-ghost {
+      height: 52px; padding: 0 28px; border-radius: 14px;
+      border: 1px solid var(--border2); color: var(--text);
+      font-size: 15px; font-weight: 600;
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--surface); backdrop-filter: blur(16px);
+      transition: border-color 0.18s, color 0.18s;
+    }
+    .s1-btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
+    .s1-benefits { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 44px; }
+    .s1-benefit {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 7px 14px; border: 1px solid var(--border);
+      border-radius: 999px; font-size: 13px; color: var(--text2);
+      background: var(--surface); backdrop-filter: blur(12px);
+    }
+    .s1-benefit-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--primary); box-shadow: 0 0 8px var(--glow);
+    }
+
+    /* Phone mockup — dark Telegram shell; accents follow global theme tokens */
+    .s1-phone-wrap { display: flex; justify-content: center; align-items: center; }
+    .s1-phone {
+      width: 310px;
+      background: #0c0f0d;
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 44px;
+      overflow: hidden;
+      box-shadow: 0 48px 100px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.05);
+      /* Local tokens so mockup accents track body theme (inherited --primary* from body) */
+      --primary-border: color-mix(in srgb, var(--primary) 42%, rgba(255,255,255,0.10));
+      --on-primary: #0a0f0b;
+    }
+    .s1-phone-notch {
+      height: 26px; display: flex;
+      justify-content: center; align-items: flex-end; padding-bottom: 4px;
+    }
+    .s1-phone-notch-pill { width: 76px; height: 7px; background: rgba(255,255,255,0.10); border-radius: 999px; }
+    .s1-phone-screen { background: #0a0f0c; margin: 0 6px; border-radius: 2px; overflow: hidden; }
+    .s1-chat-hdr {
+      padding: 10px 14px; display: flex; align-items: center; gap: 10px;
+      background: rgba(8,12,10,0.96); border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .s1-chat-av {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--primary2));
+      box-shadow: 0 0 16px var(--glow);
+      display: grid; place-items: center; font-size: 15px; flex-shrink: 0;
+    }
+    .s1-chat-name { font-size: 13px; font-weight: 700; color: #f0f0f0; line-height: 1.2; }
+    .s1-chat-online { font-size: 11px; color: var(--primary); text-shadow: 0 0 12px var(--glow); }
+    .s1-msgs { padding: 14px 10px; display: flex; flex-direction: column; gap: 10px; }
+    .s1-msg {
+      padding: 10px 12px; border-radius: 16px;
+      font-size: 12px; line-height: 1.45;
+      /* Fixed light on dark chat — readable even when global theme is light */
+      color: #eef0ec;
+      max-width: 88%;
+    }
+    .s1-msg.bot { background: rgba(255,255,255,0.08); border-bottom-left-radius: 4px; align-self: flex-start; }
+    .s1-msg.user {
+      background: color-mix(in srgb, var(--primary) 22%, rgba(0,0,0,0.55));
+      border: 1px solid var(--primary-border);
+      border-bottom-right-radius: 4px; align-self: flex-end;
+      color: color-mix(in srgb, var(--primary) 88%, #f5fff0);
+    }
+    .s1-voice {
+      align-self: flex-end;
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px; border-radius: 14px;
+      background: var(--primary-bg); border: 1px solid var(--primary-border);
+      box-shadow: 0 0 18px color-mix(in srgb, var(--glow) 35%, transparent);
+    }
+    .s1-voice-play {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--primary); color: var(--on-primary);
+      box-shadow: 0 0 10px var(--glow);
+      display: grid; place-items: center; font-size: 9px; flex-shrink: 0;
+    }
+    .s1-voice-wave { display: flex; align-items: center; gap: 2px; height: 20px; }
+    .s1-voice-wave span {
+      display: block; width: 2px; border-radius: 999px;
+      background: color-mix(in srgb, var(--primary) 65%, rgba(255,255,255,0.2));
+    }
+    .s1-voice-dur { font-size: 10px; color: color-mix(in srgb, var(--primary) 55%, #c8d0c0); }
+    .s1-draft-card {
+      margin-top: 6px; padding: 10px;
+      background: color-mix(in srgb, var(--primary-bg) 85%, rgba(0,0,0,0.25));
+      border: 1px solid var(--primary-border);
+      border-radius: 12px; font-size: 11px;
+      color: color-mix(in srgb, #cfe8c0 80%, var(--primary));
+    }
+    .s1-draft-title { font-weight: 700; color: var(--primary); margin-bottom: 6px; text-shadow: 0 0 14px var(--glow); }
+    .s1-draft-row { margin-top: 4px; }
+    .s1-draft-row label {
+      display: block; font-size: 10px;
+      color: color-mix(in srgb, var(--primary) 50%, rgba(200,210,200,0.9));
+    }
+    .s1-chat-btns { display: flex; gap: 5px; margin-top: 8px; flex-wrap: wrap; }
+    .s1-chat-btn {
+      height: 25px; padding: 0 10px; border-radius: 7px;
+      font-size: 10px; font-weight: 600;
+      background: color-mix(in srgb, var(--primary-bg) 70%, rgba(0,0,0,0.2));
+      border: 1px solid var(--primary-border);
+      color: var(--primary);
+    }
+    .s1-chat-btn.pri {
+      background: var(--primary);
+      color: var(--on-primary);
+      border-color: var(--primary);
+      box-shadow: 0 0 12px var(--glow);
+    }
+    .s1-phone-home { height: 22px; display: flex; justify-content: center; align-items: center; }
+    .s1-phone-home-bar { width: 90px; height: 4px; border-radius: 999px; background: rgba(255,255,255,0.12); }
+    /* PMD:V2:SURFACE1_CSS:end */
+
+    /* ══════════════════════════════════════════════════════════
+       PMD:V2:LANDING_SECTIONS_CSS
+    ══════════════════════════════════════════════════════════ */
+    .s1-content { max-width: 1200px; margin: 0 auto; padding: 0 64px; }
+    @media (max-width: 900px) { .s1-content { padding: 0 24px; } }
+
+    /* Section skeleton */
+    .s1-section {
+      padding: 80px 0; border-top: 1px solid var(--border);
+    }
+    .s1-sec-eyebrow {
+      display: inline-flex; align-items: center; gap: 7px;
+      height: 24px; padding: 0 11px; margin-bottom: 18px;
+      border: 1px solid var(--border2); border-radius: 999px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--muted);
+    }
+    .s1-sec-eyebrow::before {
+      content: ""; width: 5px; height: 5px; border-radius: 50%;
+      background: var(--primary); box-shadow: 0 0 8px var(--glow);
+    }
+    .s1-sec-h2 {
+      font-size: clamp(26px, 3.2vw, 44px);
+      font-weight: 900; font-style: italic;
+      letter-spacing: -0.048em; line-height: 1.05; margin-bottom: 14px;
+    }
+    .s1-sec-h2 mark { background: none; color: var(--primary); text-shadow: 0 0 28px var(--glow); }
+    .s1-sec-sub {
+      font-size: 16px; color: var(--text2); line-height: 1.65;
+      max-width: 580px; margin-bottom: 44px;
+    }
+
+    /* ── For whom ───────────────────────────────────────────── */
+    .s1-audience { display: flex; gap: 56px; align-items: flex-start; flex-wrap: wrap; }
+    .s1-audience-left { flex: 1; min-width: 260px; }
+    .s1-roles { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+    .s1-role-pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      height: 36px; padding: 0 16px; border-radius: 999px;
+      border: 1px solid var(--border2); background: var(--surface);
+      backdrop-filter: blur(12px);
+      font-size: 13px; font-weight: 600; color: var(--text2);
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .s1-role-pill span { font-size: 14px; }
+    .s1-role-pill:hover { border-color: var(--primary); color: var(--text); }
+    .s1-audience-quote {
+      flex: 0 0 320px; background: var(--surface); border: 1px solid var(--border2);
+      border-radius: 20px; padding: 24px 26px;
+      box-shadow: var(--card-shd); backdrop-filter: blur(20px);
+    }
+    .s1-audience-quote p {
+      font-size: 15px; line-height: 1.65; color: var(--text2);
+      font-style: italic;
+    }
+    .s1-audience-quote p strong { color: var(--primary); font-style: normal; }
+
+    /* ── How it works ───────────────────────────────────────── */
+    .s1-steps-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+    }
+    @media (max-width: 860px) { .s1-steps-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 520px) { .s1-steps-grid { grid-template-columns: 1fr; } }
+    .s1-step-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 18px; padding: 22px 20px 20px;
+      box-shadow: var(--card-shd); position: relative;
+      transition: border-color 0.18s, box-shadow 0.18s;
+    }
+    .s1-step-card:hover {
+      border-color: rgba(163,230,53,.28);
+      box-shadow: var(--card-shd), 0 0 24px rgba(163,230,53,.08);
+    }
+    .s1-step-num {
+      font-size: 11px; font-weight: 800; letter-spacing: 0.10em;
+      color: var(--primary); margin-bottom: 10px; font-family: var(--font-mono);
+    }
+    .s1-step-ico {
+      font-size: 28px; line-height: 1; margin-bottom: 12px;
+    }
+    .s1-step-title {
+      font-size: 14px; font-weight: 800; letter-spacing: -0.025em;
+      margin-bottom: 8px; line-height: 1.2;
+    }
+    .s1-step-desc {
+      font-size: 12px; color: var(--muted); line-height: 1.55;
+    }
+    .s1-step-connector {
+      position: absolute; top: 32px; right: -10px;
+      width: 20px; height: 2px; background: var(--border2); z-index: 1;
+    }
+    .s1-step-card:last-child .s1-step-connector { display: none; }
+
+    /* ── Features ───────────────────────────────────────────── */
+    .s1-feat-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+    }
+    @media (max-width: 860px) { .s1-feat-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 520px) { .s1-feat-grid { grid-template-columns: 1fr; } }
+    .s1-feat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 20px 18px;
+      box-shadow: var(--card-shd); display: flex; flex-direction: column; gap: 8px;
+      transition: border-color 0.18s;
+    }
+    .s1-feat-card:hover { border-color: rgba(163,230,53,.28); }
+    .s1-feat-ico {
+      font-size: 22px; line-height: 1;
+    }
+    .s1-feat-title {
+      font-size: 13px; font-weight: 800; letter-spacing: -0.02em;
+    }
+    .s1-feat-desc {
+      font-size: 12px; color: var(--muted); line-height: 1.55; flex: 1;
+    }
+    .s1-feat-tag {
+      display: inline-flex; align-items: center;
+      height: 18px; padding: 0 8px; border-radius: 4px;
+      font-size: 9px; font-weight: 700; letter-spacing: 0.06em;
+      align-self: flex-start;
+    }
+    .s1-feat-tag.free { background: rgba(163,230,53,.12); color: var(--primary); }
+    .s1-feat-tag.pro  { background: rgba(255,255,255,.07); color: var(--muted); }
+    .s1-feat-tag.team { background: rgba(0,245,200,.10); color: #00f5c8; }
+
+    /* ── Pricing ────────────────────────────────────────────── */
+    .s1-pricing-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+      align-items: stretch;
+    }
+    @media (max-width: 760px) { .s1-pricing-grid { grid-template-columns: 1fr; } }
+    .s1-plan-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 22px; padding: 28px 24px 24px;
+      display: flex; flex-direction: column; gap: 0;
+      position: relative; box-shadow: var(--card-shd);
+      transition: transform 0.18s, box-shadow 0.18s;
+    }
+    .s1-plan-card:hover { transform: translateY(-3px); }
+    .s1-plan-card.popular {
+      border-color: var(--primary);
+      box-shadow: var(--card-shd), 0 0 0 1px var(--primary), 0 0 32px var(--glow);
+    }
+    .s1-plan-popular-badge {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      height: 24px; padding: 0 14px; border-radius: 999px;
+      background: var(--primary); color: #080f02;
+      font-size: 10px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+      display: inline-flex; align-items: center; white-space: nowrap;
+      box-shadow: 0 4px 18px var(--glow);
+    }
+    .s1-plan-name {
+      font-size: 11px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 14px;
+    }
+    .s1-plan-price {
+      font-size: 36px; font-weight: 900; letter-spacing: -0.05em;
+      line-height: 1; margin-bottom: 4px;
+    }
+    .s1-plan-price sup { font-size: 18px; font-weight: 700; vertical-align: top; margin-top: 4px; }
+    .s1-plan-price .price-free { color: var(--primary); }
+    .s1-plan-price .price-mo { font-size: 14px; font-weight: 500; color: var(--muted); }
+    .s1-plan-subtitle {
+      font-size: 12px; color: var(--muted); margin-bottom: 22px; line-height: 1.5;
+    }
+    .s1-plan-divider {
+      height: 1px; background: var(--border); margin-bottom: 18px;
+    }
+    .s1-plan-features {
+      list-style: none; display: flex; flex-direction: column; gap: 10px;
+      flex: 1; margin-bottom: 24px;
+    }
+    .s1-plan-features li {
+      display: flex; align-items: flex-start; gap: 9px;
+      font-size: 13px; color: var(--text2); line-height: 1.4;
+    }
+    .s1-plan-features li::before {
+      content: ""; flex-shrink: 0;
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--primary); margin-top: 5px;
+      box-shadow: 0 0 6px var(--glow);
+    }
+    .s1-plan-cta {
+      height: 46px; border-radius: 12px;
+      font-size: 14px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.15s, box-shadow 0.15s, transform 0.15s;
+    }
+    .s1-plan-cta.primary {
+      background: var(--primary); color: #080f02;
+      box-shadow: 0 6px 24px var(--glow);
+    }
+    .s1-plan-cta.primary:hover { opacity: 0.88; transform: translateY(-1px); box-shadow: 0 10px 32px var(--glow); }
+    .s1-plan-cta.ghost {
+      border: 1px solid var(--border2); color: var(--text);
+      background: var(--surface); backdrop-filter: blur(12px);
+    }
+    .s1-plan-cta.ghost:hover { border-color: var(--primary); color: var(--primary); }
+    .s1-plan-cta.mint {
+      border: 1px solid rgba(0,245,200,.35); color: #00f5c8;
+      background: rgba(0,245,200,.06);
+    }
+    .s1-plan-cta.mint:hover { background: rgba(0,245,200,.12); border-color: rgba(0,245,200,.60); }
+
+    /* ── Security ───────────────────────────────────────────── */
+    .s1-security-grid {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;
+      margin-bottom: 28px;
+    }
+    @media (max-width: 900px) { .s1-security-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 520px) { .s1-security-grid { grid-template-columns: repeat(2, 1fr); } }
+    .s1-sec-trust {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 16px 14px;
+      display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+    }
+    .s1-sec-trust-ico { font-size: 20px; line-height: 1; }
+    .s1-sec-trust-label {
+      font-size: 11px; font-weight: 700; color: var(--text2); line-height: 1.3;
+    }
+    .s1-sec-note {
+      padding: 16px 20px; border-radius: 14px;
+      background: var(--surface); border: 1px solid var(--border);
+      font-size: 13px; color: var(--muted); line-height: 1.6;
+      max-width: 620px;
+    }
+    .s1-sec-note strong { color: var(--text2); font-weight: 600; }
+
+    /* ── Footer strip ───────────────────────────────────────── */
+    .s1-footer {
+      border-top: 1px solid var(--border); padding: 32px 64px;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;
+      font-size: 12px; color: var(--muted);
+    }
+    @media (max-width: 900px) { .s1-footer { padding: 24px; flex-direction: column; align-items: flex-start; } }
+    .s1-footer-brand { font-size: 15px; font-weight: 900; letter-spacing: -0.04em; }
+    .s1-footer-brand mark { background: none; color: var(--primary); }
+    /* PMD:V2:LANDING_SECTIONS_CSS:end */
+
+    /* ══════════════════════════════════════════════════════════
+       PMD:V2:SURFACE2_CSS:start  — APP DASHBOARD
+    ══════════════════════════════════════════════════════════ */
+    .s2-layout {
+      display: grid; grid-template-columns: 220px 1fr;
+      min-height: calc(100vh - var(--chrome-h));
+    }
+    .s2-sidebar {
+      position: sticky; top: var(--chrome-h);
+      height: calc(100vh - var(--chrome-h));
+      background: var(--sidebar-bg); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; padding: 20px 0;
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      overflow-y: auto;
+    }
+    .s2-sb-brand {
+      padding: 0 18px 18px; border-bottom: 1px solid var(--border); margin-bottom: 10px;
+    }
+    .s2-sb-brand h2 { font-size: 17px; font-weight: 900; letter-spacing: -0.05em; }
+    .s2-sb-brand h2 mark { background: none; color: var(--primary); }
+    .s2-sb-brand p {
+      font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--muted); margin-top: 2px;
+    }
+    .s2-sb-user {
+      margin-top: auto; padding: 14px 18px;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .s2-sb-av {
+      width: 34px; height: 34px; border-radius: 50%;
+      border: 1px solid var(--primary); background: var(--primary-bg);
+      display: grid; place-items: center;
+      font-size: 11px; font-weight: 700; color: var(--primary); flex-shrink: 0;
+    }
+    .s2-sb-uname { font-size: 13px; font-weight: 700; }
+    .s2-sb-tg { font-size: 11px; color: var(--muted); margin-top: 1px; }
+    .s2-sb-plan-row { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+    .s2-sb-plan { font-size: 10px; color: var(--primary); font-weight: 700; letter-spacing: 0.06em; }
+    .s2-main { min-height: 100%; display: flex; flex-direction: column; }
+    .s2-topbar {
+      position: sticky; top: var(--chrome-h); z-index: 10;
+      height: 58px; padding: 0 26px;
+      display: flex; align-items: center; gap: 12px;
+      background: var(--surface-nav); border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    }
+    .s2-status-pill {
+      display: flex; align-items: center; gap: 6px;
+      padding: 4px 12px; border: 1px solid var(--border);
+      border-radius: 999px; font-size: 11px; font-weight: 600;
+      color: var(--muted); background: var(--surface);
+    }
+    .s2-status-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--ok); box-shadow: 0 0 6px var(--ok); flex-shrink: 0;
+    }
+    .s2-topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .s2-avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      border: 1px solid var(--border2); background: var(--surface);
+      display: grid; place-items: center; font-size: 11px; font-weight: 700;
+    }
+    .s2-content { padding: 24px 26px; flex: 1; }
+    .s2-pg-title { font-size: 21px; font-weight: 800; letter-spacing: -0.04em; margin-bottom: 4px; }
+    .s2-pg-sub { font-size: 13px; color: var(--muted); margin-bottom: 22px; }
+    .s2-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 14px; margin-bottom: 18px;
+    }
+    .s2-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 18px; padding: 18px;
+      box-shadow: var(--card-shd);
+      backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+      transition: transform 0.2s var(--ease);
+    }
+    .s2-card:hover { transform: translateY(-2px); }
+    .s2-kicker {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.13em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 10px;
+    }
+    .s2-val { font-size: 36px; font-weight: 700; letter-spacing: -0.04em; line-height: 1; }
+    .s2-unit { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .s2-trend {
+      display: inline-flex; align-items: center;
+      margin-top: 10px; padding: 3px 10px; border-radius: 999px;
+      background: var(--primary-bg);
+      font-size: 11px; font-weight: 700; font-family: var(--font-mono);
+      color: var(--primary);
+    }
+    .s2-bars { display: flex; align-items: flex-end; gap: 3px; height: 30px; margin-top: 12px; }
+    .s2-bar { flex: 1; border-radius: 3px 3px 0 0; background: var(--primary-bg); }
+    .s2-bar.hi { background: linear-gradient(to top, var(--primary2), var(--primary)); }
+    .s2-sources { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+    .s2-src-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+    .s2-src-name { width: 130px; color: var(--text2); }
+    .s2-src-track { flex: 1; height: 4px; background: var(--border); border-radius: 999px; overflow: hidden; }
+    .s2-src-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--primary2), var(--primary)); }
+    .s2-src-num { width: 24px; text-align: right; font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--primary); }
+    .s2-draft-card { grid-column: 1 / 3; }
+    .s2-draft-inner { display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: start; }
+    .s2-draft-meta { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+    .s2-dsec { margin-bottom: 10px; }
+    .s2-dsec-lbl {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 3px;
+    }
+    .s2-dsec-txt { font-size: 13px; color: var(--text2); padding-left: 14px; }
+    .s2-dsec-txt li { margin-bottom: 3px; }
+    .s2-open-btn {
+      height: 36px; padding: 0 16px; border-radius: 10px;
+      background: var(--primary); color: #080f02;
+      font-size: 13px; font-weight: 700; white-space: nowrap;
+      align-self: flex-end;
+      transition: box-shadow 0.15s;
+    }
+    .s2-open-btn:hover { box-shadow: 0 5px 18px var(--glow); }
+    .s2-quick { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+    .s2-qbtn {
+      height: 42px; padding: 0 14px; border-radius: 11px;
+      border: 1px solid var(--border); background: var(--surface);
+      color: var(--text); font-size: 13px; font-weight: 500;
+      display: flex; align-items: center; gap: 10px; text-align: left;
+      transition: border-color 0.14s, color 0.14s;
+    }
+    .s2-qbtn:hover { border-color: var(--primary); color: var(--primary); }
+    .s2-qbtn.pri { background: var(--primary); color: #080f02; border-color: var(--primary); font-weight: 700; }
+    .s2-qbtn.pri:hover { box-shadow: 0 4px 14px var(--glow); }
+    .s2-strip {
+      margin: 0 26px 26px; padding: 0 18px; height: 50px;
+      border: 1px solid var(--border); border-radius: 14px;
+      background: var(--surface-nav); backdrop-filter: blur(16px);
+      display: flex; align-items: center; gap: 8px 18px; flex-wrap: wrap; font-size: 12px;
+    }
+    .s2-si { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+    .s2-sdot { width: 5px; height: 5px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 5px var(--glow); }
+    .s2-ssep { width: 1px; height: 14px; background: var(--border2); }
+    /* PMD:V2:SURFACE2_CSS:end */
+
+    /* ══════════════════════════════════════════════════════════
+       PMD:V2:SURFACE3_CSS:start  — PRO EDITOR
+    ══════════════════════════════════════════════════════════ */
+    .s3-layout {
+      display: grid; grid-template-columns: 196px 1fr 272px;
+      min-height: calc(100vh - var(--chrome-h));
+    }
+    .s3-sidebar {
+      position: sticky; top: var(--chrome-h);
+      height: calc(100vh - var(--chrome-h));
+      background: var(--sidebar-bg); border-right: 1px solid var(--border);
+      padding: 18px 0; backdrop-filter: blur(24px); overflow-y: auto;
+    }
+    .s3-sb-title {
+      padding: 0 18px 14px; font-size: 10px; font-weight: 800;
+      letter-spacing: 0.13em; text-transform: uppercase; color: var(--muted);
+      border-bottom: 1px solid var(--border); margin-bottom: 6px;
+    }
+    .s3-main { padding: 26px; display: flex; flex-direction: column; gap: 18px; }
+    .s3-topbar {
+      display: flex; align-items: center; gap: 12px;
+      padding-bottom: 18px; border-bottom: 1px solid var(--border);
+    }
+    .s3-rep-title { font-size: 18px; font-weight: 800; letter-spacing: -0.04em; flex: 1; }
+    .s3-saved { font-size: 12px; color: var(--ok); display: flex; align-items: center; gap: 5px; }
+    .s3-saved::before { content: "✓"; }
+    .s3-btn {
+      height: 35px; padding: 0 16px; border-radius: 10px;
+      font-size: 13px; font-weight: 600;
+      border: 1px solid var(--border2); color: var(--text);
+      background: var(--surface); backdrop-filter: blur(12px);
+      transition: border-color 0.14s, color 0.14s;
+    }
+    .s3-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .s3-btn.pri { background: var(--primary); color: #080f02; border-color: var(--primary); }
+    .s3-btn.pri:hover { box-shadow: 0 4px 14px var(--glow); }
+    .s3-field { display: flex; flex-direction: column; gap: 6px; }
+    .s3-flbl {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--muted);
+    }
+    .s3-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .s3-input {
+      width: 100%; background: var(--surface);
+      border: 1px solid var(--border2); border-radius: 12px;
+      padding: 10px 14px; font: inherit; font-size: 13px; color: var(--text);
+      backdrop-filter: blur(12px); transition: border-color 0.14s; resize: vertical;
+    }
+    .s3-input:focus { outline: none; border-color: var(--primary); }
+    .s3-input.tall { min-height: 88px; }
+    .s3-rec-wrap { display: flex; flex-direction: column; gap: 6px; }
+    .s3-rec-card {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      padding: 12px 14px;
+      backdrop-filter: blur(12px);
+    }
+    .s3-rec-main {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 12px; flex-wrap: wrap;
+    }
+    .s3-rec-line { font-size: 13px; color: var(--text2); line-height: 1.45; }
+    .s3-rec-k { color: var(--muted); font-size: 12px; }
+    .s3-rec-tg { font-family: var(--font-mono); font-size: 12px; color: var(--primary); font-weight: 600; }
+    .s3-rec-pick {
+      height: 32px; padding: 0 12px; border-radius: 9px;
+      font-size: 12px; font-weight: 600;
+      border: 1px solid var(--border2); color: var(--text);
+      background: var(--surface); backdrop-filter: blur(8px);
+      white-space: nowrap; flex-shrink: 0;
+      transition: border-color 0.14s, color 0.14s;
+    }
+    .s3-rec-pick:hover { border-color: var(--primary); color: var(--primary); }
+    .s3-rec-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .s3-chip {
+      font-size: 11px; font-weight: 600; font-family: var(--font-mono);
+      padding: 4px 10px; border-radius: 999px;
+      background: var(--primary-bg);
+      border: 1px solid rgba(163, 230, 53, 0.22);
+      color: var(--primary);
+    }
+    .s3-rec-hint {
+      font-size: 11px; color: var(--muted); margin: 10px 0 0;
+      line-height: 1.45; max-width: 42em;
+    }
+    .s3-export {
+      display: flex; align-items: center; gap: 10px;
+      padding-top: 18px; border-top: 1px solid var(--border);
+    }
+    .s3-exp-lbl { font-size: 12px; color: var(--muted); }
+    .s3-exp-btn {
+      height: 30px; padding: 0 12px; border-radius: 8px;
+      border: 1px solid var(--border2); font-size: 12px; font-weight: 600;
+      color: var(--text2); background: var(--surface);
+      transition: border-color 0.14s, color 0.14s;
+    }
+    .s3-exp-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .s3-ai {
+      position: sticky; top: var(--chrome-h);
+      height: calc(100vh - var(--chrome-h));
+      background: var(--sidebar-bg); border-left: 1px solid var(--border);
+      padding: 18px 14px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto;
+    }
+    .s3-ai-title {
+      font-size: 10px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--muted); padding-bottom: 10px; border-bottom: 1px solid var(--border); margin-bottom: 4px;
+    }
+    .s3-ai-btn {
+      display: flex; align-items: center; gap: 10px;
+      height: 42px; padding: 0 13px; border-radius: 11px;
+      border: 1px solid var(--border); background: var(--surface);
+      color: var(--text2); font-size: 12px; font-weight: 500; text-align: left;
+      transition: border-color 0.14s, color 0.14s, background 0.14s;
+    }
+    .s3-ai-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-dim); }
+    .s3-ai-ico { font-size: 14px; flex-shrink: 0; }
+    /* PMD:V2:SURFACE3_CSS:end */
+
+    /* ══════════════════════════════════════════════════════════
+       PMD:V2:SURFACE4_CSS:start  — TEAM ADMIN
+    ══════════════════════════════════════════════════════════ */
+    .s4-layout {
+      display: grid; grid-template-columns: 196px 1fr;
+      min-height: calc(100vh - var(--chrome-h));
+    }
+    .s4-sidebar {
+      position: sticky; top: var(--chrome-h);
+      height: calc(100vh - var(--chrome-h));
+      background: var(--sidebar-bg); border-right: 1px solid var(--border);
+      padding: 18px 0; backdrop-filter: blur(24px); overflow-y: auto;
+    }
+    .s4-sb-lbl {
+      padding: 0 18px 10px; font-size: 10px; font-weight: 800;
+      letter-spacing: 0.13em; text-transform: uppercase; color: var(--muted);
+    }
+    .s4-main { padding: 26px; }
+    .s4-hdr {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 16px; flex-wrap: wrap; margin-bottom: 22px;
+    }
+    .s4-title { font-size: 22px; font-weight: 900; letter-spacing: -0.05em; font-style: italic; }
+    .s4-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+    .s4-hdr-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .s4-hdr-btn {
+      height: 34px; padding: 0 14px; border-radius: 10px;
+      font-size: 12px; font-weight: 600;
+      border: 1px solid var(--border2); color: var(--text);
+      background: var(--surface); backdrop-filter: blur(12px);
+      transition: border-color 0.14s, color 0.14s;
+    }
+    .s4-hdr-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .s4-hdr-btn.pri {
+      background: var(--primary); color: #080f02;
+      border-color: var(--primary); font-weight: 700;
+      box-shadow: 0 4px 16px var(--glow);
+    }
+    .s4-hdr-btn.pri:hover { box-shadow: 0 6px 24px var(--glow); }
+
+    /* KPI row */
+    .s4-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+    .s4-kpi {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 18px; padding: 18px 16px; box-shadow: var(--card-shd);
+      backdrop-filter: blur(18px);
+    }
+    .s4-kpi.health {
+      border-color: rgba(163, 230, 53, 0.24);
+      box-shadow: var(--card-shd), 0 0 24px rgba(163,230,53,0.07);
+    }
+    .s4-kpi.warn    { border-color: var(--status-risk-border); }
+    .s4-kpi.blocked { border-color: var(--status-blocked-border); }
+    .s4-kpi-lbl {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.10em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 10px;
+    }
+    .s4-kpi-val { font-size: 34px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; }
+    .s4-kpi.health .s4-kpi-val { color: var(--primary); }
+    .s4-kpi.warn    .s4-kpi-val { color: var(--status-risk); }
+    .s4-kpi.blocked .s4-kpi-val { color: var(--status-blocked); }
+    .s4-kpi-sub { font-size: 11px; color: var(--muted); margin-top: 7px; font-family: var(--font-mono); }
+
+    /* Body grid */
+    .s4-body { display: grid; grid-template-columns: 1fr 296px; gap: 18px; align-items: start; }
+
+    /* Action Required card */
+    .s4-attn-card {
+      background: var(--surface); border: 1px solid var(--status-risk-border);
+      border-radius: 18px; overflow: hidden; box-shadow: var(--card-shd);
+      backdrop-filter: blur(16px); margin-bottom: 14px;
+    }
+    .s4-attn-hdr {
+      padding: 12px 18px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .s4-attn-title { font-size: 13px; font-weight: 700; }
+    .s4-attn-cnt {
+      height: 20px; padding: 0 7px; border-radius: 999px;
+      background: var(--status-risk-bg); border: 1px solid var(--status-risk-border);
+      font-size: 10px; font-weight: 700; color: var(--status-risk);
+      display: flex; align-items: center;
+    }
+    .s4-attn-list { padding: 4px 0; }
+    .s4-attn-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 18px; transition: background 0.12s;
+    }
+    .s4-attn-item:hover { background: var(--primary-dim); }
+    .s4-attn-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .s4-attn-dot.red   { background: var(--status-risk);    box-shadow: 0 0 7px var(--status-risk-border); }
+    .s4-attn-dot.amber { background: var(--status-wait);   box-shadow: 0 0 7px var(--status-wait-border); }
+    .s4-attn-dot.lime  { background: var(--primary); box-shadow: 0 0 7px var(--glow); }
+    .s4-attn-body { flex: 1; min-width: 0; }
+    .s4-attn-proj   { font-size: 13px; font-weight: 700; color: var(--text); }
+    .s4-attn-reason { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .s4-attn-act {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.05em;
+      padding: 3px 9px; border-radius: 7px;
+      background: var(--surface-2); border: 1px solid var(--border2);
+      color: var(--text2); white-space: nowrap; flex-shrink: 0;
+      transition: border-color 0.14s, color 0.14s;
+    }
+    .s4-attn-item:hover .s4-attn-act { border-color: var(--primary); color: var(--primary); }
+
+    /* Project Pulse table */
+    .s4-tbl-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 18px; overflow: hidden; box-shadow: var(--card-shd);
+      backdrop-filter: blur(16px);
+    }
+    .s4-tbl-hdr {
+      padding: 14px 18px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .s4-tbl-ttl { font-size: 14px; font-weight: 700; }
+    .s4-tbl-cnt {
+      height: 22px; padding: 0 8px; border-radius: 999px;
+      background: var(--primary-bg); font-size: 11px; font-weight: 700;
+      color: var(--primary); display: flex; align-items: center;
+    }
+    .s4-tbl th {
+      padding: 9px 14px; text-align: left;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.10em;
+      text-transform: uppercase; color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+    .s4-tbl td { padding: 11px 14px; font-size: 13px; border-bottom: 1px solid var(--border); color: var(--text2); }
+    .s4-tbl tr:last-child td { border-bottom: none; }
+    .s4-proj-name { font-weight: 700; color: var(--text); font-size: 14px; }
+    .s4-badge {
+      display: inline-flex; height: 22px; padding: 0 9px;
+      border-radius: 999px; font-size: 10px; font-weight: 700;
+      align-items: center; gap: 4px;
+    }
+    .s4-badge.active  { background: rgba(74,222,128,0.12);  color: var(--ok);     border: 1px solid rgba(74,222,128,0.24); }
+    .s4-badge.risk    { background: var(--status-risk-bg);    color: var(--status-risk);    border: 1px solid var(--status-risk-border); }
+    .s4-badge.wait    { background: var(--status-wait-bg);    color: var(--status-wait);    border: 1px solid var(--status-wait-border); }
+    .s4-badge.done    { background: var(--primary-bg); color: var(--primary); border: 1px solid rgba(163,230,53,0.24); }
+    .s4-report-badge {
+      display: inline-flex; height: 22px; padding: 0 9px;
+      border-radius: 999px; font-size: 10px; font-weight: 700;
+      align-items: center; background: var(--surface-2); border: 1px solid var(--border); color: var(--muted);
+    }
+    .s4-report-badge.rdy  { background: var(--primary-bg); color: var(--primary); border-color: rgba(163,230,53,0.24); }
+    .s4-report-badge.sent { background: rgba(74,222,128,0.10); color: var(--ok); border-color: rgba(74,222,128,0.22); }
+    .s4-risk { font-size: 11px; font-weight: 700; font-family: var(--font-mono); }
+    .s4-risk.r0 { color: var(--muted); }
+    .s4-risk.r1 { color: var(--status-wait); }
+    .s4-risk.r2 { color: var(--status-risk); }
+    .s4-owner-name { font-size: 12px; font-weight: 600; color: var(--text2); }
+
+    /* Right column */
+    .s4-right { display: flex; flex-direction: column; gap: 14px; }
+    .s4-rcard {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 18px; padding: 16px 18px; box-shadow: var(--card-shd);
+      backdrop-filter: blur(16px);
+    }
+    .s4-rcard-ttl {
+      font-size: 10px; font-weight: 800; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 14px;
+    }
+
+    /* Members */
+    .s4-members { display: flex; flex-direction: column; }
+    .s4-member {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 0; border-bottom: 1px solid var(--border);
+    }
+    .s4-member:last-child { border-bottom: none; }
+    .s4-member-av {
+      width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+      background: var(--primary-bg); border: 1px solid rgba(163,230,53,0.30);
+      display: grid; place-items: center;
+      font-size: 10px; font-weight: 800; color: var(--primary);
+    }
+    .s4-member-av.grey { background: var(--surface-2); border-color: var(--border2); color: var(--muted); }
+    .s4-member-info { flex: 1; min-width: 0; }
+    .s4-member-name { font-size: 12px; font-weight: 700; color: var(--text); line-height: 1.2; }
+    .s4-member-stat { font-size: 10px; color: var(--muted); margin-top: 1px; }
+    .s4-role-badge {
+      font-size: 9px; font-weight: 800; letter-spacing: 0.06em;
+      padding: 3px 8px; border-radius: 6px; white-space: nowrap; flex-shrink: 0;
+    }
+    .s4-role-badge.owner  { background: var(--primary-bg); color: var(--primary);  border: 1px solid rgba(163,230,53,0.24); }
+    .s4-role-badge.admin  { background: rgba(14,165,233,0.10); color: #38bdf8;     border: 1px solid rgba(14,165,233,0.22); }
+    .s4-role-badge.member { background: var(--surface-2); color: var(--muted);     border: 1px solid var(--border); }
+    .s4-invite-btn {
+      width: 100%; height: 34px; margin-top: 12px; border-radius: 10px;
+      background: var(--primary-dim); border: 1px dashed rgba(163,230,53,0.32);
+      color: var(--primary); font-size: 12px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      transition: background 0.14s, border-color 0.14s;
+    }
+    .s4-invite-btn:hover { background: var(--primary-bg); border-color: var(--primary); }
+
+    /* Invite link */
+    .s4-link-wrap {
+      background: var(--surface-2); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px;
+    }
+    .s4-link-lbl {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.10em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 5px;
+    }
+    .s4-link-text { font-size: 11px; font-family: var(--font-mono); color: var(--primary); word-break: break-all; }
+    .s4-link-btns { display: flex; gap: 6px; }
+    .s4-link-btn {
+      flex: 1; height: 30px; border-radius: 8px;
+      border: 1px solid var(--border2); background: var(--surface);
+      font-size: 11px; font-weight: 600; color: var(--text2);
+      transition: border-color 0.14s, color 0.14s;
+    }
+    .s4-link-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+    /* Activity chart */
+    .s4-act-bars { display: flex; align-items: flex-end; gap: 5px; height: 58px; }
+    .s4-abar { flex: 1; border-radius: 4px 4px 0 0; background: var(--primary-dim); }
+    .s4-abar.hi { background: linear-gradient(to top, var(--primary2), var(--primary)); }
+    .s4-abar.today {
+      background: linear-gradient(to top, var(--primary2), var(--primary));
+      box-shadow: 0 0 10px var(--glow);
+    }
+    .s4-abar-lbls { display: flex; gap: 5px; margin-top: 8px; }
+    .s4-abar-lbl { flex: 1; font-size: 9px; color: var(--muted); text-align: center; }
+    .s4-abar-lbl.today { color: var(--primary); font-weight: 700; }
+
+    /* Data sources */
+    .s4-srcs { display: flex; flex-direction: column; gap: 10px; }
+    .s4-src { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+    .s4-src-name { width: 86px; color: var(--text2); font-weight: 500; flex-shrink: 0; }
+    .s4-src-track { flex: 1; height: 5px; background: var(--border); border-radius: 999px; overflow: hidden; }
+    .s4-src-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--primary2), var(--primary)); }
+    .s4-src-pct { width: 28px; text-align: right; font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--primary); }
+    .s4-src-status {
+      font-size: 9px; font-weight: 800; letter-spacing: 0.05em;
+      padding: 2px 7px; border-radius: 5px; white-space: nowrap; flex-shrink: 0;
+    }
+    .s4-src-status.on   { background: rgba(74,222,128,0.10); color: var(--ok); border: 1px solid rgba(74,222,128,0.20); }
+    .s4-src-status.lock { background: var(--surface-2); color: var(--muted); border: 1px solid var(--border); }
+    /* PMD:V2:SURFACE4_CSS:end */
+
+    /* ══════════════════════════════════════════════════════════
+       PMD:V2:SURFACE5_CSS:start  — SUPER ADMIN
+    ══════════════════════════════════════════════════════════ */
+    .s5-layout {
+      display: grid; grid-template-columns: 200px 1fr;
+      min-height: calc(100vh - var(--chrome-h));
+    }
+    .s5-sidebar {
+      position: sticky; top: var(--chrome-h);
+      height: calc(100vh - var(--chrome-h));
+      background: var(--sidebar-bg); border-right: 1px solid var(--border);
+      padding: 18px 0; backdrop-filter: blur(24px); overflow-y: auto;
+    }
+    .s5-sb-lbl {
+      padding: 0 18px 12px; font-size: 10px; font-weight: 800;
+      letter-spacing: 0.13em; text-transform: uppercase;
+      color: var(--primary); border-bottom: 1px solid var(--border); margin-bottom: 6px;
+    }
+    .s5-main { padding: 26px; }
+    .s5-hdr {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      margin-bottom: 22px;
+    }
+    .s5-title { font-size: 21px; font-weight: 800; letter-spacing: -0.04em; }
+    .s5-sub { font-size: 13px; color: var(--muted); margin-top: 3px; }
+    .s5-admin-badge {
+      height: 30px; padding: 0 14px; border-radius: 999px;
+      background: var(--primary-bg); border: 1px solid var(--primary);
+      font-size: 11px; font-weight: 800; letter-spacing: 0.08em;
+      color: var(--primary); display: inline-flex; align-items: center;
+      box-shadow: 0 0 16px var(--glow);
+    }
+    .s5-kpis {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 12px; margin-bottom: 22px;
+    }
+    .s5-kpi {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 16px 18px; box-shadow: var(--card-shd);
+      backdrop-filter: blur(16px);
+    }
+    .s5-kpi-primary { border-color: rgba(163, 230, 53, 0.28); box-shadow: var(--card-shd), 0 0 28px rgba(163,230,53,0.08); }
+    .s5-kpi-lbl { font-size: 11px; color: var(--muted); margin-bottom: 8px; font-weight: 500; }
+    .s5-kpi-val { font-size: 28px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; }
+    .s5-kpi-primary .s5-kpi-val { color: var(--primary); }
+    .s5-kpi-delta {
+      margin-top: 6px; font-size: 11px; font-weight: 700;
+      font-family: var(--font-mono); color: var(--primary);
+    }
+    .s5-delta-ok { color: var(--ok); }
+    .s5-body { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .s5-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 18px; padding: 18px; box-shadow: var(--card-shd);
+      backdrop-filter: blur(16px);
+    }
+    .s5-card-full { grid-column: 1 / -1; }
+    .s5-card-ttl {
+      font-size: 10px; font-weight: 800; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 14px;
+    }
+    .s5-plans { display: flex; flex-direction: column; gap: 10px; }
+    .s5-plan-row { display: flex; align-items: center; gap: 9px; font-size: 12px; }
+    .s5-plan-name { width: 44px; font-weight: 700; color: var(--text); }
+    .s5-plan-track { flex: 1; height: 5px; background: var(--border); border-radius: 999px; overflow: hidden; }
+    .s5-plan-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--primary2), var(--primary)); }
+    .s5-plan-fill-muted { background: var(--border2); }
+    .s5-plan-pct { width: 30px; text-align: right; font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--primary); }
+    .s5-plan-cnt { width: 38px; text-align: right; font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--muted); }
+    .s5-pay-srcs { display: flex; flex-direction: column; gap: 11px; }
+    .s5-pay-row { display: flex; align-items: center; gap: 9px; font-size: 12px; }
+    .s5-pay-ico { font-size: 14px; width: 20px; text-align: center; flex-shrink: 0; }
+    .s5-pay-name { width: 110px; color: var(--text2); }
+    .s5-pay-pct { width: 30px; text-align: right; font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--primary); }
+    .s5-events { display: flex; flex-direction: column; gap: 0; }
+    .s5-evt {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 0; border-bottom: 1px solid var(--border);
+      font-size: 12px;
+    }
+    .s5-evt:last-child { border-bottom: none; }
+    .s5-evt-time { font-family: var(--font-mono); font-size: 11px; color: var(--muted); width: 36px; flex-shrink: 0; }
+    .s5-evt-type {
+      height: 20px; padding: 0 7px; border-radius: 5px;
+      font-size: 10px; font-weight: 800; letter-spacing: 0.06em;
+      display: inline-flex; align-items: center; flex-shrink: 0;
+    }
+    .s5-evt-pay  { background: rgba(163,230,53,0.12); color: var(--primary); border: 1px solid rgba(163,230,53,0.22); }
+    .s5-evt-new  { background: rgba(14,165,233,0.12); color: #38bdf8; border: 1px solid rgba(14,165,233,0.22); }
+    .s5-evt-warn { background: var(--status-critical-bg); color: var(--status-critical); border: 1px solid var(--status-critical-border); }
+    .s5-evt-desc { font-size: 12px; color: var(--text2); }
+    /* Access Control */
+    .s5-access { margin-bottom: 20px; }
+    .s5-ac-hdr { margin-bottom: 12px; }
+    .s5-ac-title { font-size: 15px; font-weight: 800; letter-spacing: -0.03em; }
+    .s5-ac-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .s5-spot {
+      background: var(--surface); border: 1px solid rgba(163, 230, 53, 0.22);
+      border-radius: 14px; padding: 14px 16px; margin-bottom: 10px;
+      box-shadow: var(--card-shd);
+      backdrop-filter: blur(16px);
+    }
+    .s5-spot-rows { font-size: 12px; color: var(--text2); line-height: 1.6; }
+    .s5-spot-rows b { color: var(--text); font-weight: 600; }
+    .s5-spot-tg { font-family: var(--font-mono); color: var(--primary); font-weight: 600; }
+    .s5-ac-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+    .s5-ac-btn {
+      height: 30px; padding: 0 12px; border-radius: 8px;
+      font-size: 11px; font-weight: 600;
+      border: 1px solid var(--border2); background: var(--surface);
+      color: var(--text2);
+      transition: border-color 0.14s, color 0.14s, box-shadow 0.14s;
+    }
+    .s5-ac-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .s5-ac-btn.s5-ac-revoke {
+      border-color: var(--status-critical-border);
+      color: var(--status-critical);
+      background: var(--status-critical-bg);
+    }
+    .s5-ac-btn.s5-ac-revoke:hover { border-color: var(--status-critical); }
+    .s5-ac-lower { display: grid; grid-template-columns: 1fr 288px; gap: 16px; align-items: start; }
+    .s5-tbl { width: 100%; }
+    .s5-tbl th {
+      padding: 8px 10px; text-align: left; font-size: 9px; font-weight: 800;
+      letter-spacing: 0.10em; text-transform: uppercase; color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+    .s5-tbl td {
+      padding: 9px 10px; font-size: 12px; color: var(--text2);
+      border-bottom: 1px solid var(--border);
+    }
+    .s5-tbl tr:last-child td { border-bottom: none; }
+    .s5-tbl-user { font-family: var(--font-mono); font-weight: 600; color: var(--text); }
+    .s5-tbl-ac { font-size: 11px; font-weight: 600; color: var(--primary); }
+    .s5-tbl-emp { color: var(--muted); }
+    .s5-theme-tier {
+      font-size: 9px; font-weight: 800; letter-spacing: 0.11em;
+      color: var(--primary); margin: 0 0 4px 0; text-transform: uppercase;
+    }
+    .s5-theme-list { font-size: 11px; color: var(--text2); line-height: 1.5; margin: 0 0 10px 0; padding-left: 16px; }
+    .s5-theme-list:last-of-type { margin-bottom: 0; }
+    .s5-card.s5-card-tbl { padding: 0; overflow: hidden; }
+    .s5-card.s5-card-tbl .s5-card-ttl {
+      padding: 14px 16px; border-bottom: 1px solid var(--border); margin-bottom: 0;
+    }
+    /* PMD:V2:SURFACE5_CSS:end */
+
+    /* ══════════════════════════════════════════════════════════
+       PMD:V2:THEME_VARS — extra themes (minimal globals, safe fallback)
+    ══════════════════════════════════════════════════════════ */
+    body[data-theme="neo-pink"] {
+      --bg: #07050A; --bg2: #0e080f; --surface: rgba(20,12,24,.72); --surface-2: rgba(28,14,32,.88);
+      --surface-nav: rgba(10,6,14,.92); --sidebar-bg: rgba(8,4,12,.98);
+      --text: #FFF7FD; --text2: #e8c8e4; --muted: #9a7898;
+      --primary: #FF3DF2; --primary2: #d400c8; --primary-bg: rgba(255,61,242,.14);
+      --primary-dim: rgba(255,61,242,.07); --glow: rgba(255,61,242,.55);
+      --border: rgba(255,255,255,.07); --border2: rgba(255,255,255,.14);
+      --card-shd: 0 28px 72px rgba(0,0,0,.65), inset 0 1px 0 rgba(255,255,255,.04);
+      --danger: #ff4d4d; --warn: #ff8fea; --ok: #00f5c8;
+      --c-dot: rgba(255,61,242,.82); --c-line: rgba(255,61,242,.18); --c-ambient: rgba(200,160,200,.28);
+      --status-ok:#00f5c8;--status-ok-2:#00c8a8;--status-wait:#ff8fea;--status-wait-bg:rgba(255,143,234,.10);
+      --status-wait-border:rgba(255,143,234,.35);--status-risk:#FF3DF2;--status-risk-2:#d400c8;
+      --status-risk-bg:rgba(255,61,242,.10);--status-risk-border:rgba(255,61,242,.40);
+      --status-blocked:#7a2cff;--status-blocked-2:#5500cc;--status-blocked-bg:rgba(122,44,255,.10);
+      --status-blocked-border:rgba(122,44,255,.38);--status-critical:#ff4d4d;
+      --status-critical-2:#ff6b6b;--status-critical-bg:rgba(255,77,77,.10);
+      --status-critical-border:rgba(255,77,77,.35);
+    }
+    body[data-theme="cyber-violet"] {
+      --bg: #080510; --bg2: #0d0820; --surface: rgba(18,10,32,.72); --surface-2: rgba(24,14,44,.88);
+      --surface-nav: rgba(10,6,20,.92); --sidebar-bg: rgba(8,4,18,.98);
+      --text: #F8F3FF; --text2: #d6b4ff; --muted: #8060a8;
+      --primary: #9B5CFF; --primary2: #7a30ee; --primary-bg: rgba(155,92,255,.14);
+      --primary-dim: rgba(155,92,255,.07); --glow: rgba(155,92,255,.55);
+      --border: rgba(255,255,255,.07); --border2: rgba(255,255,255,.14);
+      --card-shd: 0 28px 72px rgba(0,0,0,.65), inset 0 1px 0 rgba(255,255,255,.04);
+      --danger: #ff4d4d; --warn: #d6b4ff; --ok: #00f5c8;
+      --c-dot: rgba(155,92,255,.85); --c-line: rgba(155,92,255,.18); --c-ambient: rgba(180,150,220,.28);
+      --status-ok:#00f5c8;--status-ok-2:#00c8a8;--status-wait:#d6b4ff;--status-wait-bg:rgba(214,180,255,.10);
+      --status-wait-border:rgba(214,180,255,.38);--status-risk:#9B5CFF;--status-risk-2:#7a30ee;
+      --status-risk-bg:rgba(155,92,255,.10);--status-risk-border:rgba(155,92,255,.40);
+      --status-blocked:#00f5c8;--status-blocked-2:#00a88a;--status-blocked-bg:rgba(0,245,200,.10);
+      --status-blocked-border:rgba(0,245,200,.40);--status-critical:#ff4d4d;
+      --status-critical-2:#ff6b6b;--status-critical-bg:rgba(255,77,77,.10);
+      --status-critical-border:rgba(255,77,77,.35);
+    }
+    body[data-theme="ice-mint"] {
+      --bg: #F4FFFB; --bg2: #E8FFF5; --surface: rgba(255,255,255,.88); --surface-2: rgba(255,255,255,.96);
+      --surface-nav: rgba(255,255,255,.96); --sidebar-bg: rgba(244,255,251,.98);
+      --text: #07130F; --text2: #1a3328; --muted: #507060;
+      --primary: #00F5C8; --primary2: #00c8a8; --primary-bg: rgba(0,245,200,.12);
+      --primary-dim: rgba(0,245,200,.06); --glow: rgba(0,245,200,.42);
+      --border: rgba(0,80,60,.10); --border2: rgba(0,80,60,.20);
+      --card-shd: 0 20px 60px rgba(0,60,40,.10), inset 0 1px 0 rgba(255,255,255,.80);
+      --danger: #cc1a1a; --warn: #a3e635; --ok: #00c878;
+      --c-dot: rgba(0,200,160,.70); --c-line: rgba(0,200,160,.22); --c-ambient: rgba(60,140,110,.28);
+      --status-ok:#00c878;--status-ok-2:#00a860;--status-wait:#a3e635;--status-wait-bg:rgba(163,230,53,.10);
+      --status-wait-border:rgba(163,230,53,.38);--status-risk:#00F5C8;--status-risk-2:#00c8a8;
+      --status-risk-bg:rgba(0,245,200,.10);--status-risk-border:rgba(0,245,200,.42);
+      --status-blocked:#007a64;--status-blocked-2:#005a4a;--status-blocked-bg:rgba(0,122,100,.08);
+      --status-blocked-border:rgba(0,122,100,.30);--status-critical:#cc1a1a;
+      --status-critical-2:#e03232;--status-critical-bg:rgba(204,26,26,.08);
+      --status-critical-border:rgba(204,26,26,.28);
+    }
+    body[data-theme="emerald-glass"] {
+      --bg: #03110B; --bg2: #061a10; --surface: rgba(8,30,18,.72); --surface-2: rgba(12,38,22,.88);
+      --surface-nav: rgba(4,16,10,.92); --sidebar-bg: rgba(3,12,8,.98);
+      --text: #F7FFF9; --text2: #b8e8c8; --muted: #6a9878;
+      --primary: #00C878; --primary2: #009858; --primary-bg: rgba(0,200,120,.14);
+      --primary-dim: rgba(0,200,120,.07); --glow: rgba(0,200,120,.55);
+      --border: rgba(255,255,255,.06); --border2: rgba(255,255,255,.13);
+      --card-shd: 0 28px 72px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.04);
+      --danger: #ff4d4d; --warn: #a3e635; --ok: #00f5c8;
+      --c-dot: rgba(0,200,120,.85); --c-line: rgba(0,200,120,.18); --c-ambient: rgba(100,180,140,.28);
+      --status-ok:#00f5c8;--status-ok-2:#00c8a8;--status-wait:#a3e635;--status-wait-bg:rgba(163,230,53,.10);
+      --status-wait-border:rgba(163,230,53,.38);--status-risk:#00C878;--status-risk-2:#009858;
+      --status-risk-bg:rgba(0,200,120,.10);--status-risk-border:rgba(0,200,120,.40);
+      --status-blocked:#00f5c8;--status-blocked-2:#009870;--status-blocked-bg:rgba(0,245,200,.10);
+      --status-blocked-border:rgba(0,245,200,.40);--status-critical:#ff4d4d;
+      --status-critical-2:#ff6b6b;--status-critical-bg:rgba(255,77,77,.10);
+      --status-critical-border:rgba(255,77,77,.35);
+    }
+    body[data-theme="midnight-cyan"] {
+      --bg: #030712; --bg2: #060d1e; --surface: rgba(8,18,36,.72); --surface-2: rgba(12,24,48,.88);
+      --surface-nav: rgba(4,10,22,.92); --sidebar-bg: rgba(3,8,18,.98);
+      --text: #F7FCFF; --text2: #b8d8e8; --muted: #5878a0;
+      --primary: #00D9FF; --primary2: #00a8c8; --primary-bg: rgba(0,217,255,.14);
+      --primary-dim: rgba(0,217,255,.07); --glow: rgba(0,217,255,.55);
+      --border: rgba(255,255,255,.06); --border2: rgba(255,255,255,.13);
+      --card-shd: 0 28px 72px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.04);
+      --danger: #ff4d4d; --warn: #a3e635; --ok: #00f5c8;
+      --c-dot: rgba(0,217,255,.85); --c-line: rgba(0,217,255,.18); --c-ambient: rgba(80,140,180,.28);
+      --status-ok:#00f5c8;--status-ok-2:#00c8a8;--status-wait:#a3e635;--status-wait-bg:rgba(163,230,53,.10);
+      --status-wait-border:rgba(163,230,53,.38);--status-risk:#00D9FF;--status-risk-2:#00a8c8;
+      --status-risk-bg:rgba(0,217,255,.10);--status-risk-border:rgba(0,217,255,.40);
+      --status-blocked:#00f5c8;--status-blocked-2:#009870;--status-blocked-bg:rgba(0,245,200,.10);
+      --status-blocked-border:rgba(0,245,200,.40);--status-critical:#ff4d4d;
+      --status-critical-2:#ff6b6b;--status-critical-bg:rgba(255,77,77,.10);
+      --status-critical-border:rgba(255,77,77,.35);
+    }
+    body[data-theme="lime-matrix"] {
+      --bg: #020502; --bg2: #040a04; --surface: rgba(6,14,6,.72); --surface-2: rgba(8,18,8,.88);
+      --surface-nav: rgba(3,8,3,.92); --sidebar-bg: rgba(2,6,2,.98);
+      --text: #F7FFF4; --text2: #c8e8b8; --muted: #60887a;
+      --primary: #A3E635; --primary2: #7cff00; --primary-bg: rgba(163,230,53,.14);
+      --primary-dim: rgba(163,230,53,.07); --glow: rgba(163,230,53,.60);
+      --border: rgba(255,255,255,.06); --border2: rgba(255,255,255,.13);
+      --card-shd: 0 28px 72px rgba(0,0,0,.65), inset 0 1px 0 rgba(255,255,255,.04);
+      --danger: #ff4d4d; --warn: #00ff66; --ok: #00f5c8;
+      --c-dot: rgba(163,230,53,.90); --c-line: rgba(163,230,53,.22); --c-ambient: rgba(120,200,80,.30);
+      --status-ok:#7cff00;--status-ok-2:#a3e635;--status-wait:#00ff66;--status-wait-bg:rgba(0,255,102,.10);
+      --status-wait-border:rgba(0,255,102,.38);--status-risk:#A3E635;--status-risk-2:#7cff00;
+      --status-risk-bg:rgba(163,230,53,.10);--status-risk-border:rgba(163,230,53,.40);
+      --status-blocked:#00f5c8;--status-blocked-2:#00c8a8;--status-blocked-bg:rgba(0,245,200,.10);
+      --status-blocked-border:rgba(0,245,200,.40);--status-critical:#ff4d4d;
+      --status-critical-2:#ff6b6b;--status-critical-bg:rgba(255,77,77,.10);
+      --status-critical-border:rgba(255,77,77,.35);
+    }
+    body[data-theme="aurora-mint"] {
+      --bg: #031014; --bg2: #041820; --surface: rgba(8,28,36,.72); --surface-2: rgba(10,36,46,.88);
+      --surface-nav: rgba(4,16,22,.92); --sidebar-bg: rgba(3,12,18,.98);
+      --text: #F3FFFC; --text2: #b8e8e0; --muted: #508898;
+      --primary: #00F5C8; --primary2: #00c8a8; --primary-bg: rgba(0,245,200,.14);
+      --primary-dim: rgba(0,245,200,.07); --glow: rgba(0,245,200,.55);
+      --border: rgba(255,255,255,.06); --border2: rgba(255,255,255,.13);
+      --card-shd: 0 28px 72px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.04);
+      --danger: #ff4d4d; --warn: #00D9FF; --ok: #a3e635;
+      --c-dot: rgba(0,245,200,.85); --c-line: rgba(0,245,200,.18); --c-ambient: rgba(60,160,140,.28);
+      --status-ok:#a3e635;--status-ok-2:#7cff00;--status-wait:#00D9FF;--status-wait-bg:rgba(0,217,255,.10);
+      --status-wait-border:rgba(0,217,255,.38);--status-risk:#00F5C8;--status-risk-2:#00c8a8;
+      --status-risk-bg:rgba(0,245,200,.10);--status-risk-border:rgba(0,245,200,.40);
+      --status-blocked:#a3e635;--status-blocked-2:#7cff00;--status-blocked-bg:rgba(163,230,53,.10);
+      --status-blocked-border:rgba(163,230,53,.38);--status-critical:#ff4d4d;
+      --status-critical-2:#ff6b6b;--status-critical-bg:rgba(255,77,77,.10);
+      --status-critical-border:rgba(255,77,77,.35);
+    }
+    /* PMD:V2:THEME_VARS:end */
+
+    /* ══════════════════════════════════════════════════════════
+       PMD:V2:THEME_GALLERY_CSS
+    ══════════════════════════════════════════════════════════ */
+    .tg-section { margin-top: 28px; }
+    .tg-hdr { margin-bottom: 16px; }
+    .tg-title { font-size: 15px; font-weight: 800; letter-spacing: -0.03em; }
+    .tg-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .tg-note {
+      font-size: 11px; color: var(--muted); margin-top: 14px; font-style: italic;
+      padding: 8px 14px; border-radius: 8px;
+      background: var(--surface); border: 1px solid var(--border);
+      display: inline-block;
+    }
+    .tg-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .tg-card {
+      border-radius: 14px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 12px 40px rgba(0,0,0,.50);
+      transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
+      cursor: pointer; position: relative;
+    }
+    .tg-card:hover { transform: translateY(-3px); box-shadow: 0 20px 56px rgba(0,0,0,.60); }
+    .tg-card.tg-active {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--primary), 0 16px 48px rgba(0,0,0,.55), 0 0 28px var(--glow);
+    }
+    .tg-mini {
+      /* each card's bg/colors come from inline style */
+      height: 98px; position: relative; overflow: hidden; padding: 10px;
+      display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .tg-mini-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 4px; }
+    .tg-mini-glass {
+      flex: 1; min-width: 0; border-radius: 7px; padding: 5px 7px;
+      backdrop-filter: blur(6px);
+    }
+    .tg-mini-label { font-size: 7px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.65; }
+    .tg-mini-val   { font-size: 13px; font-weight: 800; letter-spacing: -0.04em; margin-top: 1px; }
+    .tg-mini-cta {
+      height: 20px; padding: 0 8px; border-radius: 5px;
+      font-size: 7px; font-weight: 800; letter-spacing: 0.04em;
+      display: inline-flex; align-items: center; flex-shrink: 0;
+    }
+    .tg-mini-chart { display: flex; align-items: flex-end; gap: 2px; height: 18px; margin-top: 4px; }
+    .tg-mini-bar { flex: 1; border-radius: 2px 2px 0 0; min-width: 3px; }
+    .tg-meta {
+      padding: 8px 10px 9px;
+      display: flex; align-items: center; justify-content: space-between; gap: 6px;
+      background: rgba(0,0,0,.55);
+    }
+    .tg-light .tg-meta { background: rgba(255,255,255,.90); }
+    .tg-meta-left { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+    .tg-meta-name { font-size: 11px; font-weight: 700; letter-spacing: -0.02em; color: #f0f0ee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tg-light .tg-meta-name { color: #101810; }
+    .tg-meta-swatches { display: flex; gap: 3px; }
+    .tg-swatch { width: 8px; height: 8px; border-radius: 50%; }
+    .tg-badge {
+      font-size: 8px; font-weight: 800; letter-spacing: 0.06em;
+      padding: 2px 6px; border-radius: 4px; white-space: nowrap; flex-shrink: 0;
+    }
+    .tg-badge-free  { background: rgba(163,230,53,.18); color: #a3e635; border: 1px solid rgba(163,230,53,.30); }
+    .tg-badge-pro   { background: rgba(255,255,255,.09); color: #ccc; border: 1px solid rgba(255,255,255,.16); }
+    .tg-badge-sa    { background: rgba(0,245,200,.14); color: #00f5c8; border: 1px solid rgba(0,245,200,.30); }
+    .tg-light .tg-badge-free  { background: rgba(100,200,0,.12); color: #4a8a00; border: 1px solid rgba(100,200,0,.28); }
+    .tg-light .tg-badge-pro   { background: rgba(0,0,0,.06); color: #606060; border: 1px solid rgba(0,0,0,.14); }
+    .tg-preview-btn {
+      height: 22px; padding: 0 9px; border-radius: 6px;
+      font-size: 9px; font-weight: 700;
+      border: 1px solid rgba(255,255,255,.22); color: #f0f0ee;
+      background: rgba(255,255,255,.08);
+      transition: background 0.14s, border-color 0.14s;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .tg-light .tg-preview-btn { border-color: rgba(0,0,0,.18); color: #202820; background: rgba(0,0,0,.05); }
+    .tg-card:hover .tg-preview-btn { background: rgba(255,255,255,.15); border-color: rgba(255,255,255,.40); }
+    .tg-light:hover .tg-preview-btn { background: rgba(0,0,0,.10); border-color: rgba(0,0,0,.28); }
+    @media (max-width: 1100px) { .tg-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 800px)  { .tg-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 500px)  { .tg-grid { grid-template-columns: 1fr; } }
+    /* PMD:V2:THEME_GALLERY_CSS:end */
+
+    /* ── PMD:V2:DEMO_MODAL_CSS ───────────────────────────────── */
+    .demo-overlay {
+      position: fixed; inset: 0; z-index: 3000;
+      background: rgba(0, 0, 0, 0.70);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.22s var(--ease);
+    }
+    .demo-overlay.open { opacity: 1; pointer-events: all; }
+    .demo-card {
+      background: var(--surface-2);
+      border: 1px solid var(--border2);
+      border-radius: 24px; padding: 36px 32px 28px;
+      width: 460px; max-width: calc(100vw - 32px);
+      box-shadow: 0 48px 100px rgba(0,0,0,0.55),
+                  inset 0 1px 0 rgba(255,255,255,0.06);
+      position: relative;
+      transform: translateY(12px);
+      transition: transform 0.22s var(--ease);
+    }
+    .demo-overlay.open .demo-card { transform: translateY(0); }
+    .demo-close-btn {
+      position: absolute; top: 14px; right: 14px;
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--surface); border: 1px solid var(--border2);
+      color: var(--muted); font-size: 13px;
+      display: grid; place-items: center;
+      transition: color 0.14s, border-color 0.14s;
+    }
+    .demo-close-btn:hover { color: var(--text); border-color: var(--primary); }
+    .demo-pip-row { display: flex; justify-content: center; gap: 5px; margin-bottom: 28px; }
+    .demo-pip {
+      height: 5px; width: 5px; border-radius: 999px;
+      background: var(--border2);
+      transition: background 0.2s, width 0.2s;
+    }
+    .demo-pip.active { width: 22px; background: var(--primary); }
+    .demo-step-ico {
+      font-size: 40px; text-align: center;
+      margin-bottom: 14px; line-height: 1;
+    }
+    .demo-step-title {
+      font-size: 21px; font-weight: 900; font-style: italic;
+      letter-spacing: -0.04em; text-align: center; margin-bottom: 10px;
+    }
+    .demo-step-title mark { background: none; color: var(--primary); }
+    .demo-step-desc {
+      font-size: 14px; color: var(--text2); text-align: center;
+      line-height: 1.65; margin-bottom: 28px; min-height: 46px;
+    }
+    .demo-nav-row {
+      display: flex; gap: 10px; justify-content: center;
+    }
+    .demo-nav-btn {
+      height: 40px; padding: 0 22px; border-radius: 11px;
+      font-size: 13px; font-weight: 600;
+      border: 1px solid var(--border2); color: var(--text);
+      background: var(--surface); backdrop-filter: blur(12px);
+      transition: border-color 0.14s, color 0.14s;
+    }
+    .demo-nav-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .demo-nav-btn.pri {
+      background: var(--primary); color: #080f02;
+      border-color: var(--primary); font-weight: 700;
+      box-shadow: 0 4px 18px var(--glow);
+    }
+    .demo-nav-btn.pri:hover { box-shadow: 0 6px 24px var(--glow); }
+
+    /* ── PMD:V2:SUPPORT_LINK_CSS ─────────────────────────────── */
+    .s1-support {
+      margin-top: 22px; display: flex; align-items: center; gap: 6px;
+    }
+    .s1-support-link {
+      font-size: 12px; color: var(--muted);
+      display: inline-flex; align-items: center; gap: 5px;
+      transition: color 0.14s;
+    }
+    .s1-support-link:hover { color: var(--primary); }
+    .s1-support-link b { font-weight: 700; color: var(--text2); transition: color 0.14s; }
+    .s1-support-link:hover b { color: var(--primary); }
+
+    /* PMD:V2:RESPONSIVE_RULES:start */
+    @media (max-width: 1200px) {
+      .s1-hero { grid-template-columns: 1fr; padding: 48px 48px 56px; }
+      .s1-phone-wrap { display: none; }
+      .s2-grid { grid-template-columns: 1fr 1fr; }
+      .s4-kpis { grid-template-columns: 1fr 1fr; }
+      .s5-kpis { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 840px) {
+      .s1-nav-links { display: none; }
+      .s1-nav { padding: 0 20px; }
+      .s1-hero { padding: 32px 20px 48px; }
+      .s2-layout, .s4-layout, .s5-layout { grid-template-columns: 1fr; }
+      .s3-layout { grid-template-columns: 1fr; }
+      .s2-sidebar, .s3-sidebar, .s4-sidebar, .s5-sidebar, .s3-ai { display: none; }
+      .s2-grid { grid-template-columns: 1fr; }
+      .s2-draft-card { grid-column: 1; }
+      .s4-body { grid-template-columns: 1fr; }
+      .s4-kpis { grid-template-columns: 1fr 1fr; }
+      .s5-body { grid-template-columns: 1fr; }
+      .s5-ac-lower { grid-template-columns: 1fr; }
+      .surface-tabs button { font-size: 11px; padding: 0 9px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        transition-duration: 0.001ms !important;
+      }
+    }
+    /* PMD:V2:RESPONSIVE_RULES:end */
+
+  </style>
+</head>
+<body>
+  <script>
+  (function () {
+    /* Early theme bootstrap: avoids wrong first paint. In production inside Telegram Mini App,
+       also consider window.Telegram?.WebApp?.colorScheme and themeParams for defaults. */
+    try {
+      var k = "pm-digest-v2-theme";
+      var s = localStorage.getItem(k);
+      var all = ["dark-lime","light-lime","wave-blue","neo-pink","cyber-violet","ice-mint",
+                 "emerald-glass","midnight-cyan","lime-matrix","aurora-mint"];
+      var v = (all.indexOf(s) !== -1)
+        ? s
+        : (window.matchMedia("(prefers-color-scheme: light)").matches ? "light-lime" : "dark-lime");
+      document.body.dataset.theme = v;
+    } catch (e) {
+      document.body.dataset.theme = "dark-lime";
+    }
+  })();
+  </script>
+
+  <!-- PMD:V2:BACKGROUND_CANVAS_LAYER:start -->
+  <canvas id="bg-canvas" aria-hidden="true"></canvas>
+  <!-- PMD:V2:BACKGROUND_CANVAS_LAYER:end -->
+
+  <!-- PMD:V2:PROTO_CHROME:start -->
+  <div class="proto-chrome">
+    <div class="proto-label">PM DIGEST</div>
+    <div class="proto-sep"></div>
+    <div class="surface-tabs">
+      <button class="active" data-surface="1">① Landing</button>
+      <button data-surface="2">② Dashboard</button>
+      <button data-surface="3">③ PRO Editor</button>
+      <button data-surface="4">④ Team Admin</button>
+      <button data-surface="5">⑤ Super Admin</button>
+    </div>
+    <div class="proto-right">
+      <span class="theme-gate-legend">Dark / Light — <b>FREE</b> · Premium →</span>
+      <div class="theme-sw" aria-label="FREE themes">
+        <button type="button" data-theme-btn="dark-lime" title="Dark Lime — FREE">D</button>
+        <button type="button" data-theme-btn="light-lime" title="Light Lime — FREE">L</button>
+      </div>
+      <div class="theme-pro-sep"></div>
+      <div class="theme-pro-row" aria-label="PRO themes">
+        <button type="button" class="theme-pro-chip" data-theme-pro="wave-blue" title="Wave Blue — PRO">
+          <span class="tpc-dot" style="background:#2f7dff"></span>Wave<span class="tpc-lock">🔒</span>
+        </button>
+        <button type="button" class="theme-pro-chip" data-theme-pro="neo-pink" title="Neo Pink — PRO">
+          <span class="tpc-dot" style="background:#ff4d9e"></span>Pink<span class="tpc-lock">🔒</span>
+        </button>
+        <button type="button" class="theme-pro-chip" data-theme-pro="cyber-violet" title="Cyber Violet — PRO">
+          <span class="tpc-dot" style="background:#a855f7"></span>Violet<span class="tpc-lock">🔒</span>
+        </button>
+        <button type="button" class="theme-pro-chip" data-theme-pro="ice-mint" title="Ice Mint — PRO">
+          <span class="tpc-dot" style="background:#00f5c8"></span>Mint<span class="tpc-lock">🔒</span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- PMD:V2:PROTO_CHROME:end -->
+
+  <!-- ══════════════════════════════════════════════════════════
+       PMD:V2:SURFACE1:start — Landing Page · Telegram Native Luxury
+  ══════════════════════════════════════════════════════════ -->
+  <div class="surface active" id="surface-1">
+
+    <!-- Navigation -->
+    <nav class="s1-nav">
+      <div class="s1-brand">PM<mark>·</mark>DIGEST</div>
+      <div class="s1-nav-links">
+        <a href="#s1-how">Как работает</a>
+        <a href="#s1-features">Возможности</a>
+        <a href="#s1-pricing">Тарифы</a>
+        <a href="#s1-security">Безопасность</a>
+      </div>
+      <div class="s1-nav-right">
+        <button class="s1-lang-btn">RU</button>
+        <button class="s1-open-btn">Открыть бота →</button>
+      </div>
+    </nav>
+
+    <!-- ── Hero ──────────────────────────────────────────────── -->
+    <div class="s1-hero">
+
+      <div>
+        <div class="s1-eyebrow">Telegram · Mini App · Reports</div>
+        <h1 class="s1-h1">
+          Ваш личный ассистент<br>
+          для <mark>ежедневных отчётов</mark>
+        </h1>
+        <p class="s1-sub">
+          PM Digest превращает заметки, voice и проектные апдейты в структурированный delivery report за минуты. Черновик приходит в Telegram — вы проверяете и отправляете.
+        </p>
+        <div class="s1-actions">
+          <button class="s1-btn-primary">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+            </svg>
+            Открыть в Telegram
+          </button>
+          <button class="s1-btn-ghost" id="demo-btn">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+            Смотреть демо
+          </button>
+        </div>
+        <div class="s1-benefits">
+          <div class="s1-benefit"><span class="s1-benefit-dot"></span>Работает 24/7</div>
+          <div class="s1-benefit"><span class="s1-benefit-dot"></span>Без авто-постинга</div>
+          <div class="s1-benefit"><span class="s1-benefit-dot"></span>Telegram-native</div>
+        </div>
+      </div>
+
+      <!-- Phone mockup -->
+      <div class="s1-phone-wrap">
+        <div class="s1-phone">
+          <div class="s1-phone-notch"><div class="s1-phone-notch-pill"></div></div>
+          <div class="s1-phone-screen">
+            <div class="s1-chat-hdr">
+              <div class="s1-chat-av">🤖</div>
+              <div>
+                <div class="s1-chat-name">PM Digest Bot</div>
+                <div class="s1-chat-online">онлайн</div>
+              </div>
+            </div>
+            <div class="s1-msgs">
+              <div class="s1-msg bot">Привет! Пришлите заметку или голосовое — соберу отчёт.</div>
+              <div class="s1-voice">
+                <div class="s1-voice-play">▶</div>
+                <div class="s1-voice-wave">
+                  <span style="height:7px"></span><span style="height:13px"></span>
+                  <span style="height:18px"></span><span style="height:11px"></span>
+                  <span style="height:20px"></span><span style="height:15px"></span>
+                  <span style="height:9px"></span><span style="height:17px"></span>
+                  <span style="height:13px"></span><span style="height:7px"></span>
+                  <span style="height:15px"></span><span style="height:19px"></span>
+                  <span style="height:11px"></span><span style="height:6px"></span>
+                  <span style="height:14px"></span>
+                </div>
+                <div class="s1-voice-dur">0:42</div>
+              </div>
+              <div class="s1-msg bot">
+                Готово! Черновик отчёта:
+                <div class="s1-draft-card">
+                  <div class="s1-draft-title">📋 Project Alpha</div>
+                  <div class="s1-draft-row">
+                    <label>ЧТО СДЕЛАНО</label>
+                    Интеграция API завершена
+                  </div>
+                  <div class="s1-draft-row">
+                    <label>РИСКИ</label>
+                    Задержка внешнего сервиса
+                  </div>
+                  <div class="s1-chat-btns">
+                    <button class="s1-chat-btn pri">Посмотреть</button>
+                    <button class="s1-chat-btn">Отправить себе</button>
+                    <button class="s1-chat-btn">Редактировать</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="s1-phone-home"><div class="s1-phone-home-bar"></div></div>
+        </div>
+      </div>
+
+    </div><!-- /s1-hero -->
+
+    <!-- ── For Whom ───────────────────────────────────────────── -->
+    <div class="s1-content">
+      <div class="s1-section" id="s1-audience">
+        <div class="s1-sec-eyebrow">Целевая аудитория</div>
+        <h2 class="s1-sec-h2">Для тех, кто <mark>делает отчёты</mark> каждый день</h2>
+        <div class="s1-audience">
+          <div class="s1-audience-left">
+            <p style="font-size:15px;color:var(--text2);line-height:1.65;max-width:460px;margin-bottom:24px;">
+              Для тех, кто каждый день собирает апдейты, риски и планы по нескольким проектам.
+            </p>
+            <div class="s1-roles">
+              <div class="s1-role-pill"><span>📊</span>Project Manager</div>
+              <div class="s1-role-pill"><span>🧭</span>Product Manager</div>
+              <div class="s1-role-pill"><span>🚀</span>Delivery Manager</div>
+              <div class="s1-role-pill"><span>🔧</span>Team Lead</div>
+              <div class="s1-role-pill"><span>👥</span>Руководитель команды</div>
+            </div>
+          </div>
+          <div class="s1-audience-quote">
+            <p>«Раньше я тратил 40 минут на сбор апдейтов по проектам. Теперь диктую голосовые заметки в течение дня — <strong>готовый отчёт через минуту.</strong>»</p>
+            <p style="margin-top:14px;font-size:12px;color:var(--muted);font-style:normal;">— Senior PM, продуктовая команда · 5 проектов</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── How It Works ───────────────────────────────────────── -->
+    <div class="s1-content">
+      <div class="s1-section" id="s1-how">
+        <div class="s1-sec-eyebrow">Как это работает</div>
+        <h2 class="s1-sec-h2"><mark>4 шага</mark> от заметки до отчёта</h2>
+        <p class="s1-sec-sub">Весь процесс происходит внутри Telegram. Никаких лишних приложений.</p>
+        <div class="s1-steps-grid">
+          <div class="s1-step-card">
+            <div class="s1-step-num">01</div>
+            <div class="s1-step-ico">🎙️</div>
+            <div class="s1-step-title">Пишите или диктуете заметки</div>
+            <div class="s1-step-desc">Текстовая заметка или голосовое сообщение прямо в Telegram-боте. В любое время дня.</div>
+            <div class="s1-step-connector"></div>
+          </div>
+          <div class="s1-step-card">
+            <div class="s1-step-num">02</div>
+            <div class="s1-step-ico">🧠</div>
+            <div class="s1-step-title">PM Digest распознаёт проект, план и риски</div>
+            <div class="s1-step-desc">Автоматически определяет: что сделано, что планируется, какие риски и блокеры.</div>
+            <div class="s1-step-connector"></div>
+          </div>
+          <div class="s1-step-card">
+            <div class="s1-step-num">03</div>
+            <div class="s1-step-ico">📋</div>
+            <div class="s1-step-title">Получаете готовый черновик</div>
+            <div class="s1-step-desc">Структурированный delivery report прямо в чат. Можно открыть в Report Studio для правки.</div>
+            <div class="s1-step-connector"></div>
+          </div>
+          <div class="s1-step-card">
+            <div class="s1-step-num">04</div>
+            <div class="s1-step-ico">✉️</div>
+            <div class="s1-step-title">Копируете, редактируете или отправляете себе</div>
+            <div class="s1-step-desc">Одна кнопка — и отчёт у вас в личке. Никакого авто-постинга в рабочие чаты без вашего ведома.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Features ───────────────────────────────────────────── -->
+    <div class="s1-content">
+      <div class="s1-section" id="s1-features">
+        <div class="s1-sec-eyebrow">Возможности</div>
+        <h2 class="s1-sec-h2">Всё, что нужно <mark>PM-у в Telegram</mark></h2>
+        <p class="s1-sec-sub">Голос, текст, редактор, экспорт, команда — всё в одном месте.</p>
+        <div class="s1-feat-grid">
+          <div class="s1-feat-card">
+            <div class="s1-feat-ico">🎙️</div>
+            <div class="s1-feat-title">Voice → text</div>
+            <div class="s1-feat-desc">Голосовые апдейты превращаются в понятные структурированные заметки.</div>
+            <span class="s1-feat-tag free">FREE</span>
+          </div>
+          <div class="s1-feat-card">
+            <div class="s1-feat-ico">📋</div>
+            <div class="s1-feat-title">Daily reports</div>
+            <div class="s1-feat-desc">Ежедневный delivery report по каждому проекту. Автоматически, без лишних действий.</div>
+            <span class="s1-feat-tag free">FREE</span>
+          </div>
+          <div class="s1-feat-card">
+            <div class="s1-feat-ico">📅</div>
+            <div class="s1-feat-title">Weekly / Monthly</div>
+            <div class="s1-feat-desc">Сводки за неделю и месяц с динамикой и KPI. Готовы к отправке руководству.</div>
+            <span class="s1-feat-tag pro">PRO</span>
+          </div>
+          <div class="s1-feat-card">
+            <div class="s1-feat-ico">✏️</div>
+            <div class="s1-feat-title">Report Studio</div>
+            <div class="s1-feat-desc">Редактирование черновика, executive style, перевод на EN, настройка структуры.</div>
+            <span class="s1-feat-tag pro">PRO</span>
+          </div>
+          <div class="s1-feat-card">
+            <div class="s1-feat-ico">📤</div>
+            <div class="s1-feat-title">Export</div>
+            <div class="s1-feat-desc">PDF, Word и presentation-ready текст. Готово для Slack, Notion, почты и встреч.</div>
+            <span class="s1-feat-tag pro">PRO</span>
+          </div>
+          <div class="s1-feat-card">
+            <div class="s1-feat-ico">👥</div>
+            <div class="s1-feat-title">Team dashboard</div>
+            <div class="s1-feat-desc">Роли Owner / Admin / Member, shared templates, Executive Pulse и пульс по всем проектам.</div>
+            <span class="s1-feat-tag team">TEAM</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Pricing ─────────────────────────────────────────────── -->
+    <div class="s1-content">
+      <div class="s1-section" id="s1-pricing">
+        <div class="s1-sec-eyebrow">Тарифы</div>
+        <h2 class="s1-sec-h2">Начните <mark>бесплатно</mark>, растите с командой</h2>
+        <p class="s1-sec-sub">Все тарифы включают доступ через Telegram и Mini App. Без скрытых комиссий.</p>
+        <div class="s1-pricing-grid">
+
+          <!-- FREE -->
+          <div class="s1-plan-card">
+            <div class="s1-plan-name">FREE</div>
+            <div class="s1-plan-price"><span class="price-free">0</span></div>
+            <div class="s1-plan-subtitle">Для первого теста · без карты</div>
+            <div class="s1-plan-divider"></div>
+            <ul class="s1-plan-features">
+              <li>Daily reports</li>
+              <li>3 проекта</li>
+              <li>10 заметок / день</li>
+              <li>7 дней истории</li>
+              <li>Dark / Light themes</li>
+            </ul>
+            <button class="s1-plan-cta ghost">Начать бесплатно</button>
+          </div>
+
+          <!-- PRO (highlighted) -->
+          <div class="s1-plan-card popular">
+            <div class="s1-plan-popular-badge">★ Популярный</div>
+            <div class="s1-plan-name">PRO</div>
+            <div class="s1-plan-price"><sup>$</sup>6<span class="price-mo">.99 / мес</span></div>
+            <div class="s1-plan-subtitle">Для PM, который делает отчёты каждый день</div>
+            <div class="s1-plan-divider"></div>
+            <ul class="s1-plan-features">
+              <li>Безлимит заметок</li>
+              <li>Weekly / Monthly сводки</li>
+              <li>AI-редактор отчёта</li>
+              <li>Export PDF / Word</li>
+              <li>Premium themes</li>
+              <li>90 дней истории</li>
+            </ul>
+            <button class="s1-plan-cta primary">Upgrade to PRO</button>
+          </div>
+
+          <!-- TEAM -->
+          <div class="s1-plan-card">
+            <div class="s1-plan-name">TEAM</div>
+            <div class="s1-plan-price"><sup>$</sup>19<span class="price-mo">–29 / workspace</span></div>
+            <div class="s1-plan-subtitle">Для команд и руководителей</div>
+            <div class="s1-plan-divider"></div>
+            <ul class="s1-plan-features">
+              <li>Участники команды</li>
+              <li>Роли Owner / Admin / Member</li>
+              <li>Shared templates</li>
+              <li>Executive Pulse</li>
+              <li>Monthly summary</li>
+              <li>Team Brand Theme</li>
+            </ul>
+            <button class="s1-plan-cta mint">Подключить TEAM</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Security ───────────────────────────────────────────── -->
+    <div class="s1-content">
+      <div class="s1-section" id="s1-security">
+        <div class="s1-sec-eyebrow">Безопасность</div>
+        <h2 class="s1-sec-h2">Ваши данные <mark>под контролем</mark></h2>
+        <div class="s1-security-grid">
+          <div class="s1-sec-trust">
+            <div class="s1-sec-trust-ico">🔒</div>
+            <div class="s1-sec-trust-label">Local-first ready</div>
+          </div>
+          <div class="s1-sec-trust">
+            <div class="s1-sec-trust-ico">👤</div>
+            <div class="s1-sec-trust-label">User-scoped data</div>
+          </div>
+          <div class="s1-sec-trust">
+            <div class="s1-sec-trust-ico">🚫</div>
+            <div class="s1-sec-trust-label">Нет авто-постинга в рабочие чаты</div>
+          </div>
+          <div class="s1-sec-trust">
+            <div class="s1-sec-trust-ico">✈️</div>
+            <div class="s1-sec-trust-label">Telegram auth</div>
+          </div>
+          <div class="s1-sec-trust">
+            <div class="s1-sec-trust-ico">👁️</div>
+            <div class="s1-sec-trust-label">Ручная проверка перед отправкой</div>
+          </div>
+        </div>
+        <div class="s1-sec-note">
+          <strong>PM Digest не публикует отчёты автоматически.</strong> Вы всегда проверяете черновик перед отправкой. Никаких неожиданных сообщений в рабочих чатах.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Footer ─────────────────────────────────────────────── -->
+    <footer class="s1-footer">
+      <div class="s1-footer-brand">PM<mark>·</mark>DIGEST</div>
+      <div>
+        <a href="https://t.me/PM_vibe" target="_blank" rel="noopener" class="s1-support-link">
+          💬 Нашли проблему или есть идея? Напишите супер-админу: <b>@PM_vibe</b>
+        </a>
+      </div>
+      <div style="color:var(--muted);font-size:11px;">© 2026 PM Digest · Prototype only</div>
+    </footer>
+
+  </div>
+  <!-- PMD:V2:SURFACE1:end -->
+
+  <!-- ══════════════════════════════════════════════════════════
+       PMD:V2:SURFACE2:start — App Dashboard · Premium Control Room
+  ══════════════════════════════════════════════════════════ -->
+  <div class="surface" id="surface-2">
+    <div class="s2-layout">
+
+      <aside class="s2-sidebar">
+        <div class="s2-sb-brand">
+          <h2>PM<mark>·</mark>DIGEST</h2>
+          <p>Delivery Reports</p>
+        </div>
+        <div class="sidebar-nav-item active">▣&ensp;Dashboard</div>
+        <div class="sidebar-nav-item">✎&ensp;Заметки</div>
+        <div class="sidebar-nav-item">◎&ensp;Проекты</div>
+        <div class="sidebar-nav-item">◈&ensp;Отчёты</div>
+        <div class="sidebar-nav-item">▤&ensp;Шаблоны</div>
+        <div class="sidebar-nav-item">↗&ensp;Аналитика</div>
+        <div class="sidebar-nav-item">⚙&ensp;Настройки</div>
+        <div class="s2-sb-user">
+          <div class="s2-sb-av">АГ</div>
+          <div>
+            <div class="s2-sb-uname">Анатолий Графкин</div>
+            <div class="s2-sb-tg">@anatoliy_grafkin</div>
+            <div class="s2-sb-plan-row">
+              <span class="pro-badge">PRO</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <div class="s2-main">
+        <div class="s2-topbar">
+          <div class="s2-status-pill">
+            <span class="s2-status-dot"></span> System online
+          </div>
+          <div class="s2-topbar-right">
+            <span class="pro-badge">PRO</span>
+            <div class="s2-avatar" title="Анатолий Графкин">АГ</div>
+          </div>
+        </div>
+
+        <div class="s2-content">
+          <div class="s2-pg-title">Dashboard</div>
+          <div class="s2-pg-sub">Понедельник, 27 апреля 2026</div>
+
+          <div class="s2-grid">
+
+            <div class="s2-card">
+              <div class="s2-kicker">Сегодня собрано</div>
+              <div class="s2-val">124</div>
+              <div class="s2-unit">заметки</div>
+              <div class="s2-trend">↑ 18%</div>
+              <div class="s2-bars">
+                <div class="s2-bar" style="height:13px"></div>
+                <div class="s2-bar" style="height:17px"></div>
+                <div class="s2-bar" style="height:14px"></div>
+                <div class="s2-bar" style="height:20px"></div>
+                <div class="s2-bar" style="height:16px"></div>
+                <div class="s2-bar hi" style="height:24px"></div>
+                <div class="s2-bar hi" style="height:30px"></div>
+              </div>
+            </div>
+
+            <div class="s2-card">
+              <div class="s2-kicker">Готовность отчёта</div>
+              <div class="s2-val" style="color:var(--primary)">91%</div>
+              <div class="s2-unit">готово к отправке</div>
+              <div class="s2-trend">↑ 7%</div>
+              <div class="s2-bars">
+                <div class="s2-bar" style="height:21px"></div>
+                <div class="s2-bar" style="height:22px"></div>
+                <div class="s2-bar" style="height:24px"></div>
+                <div class="s2-bar" style="height:23px"></div>
+                <div class="s2-bar" style="height:25px"></div>
+                <div class="s2-bar hi" style="height:27px"></div>
+                <div class="s2-bar hi" style="height:30px"></div>
+              </div>
+            </div>
+
+            <div class="s2-card">
+              <div class="s2-kicker">Источники данных</div>
+              <div class="s2-sources" style="margin-top:8px">
+                <div class="s2-src-row">
+                  <span class="s2-src-name">Текстовые</span>
+                  <div class="s2-src-track"><div class="s2-src-fill" style="width:87%"></div></div>
+                  <span class="s2-src-num">68</span>
+                </div>
+                <div class="s2-src-row">
+                  <span class="s2-src-name">Голосовые</span>
+                  <div class="s2-src-track"><div class="s2-src-fill" style="width:38%"></div></div>
+                  <span class="s2-src-num">5</span>
+                </div>
+                <div class="s2-src-row">
+                  <span class="s2-src-name">Проекты</span>
+                  <div class="s2-src-track"><div class="s2-src-fill" style="width:38%"></div></div>
+                  <span class="s2-src-num">5</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="s2-card s2-draft-card">
+              <div class="s2-kicker">Предпросмотр черновика</div>
+              <div class="s2-draft-inner">
+                <div>
+                  <div class="s2-draft-meta">Проект: Alpha · 27 апр 2026</div>
+                  <div class="s2-dsec">
+                    <div class="s2-dsec-lbl">Что сделано</div>
+                    <ul class="s2-dsec-txt">
+                      <li>Интеграция API завершена</li>
+                      <li>Исправлены ошибки авторизации</li>
+                    </ul>
+                  </div>
+                  <div class="s2-dsec">
+                    <div class="s2-dsec-lbl">План</div>
+                    <ul class="s2-dsec-txt"><li>Подготовка релиза</li></ul>
+                  </div>
+                  <div class="s2-dsec">
+                    <div class="s2-dsec-lbl">Риски</div>
+                    <ul class="s2-dsec-txt" style="color:var(--warn)"><li>Задержка от внешнего сервиса</li></ul>
+                  </div>
+                </div>
+                <button class="s2-open-btn">Открыть черновик →</button>
+              </div>
+            </div>
+
+            <div class="s2-card">
+              <div class="s2-kicker">Быстрые действия</div>
+              <div class="s2-quick">
+                <button class="s2-qbtn pri">◈&ensp;Собрать отчёт</button>
+                <button class="s2-qbtn">✎&ensp;Добавить заметку</button>
+                <button class="s2-qbtn">↗&ensp;История отчётов</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="s2-strip">
+          <div class="s2-si"><span class="s2-sdot"></span> Последняя синхронизация: <b style="color:var(--text);margin-left:4px">2 мин назад</b></div>
+          <div class="s2-ssep"></div>
+          <div class="s2-si">Автосбор: <b style="color:var(--ok);margin-left:4px">включён</b></div>
+          <div class="s2-ssep"></div>
+          <div class="s2-si">Источников подключено: <b style="color:var(--text);margin-left:4px">12</b></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <!-- PMD:V2:SURFACE2:end -->
+
+  <!-- ══════════════════════════════════════════════════════════
+       PMD:V2:SURFACE3:start — PRO Editor · Report Studio
+  ══════════════════════════════════════════════════════════ -->
+  <div class="surface" id="surface-3">
+    <div class="s3-layout">
+
+      <aside class="s3-sidebar">
+        <div class="s3-sb-title">Report Studio</div>
+        <div class="sidebar-nav-item active">Редактор отчёта</div>
+        <div class="sidebar-nav-item">Шаблоны</div>
+        <div class="sidebar-nav-item">Экспорт</div>
+        <div class="sidebar-nav-item">История версий</div>
+      </aside>
+
+      <div class="s3-main">
+        <div class="s3-topbar">
+          <div class="s3-rep-title">Отчёт за 27.04.2026</div>
+          <div class="s3-saved">Сохранено</div>
+          <button class="s3-btn">Предпросмотр</button>
+          <button class="s3-btn pri">Отправить</button>
+        </div>
+
+        <div class="s3-2col">
+          <div class="s3-field">
+            <div class="s3-flbl">Дата</div>
+            <input class="s3-input" value="27.04.2026" />
+          </div>
+          <div class="s3-field">
+            <div class="s3-flbl">Проект</div>
+            <input class="s3-input" value="Project Alpha" />
+          </div>
+        </div>
+
+        <div class="s3-rec-wrap">
+          <div class="s3-flbl">Кому отчёт</div>
+          <div class="s3-rec-card">
+            <div class="s3-rec-main">
+              <div>
+                <div class="s3-rec-line"><span class="s3-rec-k">Руководитель:</span> Алексей Петров</div>
+                <div class="s3-rec-line"><span class="s3-rec-k">Telegram:</span> <span class="s3-rec-tg">@alexey_pm</span></div>
+              </div>
+              <button type="button" class="s3-rec-pick">Выбрать получателя</button>
+            </div>
+            <div class="s3-rec-chips">
+              <span class="s3-chip">@pm_vibe</span>
+              <span class="s3-chip">@team_lead</span>
+            </div>
+            <p class="s3-rec-hint">В TEAM можно выбрать участника команды или руководителя.</p>
+          </div>
+        </div>
+
+        <div class="s3-field">
+          <div class="s3-flbl">Что сделано</div>
+          <textarea class="s3-input tall">— Интеграция API завершена
+— Исправлены ошибки авторизации
+— Ревью кода пройдено</textarea>
+        </div>
+
+        <div class="s3-field">
+          <div class="s3-flbl">План на завтра</div>
+          <textarea class="s3-input tall">— Подготовка релиза
+— Деплой на staging
+— Согласование с QA</textarea>
+        </div>
+
+        <div class="s3-field">
+          <div class="s3-flbl">Риски и блокеры</div>
+          <textarea class="s3-input">— Задержка от внешнего сервиса (ETA неизвестна)</textarea>
+        </div>
+
+        <div class="s3-export">
+          <span class="s3-exp-lbl">Экспорт:</span>
+          <button class="s3-exp-btn">PDF</button>
+          <button class="s3-exp-btn">Word</button>
+          <button class="s3-exp-btn">Excel</button>
+          <button class="s3-exp-btn">Canva</button>
+        </div>
+      </div>
+
+      <aside class="s3-ai">
+        <div class="s3-ai-title">✦ AI Действия</div>
+        <button class="s3-ai-btn"><span class="s3-ai-ico">⇲</span> Сделать короче</button>
+        <button class="s3-ai-btn"><span class="s3-ai-ico">◈</span> Executive style</button>
+        <button class="s3-ai-btn"><span class="s3-ai-ico">🌐</span> Перевести на EN</button>
+        <button class="s3-ai-btn"><span class="s3-ai-ico">⚠</span> Выделить риски</button>
+        <button class="s3-ai-btn"><span class="s3-ai-ico">✓</span> Проверить грамматику</button>
+      </aside>
+
+    </div>
+  </div>
+  <!-- PMD:V2:SURFACE3:end -->
+
+  <!-- ══════════════════════════════════════════════════════════
+       PMD:V2:SURFACE4:start — Team Admin · Executive Pulse
+  ══════════════════════════════════════════════════════════ -->
+  <div class="surface" id="surface-4">
+    <div class="s4-layout">
+
+      <aside class="s4-sidebar">
+        <div class="s4-sb-lbl">Команда</div>
+        <div class="sidebar-nav-item active">Executive Pulse</div>
+        <div class="sidebar-nav-item">Пользователи</div>
+        <div class="sidebar-nav-item">Проекты</div>
+        <div class="sidebar-nav-item">Шаблоны</div>
+        <div class="sidebar-nav-item">Тариф и биллинг</div>
+        <div class="sidebar-nav-item">Настройки</div>
+      </aside>
+
+      <div class="s4-main">
+
+        <!-- 1. Header -->
+        <div class="s4-hdr">
+          <div>
+            <div class="s4-title">Executive Pulse</div>
+            <div class="s4-sub">Delivery Team · 8 участников · <span style="color:var(--primary);font-weight:700">TEAM plan</span></div>
+          </div>
+          <div class="s4-hdr-right">
+            <button class="s4-hdr-btn pri">+ Пригласить участника</button>
+            <button class="s4-hdr-btn">Шаблоны команды</button>
+            <button class="s4-hdr-btn">Billing</button>
+            <span class="pro-badge" style="padding:0 14px;height:30px;font-size:11px">TEAM</span>
+          </div>
+        </div>
+
+        <!-- 2. KPI row -->
+        <div class="s4-kpis">
+          <div class="s4-kpi health">
+            <div class="s4-kpi-lbl">Team Health</div>
+            <div class="s4-kpi-val">91%</div>
+            <div class="s4-kpi-sub">↑ 14% за неделю</div>
+          </div>
+          <div class="s4-kpi">
+            <div class="s4-kpi-lbl">Reports Ready</div>
+            <div class="s4-kpi-val" style="color:var(--primary)">23</div>
+            <div class="s4-kpi-sub">5 проектов</div>
+          </div>
+          <div class="s4-kpi warn">
+            <div class="s4-kpi-lbl">Open Risks</div>
+            <div class="s4-kpi-val">3</div>
+            <div class="s4-kpi-sub">2 требуют внимания</div>
+          </div>
+          <div class="s4-kpi blocked">
+            <div class="s4-kpi-lbl">Blocked Items</div>
+            <div class="s4-kpi-val">2</div>
+            <div class="s4-kpi-sub">нужен follow-up</div>
+          </div>
+        </div>
+
+        <!-- Body -->
+        <div class="s4-body">
+
+          <!-- Left: Attention + Project Pulse -->
+          <div>
+
+            <!-- 3. Action Required -->
+            <div class="s4-attn-card">
+              <div class="s4-attn-hdr">
+                <span class="s4-attn-title">Требует внимания</span>
+                <span class="s4-attn-cnt">3</span>
+              </div>
+              <div class="s4-attn-list">
+                <div class="s4-attn-item">
+                  <span class="s4-attn-dot red"></span>
+                  <div class="s4-attn-body">
+                    <div class="s4-attn-proj">Beta</div>
+                    <div class="s4-attn-reason">2 риска · согласование API заблокировано</div>
+                  </div>
+                  <span class="s4-attn-act">Просмотреть</span>
+                </div>
+                <div class="s4-attn-item">
+                  <span class="s4-attn-dot amber"></span>
+                  <div class="s4-attn-body">
+                    <div class="s4-attn-proj">Gamma</div>
+                    <div class="s4-attn-reason">Ответ от клиента задержан</div>
+                  </div>
+                  <span class="s4-attn-act">Follow-up</span>
+                </div>
+                <div class="s4-attn-item">
+                  <span class="s4-attn-dot lime"></span>
+                  <div class="s4-attn-body">
+                    <div class="s4-attn-proj">Alpha</div>
+                    <div class="s4-attn-reason">Релиз завтра · проверить QA</div>
+                  </div>
+                  <span class="s4-attn-act">Check QA</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. Project Pulse table -->
+            <div class="s4-tbl-card">
+              <div class="s4-tbl-hdr">
+                <span class="s4-tbl-ttl">Project Pulse</span>
+                <span class="s4-tbl-cnt">4</span>
+              </div>
+              <table class="s4-tbl">
+                <thead>
+                  <tr>
+                    <th>Проект</th>
+                    <th>Health</th>
+                    <th>Отчёт</th>
+                    <th>Риски</th>
+                    <th>Ответственный</th>
+                    <th>Следующий шаг</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="s4-proj-name">Alpha</td>
+                    <td><span class="s4-badge active">● В норме</span></td>
+                    <td><span class="s4-report-badge rdy">Готов</span></td>
+                    <td><span class="s4-risk r1">⚠ 1</span></td>
+                    <td><span class="s4-owner-name">Анатолий</span></td>
+                    <td>Подготовка релиза</td>
+                  </tr>
+                  <tr>
+                    <td class="s4-proj-name">Beta</td>
+                    <td><span class="s4-badge risk">● Риск</span></td>
+                    <td><span class="s4-report-badge">Черновик</span></td>
+                    <td><span class="s4-risk r2">⚠ 2</span></td>
+                    <td><span class="s4-owner-name">Мария</span></td>
+                    <td>Согласование API</td>
+                  </tr>
+                  <tr>
+                    <td class="s4-proj-name">Gamma</td>
+                    <td><span class="s4-badge wait">● Ожидает</span></td>
+                    <td><span class="s4-report-badge">Черновик</span></td>
+                    <td><span class="s4-risk r1">⚠ 1</span></td>
+                    <td><span class="s4-owner-name">Илья</span></td>
+                    <td>Ответ от клиента</td>
+                  </tr>
+                  <tr>
+                    <td class="s4-proj-name">Delta</td>
+                    <td><span class="s4-badge done">● Готово</span></td>
+                    <td><span class="s4-report-badge sent">Отправлен</span></td>
+                    <td><span class="s4-risk r0">— 0</span></td>
+                    <td><span class="s4-owner-name">Олег</span></td>
+                    <td>Архив</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+
+          <!-- Right column -->
+          <div class="s4-right">
+
+            <!-- 5. Team Members -->
+            <div class="s4-rcard">
+              <div class="s4-rcard-ttl">Команда</div>
+              <div class="s4-members">
+                <div class="s4-member">
+                  <div class="s4-member-av">АГ</div>
+                  <div class="s4-member-info">
+                    <div class="s4-member-name">Анатолий Графкин</div>
+                    <div class="s4-member-stat">Active</div>
+                  </div>
+                  <span class="s4-role-badge owner">Owner</span>
+                </div>
+                <div class="s4-member">
+                  <div class="s4-member-av">МИ</div>
+                  <div class="s4-member-info">
+                    <div class="s4-member-name">Мария Иванова</div>
+                    <div class="s4-member-stat">12 отчётов</div>
+                  </div>
+                  <span class="s4-role-badge admin">Admin</span>
+                </div>
+                <div class="s4-member">
+                  <div class="s4-member-av grey">ИП</div>
+                  <div class="s4-member-info">
+                    <div class="s4-member-name">Илья Петров</div>
+                    <div class="s4-member-stat">8 отчётов</div>
+                  </div>
+                  <span class="s4-role-badge member">Member</span>
+                </div>
+                <div class="s4-member">
+                  <div class="s4-member-av grey">ОС</div>
+                  <div class="s4-member-info">
+                    <div class="s4-member-name">Олег Смирнов</div>
+                    <div class="s4-member-stat">Ожидает</div>
+                  </div>
+                  <span class="s4-role-badge member">Member</span>
+                </div>
+              </div>
+              <button class="s4-invite-btn">+ Пригласить</button>
+            </div>
+
+            <!-- 6. Invite link -->
+            <div class="s4-rcard">
+              <div class="s4-rcard-ttl">Invite Link</div>
+              <div class="s4-link-wrap">
+                <div class="s4-link-lbl">Ссылка для команды</div>
+                <div class="s4-link-text">t.me/pm_digest_bot?start=team_8F3K</div>
+              </div>
+              <div class="s4-link-btns">
+                <button class="s4-link-btn">Скопировать</button>
+                <button class="s4-link-btn">→ Telegram</button>
+              </div>
+            </div>
+
+            <!-- 8. Team Activity -->
+            <div class="s4-rcard">
+              <div class="s4-rcard-ttl">Активность команды</div>
+              <div class="s4-act-bars">
+                <div class="s4-abar" style="height:40%"></div>
+                <div class="s4-abar" style="height:55%"></div>
+                <div class="s4-abar" style="height:68%"></div>
+                <div class="s4-abar hi" style="height:85%"></div>
+                <div class="s4-abar" style="height:60%"></div>
+                <div class="s4-abar today" style="height:100%"></div>
+                <div class="s4-abar" style="height:34%"></div>
+              </div>
+              <div class="s4-abar-lbls">
+                <span class="s4-abar-lbl">Пн</span>
+                <span class="s4-abar-lbl">Вт</span>
+                <span class="s4-abar-lbl">Ср</span>
+                <span class="s4-abar-lbl">Чт</span>
+                <span class="s4-abar-lbl">Пт</span>
+                <span class="s4-abar-lbl today">Сб</span>
+                <span class="s4-abar-lbl">Вс</span>
+              </div>
+            </div>
+
+            <!-- 7. Data Sources -->
+            <div class="s4-rcard">
+              <div class="s4-rcard-ttl">Источники данных</div>
+              <div class="s4-srcs">
+                <div class="s4-src">
+                  <span class="s4-src-name">Telegram Bot</span>
+                  <div class="s4-src-track"><div class="s4-src-fill" style="width:68%"></div></div>
+                  <span class="s4-src-pct">68%</span>
+                  <span class="s4-src-status on">On</span>
+                </div>
+                <div class="s4-src">
+                  <span class="s4-src-name">Mini App</span>
+                  <div class="s4-src-track"><div class="s4-src-fill" style="width:20%"></div></div>
+                  <span class="s4-src-pct">20%</span>
+                  <span class="s4-src-status on">Active</span>
+                </div>
+                <div class="s4-src">
+                  <span class="s4-src-name">Manual Import</span>
+                  <div class="s4-src-track"><div class="s4-src-fill" style="width:12%"></div></div>
+                  <span class="s4-src-pct">12%</span>
+                  <span class="s4-src-status on">On</span>
+                </div>
+                <div class="s4-src">
+                  <span class="s4-src-name">Jira</span>
+                  <div class="s4-src-track"><div class="s4-src-fill" style="width:0%"></div></div>
+                  <span class="s4-src-pct" style="color:var(--muted)">—</span>
+                  <span class="s4-src-status lock">Soon</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <!-- PMD:V2:SURFACE4:end -->
+
+  <!-- ══════════════════════════════════════════════════════════
+       PMD:V2:SURFACE5:start — Super Admin · Platform Metrics
+  ══════════════════════════════════════════════════════════ -->
+  <div class="surface" id="surface-5">
+    <div class="s5-layout">
+
+      <aside class="s5-sidebar">
+        <div class="s5-sb-lbl">⚡ Super Admin</div>
+        <div class="sidebar-nav-item active">Обзор</div>
+        <div class="sidebar-nav-item">Пользователи</div>
+        <div class="sidebar-nav-item">Платежи</div>
+        <div class="sidebar-nav-item">События</div>
+        <div class="sidebar-nav-item">Настройки</div>
+      </aside>
+
+      <div class="s5-main">
+        <!-- PROTOTYPE DATA — in production, super-admin identity must come
+             from env/AdminService logic (SUPER_ADMIN_USERNAMES), not hardcoded UI. -->
+        <div class="s5-hdr">
+          <div>
+            <div class="s5-title">Super Admin</div>
+            <div class="s5-sub">
+              PM Vibe · <span style="font-family:var(--font-mono);color:var(--primary)">@PM_vibe</span>
+              · ID <span style="font-family:var(--font-mono)">7623838243</span>
+              · <span style="text-transform:uppercase;letter-spacing:0.06em;font-size:11px">ru</span>
+              · 27 апр 2026
+            </div>
+          </div>
+          <span class="s5-admin-badge">⚡ SUPER ADMIN</span>
+        </div>
+
+        <div class="s5-kpis">
+          <div class="s5-kpi s5-kpi-primary">
+            <div class="s5-kpi-lbl">MRR</div>
+            <div class="s5-kpi-val">₽ 128 400</div>
+            <div class="s5-kpi-delta">↑ 12.4% к прош. месяцу</div>
+          </div>
+          <div class="s5-kpi">
+            <div class="s5-kpi-lbl">Всего пользователей</div>
+            <div class="s5-kpi-val">1 847</div>
+            <div class="s5-kpi-delta">↑ 8.1%</div>
+          </div>
+          <div class="s5-kpi">
+            <div class="s5-kpi-lbl">Новые за неделю</div>
+            <div class="s5-kpi-val">143</div>
+            <div class="s5-kpi-delta s5-delta-ok">↑ 22%</div>
+          </div>
+          <div class="s5-kpi">
+            <div class="s5-kpi-lbl">Платежей за неделю</div>
+            <div class="s5-kpi-val">89</div>
+            <div class="s5-kpi-delta">↑ 6%</div>
+          </div>
+        </div>
+
+        <!--
+          PROTOTYPE — production must connect Access Control actions to existing
+          AdminService / subscription service / env super-admin checks (not hardcoded UI).
+        -->
+        <div class="s5-access">
+          <div class="s5-ac-hdr">
+            <div class="s5-ac-title">Access Control</div>
+            <div class="s5-ac-sub">Manual grants, test trials and theme access</div>
+          </div>
+
+          <div class="s5-spot">
+            <div class="s5-spot-rows">
+              <div><b>User:</b> <span class="s5-spot-tg">@PM_vibe</span></div>
+              <div><b>ID:</b> <span class="s5-spot-tg">7623838243</span></div>
+              <div><b>Name:</b> PM Vibe</div>
+              <div><b>Plan:</b> TEAM</div>
+              <div><b>Trial:</b> Active · 7 days</div>
+              <div><b>Themes:</b> All themes unlocked</div>
+            </div>
+          </div>
+
+          <div class="s5-ac-btns">
+            <button type="button" class="s5-ac-btn">Grant PRO</button>
+            <button type="button" class="s5-ac-btn">Grant TEAM</button>
+            <button type="button" class="s5-ac-btn">Start 7-day Trial</button>
+            <button type="button" class="s5-ac-btn">Unlock Themes</button>
+            <button type="button" class="s5-ac-btn s5-ac-revoke">Revoke Plan</button>
+          </div>
+
+          <div class="s5-ac-lower">
+            <div class="s5-card s5-card-tbl">
+              <div class="s5-card-ttl">Пользователи</div>
+              <table class="s5-tbl">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Plan</th>
+                    <th>Trial</th>
+                    <th>Themes</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="s5-tbl-user">@PM_vibe</td>
+                    <td>TEAM</td>
+                    <td>Active</td>
+                    <td>All</td>
+                    <td class="s5-tbl-ac">Manage</td>
+                  </tr>
+                  <tr>
+                    <td class="s5-tbl-user">@alexey_pm</td>
+                    <td>FREE</td>
+                    <td class="s5-tbl-emp">—</td>
+                    <td>Basic</td>
+                    <td class="s5-tbl-ac">Grant PRO</td>
+                  </tr>
+                  <tr>
+                    <td class="s5-tbl-user">@team_lead</td>
+                    <td>PRO</td>
+                    <td>5 days</td>
+                    <td>Premium</td>
+                    <td class="s5-tbl-ac">Extend</td>
+                  </tr>
+                  <tr>
+                    <td class="s5-tbl-user">@demo_pm</td>
+                    <td>FREE</td>
+                    <td class="s5-tbl-emp">—</td>
+                    <td>Basic</td>
+                    <td class="s5-tbl-ac">Trial</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="s5-card">
+              <div class="s5-card-ttl">Theme Access</div>
+              <div class="s5-theme-tier">FREE</div>
+              <ul class="s5-theme-list">
+                <li>Dark Lime</li>
+                <li>Light Lime</li>
+              </ul>
+              <div class="s5-theme-tier">PRO</div>
+              <ul class="s5-theme-list">
+                <li>Wave Blue</li>
+                <li>Neo Pink</li>
+                <li>Cyber Violet</li>
+                <li>Ice Mint</li>
+              </ul>
+              <div class="s5-theme-tier">TEAM</div>
+              <ul class="s5-theme-list">
+                <li>Team Brand Theme</li>
+                <li>Shared workspace theme</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="s5-body">
+
+          <div class="s5-card">
+            <div class="s5-card-ttl">Топ тарифы</div>
+            <div class="s5-plans">
+              <div class="s5-plan-row">
+                <span class="s5-plan-name">PRO</span>
+                <div class="s5-plan-track"><div class="s5-plan-fill" style="width:68%"></div></div>
+                <span class="s5-plan-pct">68%</span>
+                <span class="s5-plan-cnt">1 256</span>
+              </div>
+              <div class="s5-plan-row">
+                <span class="s5-plan-name">TEAM</span>
+                <div class="s5-plan-track"><div class="s5-plan-fill" style="width:18%"></div></div>
+                <span class="s5-plan-pct">18%</span>
+                <span class="s5-plan-cnt">332</span>
+              </div>
+              <div class="s5-plan-row">
+                <span class="s5-plan-name">FREE</span>
+                <div class="s5-plan-track"><div class="s5-plan-fill s5-plan-fill-muted" style="width:14%"></div></div>
+                <span class="s5-plan-pct" style="color:var(--muted)">14%</span>
+                <span class="s5-plan-cnt" style="color:var(--muted)">259</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="s5-card">
+            <div class="s5-card-ttl">Платёжные системы</div>
+            <div class="s5-pay-srcs">
+              <div class="s5-pay-row">
+                <span class="s5-pay-ico">⭐</span>
+                <span class="s5-pay-name">Telegram Stars</span>
+                <div class="s5-plan-track"><div class="s5-plan-fill" style="width:74%"></div></div>
+                <span class="s5-pay-pct">74%</span>
+              </div>
+              <div class="s5-pay-row">
+                <span class="s5-pay-ico">💳</span>
+                <span class="s5-pay-name">Card</span>
+                <div class="s5-plan-track"><div class="s5-plan-fill" style="width:16%"></div></div>
+                <span class="s5-pay-pct">16%</span>
+              </div>
+              <div class="s5-pay-row">
+                <span class="s5-pay-ico">₿</span>
+                <span class="s5-pay-name">Crypto</span>
+                <div class="s5-plan-track"><div class="s5-plan-fill" style="width:10%"></div></div>
+                <span class="s5-pay-pct">10%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="s5-card s5-card-full">
+            <div class="s5-card-ttl">Последние события</div>
+            <div class="s5-events">
+              <div class="s5-evt">
+                <span class="s5-evt-time">16:07</span>
+                <span class="s5-evt-type s5-evt-pay">PAY</span>
+                <span class="s5-evt-desc">@user_3821 → PRO · ₽ 490 · Stars</span>
+              </div>
+              <div class="s5-evt">
+                <span class="s5-evt-time">15:54</span>
+                <span class="s5-evt-type s5-evt-new">NEW</span>
+                <span class="s5-evt-desc">@user_3820 зарегистрировался</span>
+              </div>
+              <div class="s5-evt">
+                <span class="s5-evt-time">15:41</span>
+                <span class="s5-evt-type s5-evt-pay">PAY</span>
+                <span class="s5-evt-desc">@user_3819 → TEAM · ₽ 1 490 · Card</span>
+              </div>
+              <div class="s5-evt">
+                <span class="s5-evt-time">15:30</span>
+                <span class="s5-evt-type s5-evt-new">NEW</span>
+                <span class="s5-evt-desc">@user_3818 зарегистрировался</span>
+              </div>
+              <div class="s5-evt">
+                <span class="s5-evt-time">15:12</span>
+                <span class="s5-evt-type s5-evt-warn">ERR</span>
+                <span class="s5-evt-desc">Payment timeout · Stars · user_3817</span>
+              </div>
+              <div class="s5-evt">
+                <span class="s5-evt-time">14:58</span>
+                <span class="s5-evt-type s5-evt-pay">PAY</span>
+                <span class="s5-evt-desc">@user_3816 → PRO · ₽ 490 · Stars</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- PMD:V2:THEME_GALLERY:start -->
+        <div class="tg-section">
+          <div class="tg-hdr">
+            <div class="tg-title">Theme Gallery</div>
+            <div class="tg-sub">Super Admin Preview · all themes unlocked</div>
+          </div>
+
+          <div class="tg-grid" id="tg-grid">
+
+            <!-- dark-lime FREE -->
+            <div class="tg-card" data-tg-theme="dark-lime">
+              <div class="tg-mini" style="background:#050607">
+                <div class="tg-mini-top">
+                  <div class="tg-mini-glass" style="background:rgba(10,15,13,.72);border:1px solid rgba(255,255,255,.07)">
+                    <div class="tg-mini-label" style="color:#8b9287">Reports</div>
+                    <div class="tg-mini-val" style="color:#a3e635">124</div>
+                  </div>
+                  <div class="tg-mini-cta" style="background:#a3e635;color:#080f02">Report →</div>
+                </div>
+                <div class="tg-mini-chart">
+                  <div class="tg-mini-bar" style="height:40%;background:rgba(163,230,53,.25)"></div>
+                  <div class="tg-mini-bar" style="height:55%;background:rgba(163,230,53,.35)"></div>
+                  <div class="tg-mini-bar" style="height:70%;background:rgba(163,230,53,.45)"></div>
+                  <div class="tg-mini-bar" style="height:85%;background:#a3e635"></div>
+                  <div class="tg-mini-bar" style="height:60%;background:rgba(163,230,53,.35)"></div>
+                  <div class="tg-mini-bar" style="height:90%;background:#a3e635"></div>
+                  <div class="tg-mini-bar" style="height:100%;background:#a3e635;box-shadow:0 0 6px #a3e635"></div>
+                </div>
+              </div>
+              <div class="tg-meta">
+                <div class="tg-meta-left">
+                  <div class="tg-meta-name">Dark Lime</div>
+                  <div class="tg-meta-swatches">
+                    <span class="tg-swatch" style="background:#050607;border:1px solid rgba(255,255,255,.2)"></span>
+                    <span class="tg-swatch" style="background:#a3e635"></span>
+                    <span class="tg-swatch" style="background:#00c878"></span>
+                    <span class="tg-swatch" style="background:#f7f7f4;border:1px solid rgba(255,255,255,.15)"></span>
+                  </div>
+                </div>
+                <span class="tg-badge tg-badge-free">FREE</span>
+                <button type="button" class="tg-preview-btn">Preview</button>
+              </div>
+            </div>
+
+            <!-- light-lime FREE -->
+            <div class="tg-card tg-light" data-tg-theme="light-lime">
+              <div class="tg-mini" style="background:#F8FAF3">
+                <div class="tg-mini-top">
+                  <div class="tg-mini-glass" style="background:rgba(255,255,255,.86);border:1px solid rgba(16,24,12,.10)">
+                    <div class="tg-mini-label" style="color:#697268">Reports</div>
+                    <div class="tg-mini-val" style="color:#5fa300">124</div>
+                  </div>
+                  <div class="tg-mini-cta" style="background:#7CFF00;color:#07130f">Report →</div>
+                </div>
+                <div class="tg-mini-chart">
+                  <div class="tg-mini-bar" style="height:40%;background:rgba(108,200,0,.25)"></div>
+                  <div class="tg-mini-bar" style="height:55%;background:rgba(108,200,0,.35)"></div>
+                  <div class="tg-mini-bar" style="height:70%;background:rgba(108,200,0,.50)"></div>
+                  <div class="tg-mini-bar" style="height:85%;background:#7CFF00"></div>
+                  <div class="tg-mini-bar" style="height:60%;background:rgba(108,200,0,.40)"></div>
+                  <div class="tg-mini-bar" style="height:90%;background:#7CFF00"></div>
+                  <div class="tg-mini-bar" style="height:100%;background:#7CFF00"></div>
+                </div>
+              </div>
+              <div class="tg-meta">
+                <div class="tg-meta-left">
+                  <div class="tg-meta-name">Light Lime</div>
+                  <div class="tg-meta-swatches">
+                    <span class="tg-swatch" style="background:#F8FAF3;border:1px solid rgba(0,0,0,.12)"></span>
+                    <span class="tg-swatch" style="background:#7CFF00"></span>
+                    <span class="tg-swatch" style="background:#00C878"></span>
+                    <span class="tg-swatch" style="background:#07130f"></span>
+                  </div>
+                </div>
+                <span class="tg-badge tg-badge-free">FREE</span>
+                <button type="button" class="tg-preview-btn">Preview</button>
+              </div>
+            </div>
+
+            <!-- wave-blue PRO -->
+            <div class="tg-card tg-light" data-tg-theme="wave-blue">
+              <div class="tg-mini" style="background:#F8FBFF">
+                <div class="tg-mini-top">
+                  <div class="tg-mini-glass" style="background:rgba(255,255,255,.88);border:1px solid rgba(47,125,255,.14)">
+                    <div class="tg-mini-label" style="color:#6378a0">Reports</div>
+                    <div class="tg-mini-val" style="color:#2f7dff">124</div>
+                  </div>
+                  <div class="tg-mini-cta" style="background:#2F7DFF;color:#fff">Report →</div>
+                </div>
+                <div class="tg-mini-chart">
+                  <div class="tg-mini-bar" style="height:40%;background:rgba(47,125,255,.25)"></div>
+                  <div class="tg-mini-bar" style="height:55%;background:rgba(47,125,255,.35)"></div>
+                  <div class="tg-mini-bar" style="height:70%;background:rgba(47,125,255,.50)"></div>
+                  <div class="tg-mini-bar" style="height:85%;background:#2F7DFF"></div>
+                  <div class="tg-mini-bar" style="height:60%;background:rgba(47,125,255,.40)"></div>
+                  <div class="tg-mini-bar" style="height:90%;background:#2F7DFF"></div>
+                  <div class="tg-mini-bar" style="height:100%;background:#00D9FF"></div>
+                </div>
+              </div>
+              <div class="tg-meta">
+                <div class="tg-meta-left">
+                  <div class="tg-meta-name">Wave Blue</div>
+                  <div class="tg-meta-swatches">
+                    <span class="tg-swatch" style="background:#F8FBFF;border:1px solid rgba(0,0,0,.10)"></span>
+                    <span class="tg-swatch" style="background:#2F7DFF"></span>
+                    <span class="tg-swatch" style="background:#00D9FF"></span>
+                    <span class="tg-swatch" style="background:#102033"></span>
+                  </div>
+                </div>
+                <span class="tg-badge tg-badge-sa">SA</span>
+                <button type="button" class="tg-preview-btn">Preview</button>
+              </div>
+            </div>
+
+            <!-- neo-pink PRO -->
+            <div class="tg-card" data-tg-theme="neo-pink">
+              <div class="tg-mini" style="background:#07050A">
+                <div class="tg-mini-top">
+                  <div class="tg-mini-glass" style="background:rgba(20,12,24,.72);border:1px solid rgba(255,61,242,.18)">
+                    <div class="tg-mini-label" style="color:#9a7898">Reports</div>
+                    <div class="tg-mini-val" style="color:#FF3DF2">124</div>
+                  </div>
+                  <div class="tg-mini-cta" style="background:#FF3DF2;color:#07050a">Report →</div>
+                </div>
+                <div class="tg-mini-chart">
+                  <div class="tg-mini-bar" style="height:40%;background:rgba(255,61,242,.22)"></div>
+                  <div class="tg-mini-bar" style="height:55%;background:rgba(255,61,242,.35)"></div>
+                  <div class="tg-mini-bar" style="height:70%;background:rgba(255,61,242,.50)"></div>
+                  <div class="tg-mini-bar" style="height:85%;background:#FF3DF2"></div>
+                  <div class="tg-mini-bar" style="height:60%;background:rgba(255,61,242,.40)"></div>
+                  <div class="tg-mini-bar" style="height:90%;background:#FF3DF2"></div>
+                  <div class="tg-mini-bar" style="height:100%;background:#FF8FEA;box-shadow:0 0 6px #FF3DF2"></div>
+                </div>
+              </div>
+              <div class="tg-meta">
+                <div class="tg-meta-left">
+                  <div class="tg-meta-name">Neo Pink</div>
+                  <div class="tg-meta-swatches">
+                    <span class="tg-swatch" style="background:#07050A;border:1px solid rgba(255,255,255,.15)"></span>
+                    <span class="tg-swatch" style="background:#FF3DF2"></span>
+                    <span class="tg-swatch" style="background:#FF8FEA"></span>
+                    <span class="tg-swatch" style="background:#7A2CFF"></span>
+                  </div>
+                </div>
+                <span class="tg-badge tg-badge-sa">SA</span>
+                <button type="button" class="tg-preview-btn">Preview</button>
+              </div>
+            </div>
+
+            <!-- cyber-violet PRO -->
+            <div class="tg-card" data-tg-theme="cyber-violet">
+              <div class="tg-mini" style="background:#080510">
+                <div class="tg-mini-top">
+                  <div class="tg-mini-glass" style="background:rgba(18,10,32,.72);border:1px solid rgba(155,92,255,.20)">
+                    <div class="tg-mini-label" style="color:#8060a8">Reports</div>
+                    <div class="tg-mini-val" style="color:#9B5CFF">124</div>
+                  </div>
+                  <div class="tg-mini-cta" style="background:#9B5CFF;color:#f8f3ff">Report →</div>
+                </div>
+                <div class="tg-mini-chart">
+                  <div class="tg-mini-bar" style="height:40%;background:rgba(155,92,255,.22)"></div>
+                  <div class="tg-mini-bar" style="height:55%;background:rgba(155,92,255,.35)"></div>
+                  <div class="tg-mini-bar" style="height:70%;background:rgba(155,92,255,.50)"></div>
+                  <div class="tg-mini-bar" style="height:85%;background:#9B5CFF"></div>
+                  <div class="tg-mini-bar" style="height:60%;background:rgba(155,92,255,.40)"></div>
+                  <div class="tg-mini-bar" style="height:90%;background:#9B5CFF"></div>
+                  <div class="tg-mini-bar" style="height:100%;background:#D6B4FF;box-shadow:0 0 6px #9B5CFF"></div>
+                </div>
+              </div>
+              <div class="tg-meta">
+                <div class="tg-meta-left">
+                  <div class="tg-meta-name">Cyber Violet</div>
+                  <div class="tg-meta-swatches">
+                    <span class="tg-swatch" style="background:#080510;border:1px solid rgba(255,255,255,.15)"></span>
+                    <span class="tg-swatch" style="background:#9B5CFF"></span>
+                    <span class="tg-swatch" style="background:#D6B4FF"></span>
+                    <span class="tg-swatch" style="background:#00F5C8"></span>
+                  </div>
+                </div>
+                <span class="tg-badge tg-badge-sa">SA</span>
+                <button type="button" class="tg-preview-btn">Preview</button>
+              </div>
+            </div>
+
+            <!-- ice-mint PRO -->
+            <div class="tg-card tg-light" data-tg-theme="ice-mint">
+              <div class="tg-mini" style="background:#F4FFFB">
+                <div class="tg-mini-top">
+                  <div class="tg-mini-glass" style="background:rgba(255,255,255,.88);border:1px solid rgba(0,80,60,.12)">
+                    <div class="tg-mini-label" style="color:#507060">Reports</div>
+                    <div class="tg-mini-val" style="color:#00C878">124</div>
+                  </div>
+                  <div class="tg-mini-cta" style="background:#00F5C8;color:#07130f">Report →</div>
+                </div>
+                <div class="tg-mini-chart">
+                  <div class="tg-mini-bar" style="height:40%;background:rgba(0,200,160,.25)"></div>
+                  <div class="tg-mini-bar" style="height:55%;background:rgba(0,200,160,.35)"></div>
+                  <div class="tg-mini-bar" style="height:70%;background:rgba(0,200,160,.50)"></div>
+                  <div class="tg-mini-bar" style="height:85%;background:#00F5C8"></div>
+                  <div class="tg-mini-bar" style="height:60%;background:rgba(0,200,160,.40)"></div>
+                  <div class="tg-mini-bar" style="height:90%;background:#00F5C8"></div>
+                  <div class="tg-mini-bar" style="height:100%;background:#00C878"></div>
+                </div>
+              </div>
+              <div class="tg-meta">
+                <div class="tg-meta-left">
+                  <div class="tg-meta-name">Ice Mint</div>
+                  <div class="tg-meta-swatches">
+                    <span class="tg-swatch" style="background:#F4FFFB;border:1px solid rgba(0,80,60,.15)"></span>
+                    <span class="tg-swatch" style="background:#00F5C8"></span>
+                    <span class="tg-swatch" style="background:#A3E635"></span>
+                    <span class="tg-swatch" style="background:#07130f"></span>
+                  </div>
+                </div>
+                <span class="tg-badge tg-badge-sa">SA</span>
+                <button type="button" class="tg-preview-btn">Preview</button>
+              </div>
+            </div>
+
+            <!-- emerald-glass PRO -->
+            <div class="tg-card" data-tg-theme="emerald-glass">
+              <div class="tg-mini" style="background:#03110B">
+                <div class="tg-mini-top">
+                  <div class="tg-mini-glass" style="background:rgba(8,30,18,.72);border:1px solid rgba(0,200,120,.18)">
+                    <div class="tg-mini-label" style="color:#6a9878">Reports</div>
+                    <div class="tg-mini-val" style="color:#00C878">124</div>
+                  </div>
+                  <div class="tg-mini-cta" style="background:#00C878;color:#03110b">Report →</div>
+                </div>
+                <div class="tg-mini-chart">
+                  <div class="tg-mini-bar" style="height:40%;background:rgba(0,200,120,.22)"></div>
+                  <div class="tg-mini-bar" style="height:55%;background:rgba(0,200,120,.35)"></div>
+                  <div class="tg-mini-bar" style="height:70%;background:rgba(0,200,120,.50)"></div>
+                  <div class="tg-mini-bar" style="height:85%;background:#00C878"></div>
+                  <div class="tg-mini-bar" style="height:60%;background:rgba(0,200,120,.40)"></div>
+                  <div class="tg-mini-bar" style="height:90%;background:#00C878"></div>
+                  <div class="tg-mini-bar" style="height:100%;background:#00F5C8;box-shadow:0 0 6px #00C878"></div>
+                </div>
+              </div>
+              <div class="tg-meta">
+                <div class="tg-meta-left">
+                  <div class="tg-meta-name">Emerald Glass</div>
+                  <div class="tg-meta-swatches">
+                    <span class="tg-swatch" style="background:#03110B;border:1px solid rgba(255,255,255,.15)"></span>
+                    <span class="tg-swatch" style="background:#00C878"></span>
+                    <span class="tg-swatch" style="background:#00F5C8"></span>
+                    <span class="tg-swatch" style="background:#A3E635"></span>
+                  </div>
+                </div>
+                <span class="tg-badge tg-badge-sa">SA</span>
+                <button type="button" class="tg-preview-btn">Preview</button>
+              </div>
+            </div>
+
+            <!-- midnight-cyan PRO -->
+            <div class="tg-card" data-tg-theme="midnight-cyan">
+              <div class="tg-mini" style="background:#030712">
+                <div class="tg-mini-top">
+                  <div class="tg-mini-glass" style="background:rgba(8,18,36,.72);border:1px solid rgba(0,217,255,.18)">
+                    <div class="tg-mini-label" style="color:#5878a0">Reports</div>
+                    <div class="tg-mini-val" style="color:#00D9FF">124</div>
+                  </div>
+                  <div class="tg-mini-cta" style="background:#00D9FF;color:#030712">Report →</div>
+                </div>
+                <div class="tg-mini-chart">
+                  <div class="tg-mini-bar" style="height:40%;background:rgba(0,217,255,.22)"></div>
+                  <div class="tg-mini-bar" style="height:55%;background:rgba(0,217,255,.35)"></div>
+                  <div class="tg-mini-bar" style="height:70%;background:rgba(0,217,255,.50)"></div>
+                  <div class="tg-mini-bar" style="height:85%;background:#00D9FF"></div>
+                  <div class="tg-mini-bar" style="height:60%;background:rgba(0,217,255,.40)"></div>
+                  <div class="tg-mini-bar" style="height:90%;background:#00D9FF"></div>
+                  <div class="tg-mini-bar" style="height:100%;background:#00F5C8;box-shadow:0 0 6px #00D9FF"></div>
+                </div>
+              </div>
+              <div class="tg-meta">
+                <div class="tg-meta-left">
+                  <div class="tg-meta-name">Midnight Cyan</div>
+                  <div class="tg-meta-swatches">
+                    <span class="tg-swatch" style="background:#030712;border:1px solid rgba(255,255,255,.15)"></span>
+                    <span class="tg-swatch" style="background:#00D9FF"></span>
+                    <span class="tg-swatch" style="background:#00F5C8"></span>
+                    <span class="tg-swatch" style="background:#A3E635"></span>
+                  </div>
+                </div>
+                <span class="tg-badge tg-badge-sa">SA</span>
+                <button type="button" class="tg-preview-btn">Preview</button>
+              </div>
+            </div>
+
+            <!-- lime-matrix PRO -->
+            <div class="tg-card" data-tg-theme="lime-matrix">
+              <div class="tg-mini" style="background:#020502">
+                <div class="tg-mini-top">
+                  <div class="tg-mini-glass" style="background:rgba(6,14,6,.72);border:1px solid rgba(163,230,53,.22)">
+                    <div class="tg-mini-label" style="color:#60887a">Reports</div>
+                    <div class="tg-mini-val" style="color:#A3E635">124</div>
+                  </div>
+                  <div class="tg-mini-cta" style="background:#A3E635;color:#020502">Report →</div>
+                </div>
+                <div class="tg-mini-chart">
+                  <div class="tg-mini-bar" style="height:40%;background:rgba(163,230,53,.22)"></div>
+                  <div class="tg-mini-bar" style="height:55%;background:rgba(163,230,53,.35)"></div>
+                  <div class="tg-mini-bar" style="height:70%;background:rgba(163,230,53,.50)"></div>
+                  <div class="tg-mini-bar" style="height:85%;background:#A3E635"></div>
+                  <div class="tg-mini-bar" style="height:60%;background:rgba(163,230,53,.40)"></div>
+                  <div class="tg-mini-bar" style="height:90%;background:#7cff00"></div>
+                  <div class="tg-mini-bar" style="height:100%;background:#00ff66;box-shadow:0 0 6px #A3E635"></div>
+                </div>
+              </div>
+              <div class="tg-meta">
+                <div class="tg-meta-left">
+                  <div class="tg-meta-name">Lime Matrix</div>
+                  <div class="tg-meta-swatches">
+                    <span class="tg-swatch" style="background:#020502;border:1px solid rgba(255,255,255,.15)"></span>
+                    <span class="tg-swatch" style="background:#A3E635"></span>
+                    <span class="tg-swatch" style="background:#7cff00"></span>
+                    <span class="tg-swatch" style="background:#00ff66"></span>
+                  </div>
+                </div>
+                <span class="tg-badge tg-badge-sa">SA</span>
+                <button type="button" class="tg-preview-btn">Preview</button>
+              </div>
+            </div>
+
+            <!-- aurora-mint PRO -->
+            <div class="tg-card" data-tg-theme="aurora-mint">
+              <div class="tg-mini" style="background:#031014">
+                <div class="tg-mini-top">
+                  <div class="tg-mini-glass" style="background:rgba(8,28,36,.72);border:1px solid rgba(0,245,200,.18)">
+                    <div class="tg-mini-label" style="color:#508898">Reports</div>
+                    <div class="tg-mini-val" style="color:#00F5C8">124</div>
+                  </div>
+                  <div class="tg-mini-cta" style="background:#00F5C8;color:#031014">Report →</div>
+                </div>
+                <div class="tg-mini-chart">
+                  <div class="tg-mini-bar" style="height:40%;background:rgba(0,245,200,.22)"></div>
+                  <div class="tg-mini-bar" style="height:55%;background:rgba(0,245,200,.35)"></div>
+                  <div class="tg-mini-bar" style="height:70%;background:rgba(0,245,200,.50)"></div>
+                  <div class="tg-mini-bar" style="height:85%;background:#00F5C8"></div>
+                  <div class="tg-mini-bar" style="height:60%;background:rgba(0,245,200,.40)"></div>
+                  <div class="tg-mini-bar" style="height:90%;background:#00D9FF"></div>
+                  <div class="tg-mini-bar" style="height:100%;background:#A3E635;box-shadow:0 0 6px #00F5C8"></div>
+                </div>
+              </div>
+              <div class="tg-meta">
+                <div class="tg-meta-left">
+                  <div class="tg-meta-name">Aurora Mint</div>
+                  <div class="tg-meta-swatches">
+                    <span class="tg-swatch" style="background:#031014;border:1px solid rgba(255,255,255,.15)"></span>
+                    <span class="tg-swatch" style="background:#00F5C8"></span>
+                    <span class="tg-swatch" style="background:#00D9FF"></span>
+                    <span class="tg-swatch" style="background:#A3E635"></span>
+                  </div>
+                </div>
+                <span class="tg-badge tg-badge-sa">SA</span>
+                <button type="button" class="tg-preview-btn">Preview</button>
+              </div>
+            </div>
+
+          </div><!-- /tg-grid -->
+
+          <div class="tg-note">
+            FREE users see only Dark / Light. PRO unlocks premium themes. Super Admin can preview all.
+          </div>
+        </div>
+        <!-- PMD:V2:THEME_GALLERY:end -->
+
+      </div>
+
+    </div>
+  </div>
+  <!-- PMD:V2:SURFACE5:end -->
+
+  <!-- PMD:V2:PRO_TOAST -->
+  <div class="theme-pro-toast" id="theme-pro-toast" role="status" aria-live="polite">
+    ⚡ Доступно в PRO
+  </div>
+
+  <!-- PMD:V2:DEMO_MODAL:start -->
+  <div class="demo-overlay" id="demo-overlay" role="dialog" aria-modal="true" aria-label="Как работает PM DIGEST">
+    <div class="demo-card">
+      <button class="demo-close-btn" id="demo-close-btn" aria-label="Закрыть">✕</button>
+      <div class="demo-pip-row">
+        <div class="demo-pip active" data-pi="0"></div>
+        <div class="demo-pip" data-pi="1"></div>
+        <div class="demo-pip" data-pi="2"></div>
+        <div class="demo-pip" data-pi="3"></div>
+      </div>
+      <div class="demo-step-ico" id="demo-ico">📝</div>
+      <div class="demo-step-title" id="demo-title">Заметка или голос</div>
+      <div class="demo-step-desc" id="demo-desc">Пишите текстовую заметку прямо в Telegram или отправьте голосовое — бот распознает и запомнит всё.</div>
+      <div class="demo-nav-row">
+        <button class="demo-nav-btn" id="demo-prev">← Назад</button>
+        <button class="demo-nav-btn pri" id="demo-next">Далее →</button>
+      </div>
+    </div>
+  </div>
+  <!-- PMD:V2:DEMO_MODAL:end -->
+
+  <script>
+  (function () {
+    "use strict";
+
+    // PMD:V2:THEME_SWITCHER:start
+    /* Default theme set in inline <body> script (saved pref or prefers-color-scheme).
+       Production (Telegram Mini App): also read Telegram.WebApp.colorScheme / themeParams.
+       To connect to real user plan: replace PROTOTYPE_USER_PLAN with the value returned by
+       your backend /me or /subscription endpoint (user_plan field). */
+
+    // PROTOTYPE-ONLY: set to "pro" to preview PRO theme access.
+    const PROTOTYPE_USER_PLAN = "free";
+
+    const FREE_THEMES = { "dark-lime": 1, "light-lime": 1 };
+    const PRO_THEMES  = {
+      "wave-blue": 1, "neo-pink": 1, "cyber-violet": 1, "ice-mint": 1,
+      "emerald-glass": 1, "midnight-cyan": 1, "lime-matrix": 1, "aurora-mint": 1
+    };
+
+    const body = document.body;
+    const SKEY = "pm-digest-v2-theme";
+
+    // --- Toast ---
+    let toastTimer = null;
+    const toastEl = document.getElementById("theme-pro-toast");
+    function showProToast() {
+      if (!toastEl) return;
+      toastEl.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toastEl.classList.remove("show"), 2200);
+    }
+
+    // --- FREE switcher buttons ---
+    const thBtns = Array.from(document.querySelectorAll("[data-theme-btn]"));
+    function syncTheme() {
+      const cur = body.dataset.theme;
+      thBtns.forEach(b => b.classList.toggle("active", b.dataset.themeBtn === cur));
+    }
+    thBtns.forEach(b => {
+      b.addEventListener("click", () => {
+        const id = b.dataset.themeBtn;
+        if (!FREE_THEMES[id]) return;
+        body.dataset.theme = id;
+        try { localStorage.setItem(SKEY, id); } catch (e) {}
+        syncTheme();
+        updateColors();
+      });
+    });
+
+    // --- PRO chip buttons ---
+    const proChips = Array.from(document.querySelectorAll("[data-theme-pro]"));
+    proChips.forEach(chip => {
+      chip.addEventListener("click", () => {
+        if (PROTOTYPE_USER_PLAN === "pro" || PROTOTYPE_USER_PLAN === "team") {
+          // Unlock: switch theme (wave-blue has full CSS; others fall back gracefully)
+          const id = chip.dataset.themePro;
+          body.dataset.theme = id;
+          try { localStorage.setItem(SKEY, id); } catch (e) {}
+          syncTheme();
+          updateColors();
+        } else {
+          showProToast();
+        }
+      });
+    });
+
+    syncTheme();
+
+    // PMD:V2:THEME_GALLERY_JS:start
+    /* Super Admin theme gallery — all previews unlocked for SA.
+       Production: gate by user plan / role. */
+    function syncGalleryActive() {
+      const cur = body.dataset.theme;
+      document.querySelectorAll(".tg-card").forEach(c => {
+        c.classList.toggle("tg-active", c.dataset.tgTheme === cur);
+      });
+    }
+    document.querySelectorAll(".tg-card").forEach(card => {
+      card.addEventListener("click", () => {
+        const id = card.dataset.tgTheme;
+        if (!id) return;
+        // Super Admin gallery bypasses plan gate — all themes accessible
+        body.dataset.theme = id;
+        try { localStorage.setItem(SKEY, id); } catch (e) {}
+        syncTheme();
+        syncGalleryActive();
+        updateColors();
+      });
+    });
+    syncGalleryActive();
+    // PMD:V2:THEME_GALLERY_JS:end
+
+    // PMD:V2:THEME_SWITCHER:end
+
+    // PMD:V2:SURFACE_SWITCHER:start
+    const surfaces = Array.from(document.querySelectorAll(".surface"));
+    const surfBtns = Array.from(document.querySelectorAll("[data-surface]"));
+    surfBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = "surface-" + btn.dataset.surface;
+        surfaces.forEach(s => s.classList.toggle("active", s.id === id));
+        surfBtns.forEach(b => b.classList.toggle("active", b === btn));
+      });
+    });
+    // PMD:V2:SURFACE_SWITCHER:end
+
+    // PMD:V2:CANVAS_ENGINE:start
+    /* Lightweight background: floating dots + proximity lines.
+       No helix. Low CPU. Pauses when tab hidden. */
+    const canvas = document.getElementById("bg-canvas");
+    const ctx    = canvas.getContext("2d");
+    const REDUCE = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    let W = 0, H = 0, rafId = 0;
+    let dots = [];
+    let cDot = "", cLine = "", cAmb = "";
+
+    function cssv(n) { return getComputedStyle(body).getPropertyValue(n).trim(); }
+
+    function updateColors() {
+      cDot  = cssv("--c-dot");
+      cLine = cssv("--c-line");
+      cAmb  = cssv("--c-ambient");
+      buildDots();
+    }
+
+    // PMD:V2:CANVAS_RESIZE:start
+    function buildDots() {
+      const theme   = body.dataset.theme;
+      const dark    = theme === "dark-lime";
+      const ltLime  = theme === "light-lime";
+      const density = dark ? 10000 : (ltLime ? 12000 : 18000);
+      const minN    = dark ? 58 : (ltLime ? 52 : 36);
+      const n = Math.max(minN, Math.floor((W * H) / density));
+      dots = Array.from({ length: n }, () => ({
+        x:  Math.random() * W,
+        y:  Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.30,
+        vy: (Math.random() - 0.5) * 0.20,
+        r:  dark ? (1.1 + Math.random() * 1.7) : (0.8 + Math.random() * 1.3),
+        accent: Math.random() < (dark ? 0.30 : (ltLime ? 0.28 : 0.18)),
+        alpha:  dark    ? (0.32 + Math.random() * 0.46)
+              : ltLime  ? (0.26 + Math.random() * 0.36)
+              :            (0.14 + Math.random() * 0.22),
+      }));
+    }
+
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth;
+      H = window.innerHeight;
+      canvas.width  = Math.floor(W * dpr);
+      canvas.height = Math.floor(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      updateColors();
+    }
+    // PMD:V2:CANVAS_RESIZE:end
+
+    const LINE_D = 170;
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+
+      if (body.dataset.theme === "light-lime") {
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = "rgba(72, 108, 42, 0.092)";
+        ctx.lineWidth = 0.5;
+        const gs = 44;
+        for (let x = gs; x < W; x += gs) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+        }
+        for (let y = gs; y < H; y += gs) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+        }
+      }
+
+      for (const d of dots) {
+        d.x += d.vx;  d.y += d.vy;
+        if (d.x < -4)    d.x = W + 4;
+        if (d.x > W + 4) d.x = -4;
+        if (d.y < -4)    d.y = H + 4;
+        if (d.y > H + 4) d.y = -4;
+      }
+
+      const th = body.dataset.theme;
+      const darkLine = th === "dark-lime";
+      const ltLimeLine = th === "light-lime";
+      ctx.lineWidth = darkLine ? 0.7 : (ltLimeLine ? 0.55 : 0.5);
+      const lineAlphaMult = darkLine ? 0.30 : (ltLimeLine ? 0.22 : 0.14);
+      for (let i = 0; i < dots.length; i++) {
+        for (let j = i + 1; j < dots.length; j++) {
+          const dx = dots[i].x - dots[j].x;
+          const dy = dots[i].y - dots[j].y;
+          const d2 = dx * dx + dy * dy;
+          if (d2 < LINE_D * LINE_D) {
+            ctx.globalAlpha = (1 - Math.sqrt(d2) / LINE_D) * lineAlphaMult;
+            ctx.strokeStyle = cLine;
+            ctx.beginPath();
+            ctx.moveTo(dots[i].x, dots[i].y);
+            ctx.lineTo(dots[j].x, dots[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+      ctx.globalAlpha = 1;
+
+      const dark = body.dataset.theme === "dark-lime";
+      const ltLm = body.dataset.theme === "light-lime";
+      for (const d of dots) {
+        if (d.accent) {
+          ctx.shadowBlur = dark ? 14 : (ltLm ? 8 : 5);
+          ctx.shadowColor = cDot;
+        }
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+        ctx.fillStyle   = d.accent ? cDot : cAmb;
+        ctx.globalAlpha = d.alpha;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+      ctx.globalAlpha = 1;
+
+      if (!REDUCE && !document.hidden) rafId = requestAnimationFrame(draw);
+    }
+
+    function start() { if (REDUCE) { draw(); return; } if (!rafId) rafId = requestAnimationFrame(draw); }
+    function stop()  { if (rafId) cancelAnimationFrame(rafId); rafId = 0; }
+
+    document.addEventListener("visibilitychange", () => { document.hidden ? stop() : start(); });
+
+    if (window.ResizeObserver) {
+      new ResizeObserver(() => { resize(); }).observe(document.documentElement);
+    } else {
+      let rt = 0;
+      window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(resize, 80); });
+    }
+
+    requestAnimationFrame(() => { resize(); start(); });
+    // PMD:V2:CANVAS_ENGINE:end
+
+    // PMD:V2:DEMO_MODAL:start
+    const DEMO_STEPS = [
+      {
+        ico: "📝",
+        title: "Заметка или голос",
+        desc: "Пишите текстовую заметку прямо в Telegram или отправьте голосовое — бот распознает и запомнит всё."
+      },
+      {
+        ico: "⚡",
+        title: "Парсинг и <mark>структура</mark>",
+        desc: "Бот автоматически разбирает данные по разделам: что сделано, риски, план на завтра — без ручной работы."
+      },
+      {
+        ico: "📋",
+        title: "Черновик готов",
+        desc: "Открывайте отчёт в Mini App, редактируйте поля и дополняйте детали перед финальной отправкой."
+      },
+      {
+        ico: "📤",
+        title: "Отправить или скопировать",
+        desc: "Отправьте черновик себе в Telegram, скопируйте текст или экспортируйте в PDF / Word одной кнопкой."
+      }
+    ];
+    let demoIdx = 0;
+    const demoOverlay = document.getElementById("demo-overlay");
+    const demoCloseBtn = document.getElementById("demo-close-btn");
+    const demoPrevBtn  = document.getElementById("demo-prev");
+    const demoNextBtn  = document.getElementById("demo-next");
+    const demoIcoEl    = document.getElementById("demo-ico");
+    const demoTitleEl  = document.getElementById("demo-title");
+    const demoDescEl   = document.getElementById("demo-desc");
+    const demoPips     = Array.from(document.querySelectorAll(".demo-pip"));
+
+    function demoRender() {
+      const s = DEMO_STEPS[demoIdx];
+      demoIcoEl.textContent  = s.ico;
+      demoTitleEl.innerHTML  = s.title;
+      demoDescEl.textContent = s.desc;
+      demoPips.forEach((p, i) => p.classList.toggle("active", i === demoIdx));
+      demoPrevBtn.style.visibility = demoIdx === 0 ? "hidden" : "visible";
+      demoNextBtn.textContent = demoIdx === DEMO_STEPS.length - 1 ? "Открыть бота →" : "Далее →";
+    }
+
+    function demoOpen()  { demoIdx = 0; demoRender(); demoOverlay.classList.add("open"); }
+    function demoClose() { demoOverlay.classList.remove("open"); }
+
+    const demoBtnEl = document.getElementById("demo-btn");
+    if (demoBtnEl) demoBtnEl.addEventListener("click", demoOpen);
+    demoCloseBtn.addEventListener("click", demoClose);
+    demoOverlay.addEventListener("click", e => { if (e.target === demoOverlay) demoClose(); });
+    document.addEventListener("keydown", e => { if (e.key === "Escape") demoClose(); });
+    demoNextBtn.addEventListener("click", () => {
+      if (demoIdx < DEMO_STEPS.length - 1) { demoIdx++; demoRender(); }
+      else demoClose();
+    });
+    demoPrevBtn.addEventListener("click", () => { if (demoIdx > 0) { demoIdx--; demoRender(); } });
+    demoRender();
+    // PMD:V2:DEMO_MODAL:end
+
+  })();
+  </script>
+</body>
+</html>

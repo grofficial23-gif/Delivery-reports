@@ -27,6 +27,17 @@ def _read_optional_int(name: str) -> int | None:
         return None
 
 
+def _read_bot_username(default: str = "igest_bot") -> str:
+    value = os.getenv("BOT_USERNAME", default)
+    normalized = value.strip().lstrip("@")
+    return normalized or default
+
+
+def _read_landing_ui_version(default: str = "v1") -> str:
+    value = os.getenv("LANDING_UI_VERSION", default).strip().lower()
+    return "v2" if value == "v2" else "v1"
+
+
 @dataclass(frozen=True)
 class Settings:
     telegram_bot_token: str = ""
@@ -41,8 +52,11 @@ class Settings:
     whisper_model: str = "base"
     web_host: str = "127.0.0.1"
     web_port: int = 8787
+    bot_username: str = "igest_bot"
+    landing_ui_version: str = "v1"
     public_web_app_url: str = ""
     web_session_secret: str = ""
+    dashboard_ui_version: str = "v1"
     super_admin_usernames: frozenset[str] = frozenset({"pm_vibe"})  # e.g. {'PM_vibe'}
 
 
@@ -61,8 +75,13 @@ def load_settings() -> Settings:
         whisper_model=os.getenv("WHISPER_MODEL", "base").strip() or "base",
         web_host=os.getenv("WEB_HOST", "127.0.0.1").strip() or "127.0.0.1",
         web_port=_read_int("WEB_PORT", 8787),
+        bot_username=_read_bot_username("igest_bot"),
+        landing_ui_version=_read_landing_ui_version("v1"),
         public_web_app_url=os.getenv("PUBLIC_WEB_APP_URL", "").strip(),
         web_session_secret=os.getenv("WEB_SESSION_SECRET", "").strip() or os.getenv("TELEGRAM_BOT_TOKEN", "").strip(),
+        dashboard_ui_version=(
+            os.getenv("DASHBOARD_UI_VERSION", "v1").strip().lower() or "v1"
+        ),
         super_admin_usernames=frozenset(
             u.strip().lstrip("@").lower()
             for u in os.getenv("SUPER_ADMIN_USERNAMES", "PM_vibe").split(",")

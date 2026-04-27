@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<!-- DESIGN_VERSION: V2_LANDING_ROLLBACK_SAFE -->
+<!--
+  PM Digest — V2 Landing Page
+  Enabled by: LANDING_UI_VERSION=v2 in .env
+  Rollback:   Set LANDING_UI_VERSION=v1 to restore landing.html (V1) instantly.
+  Do not edit: landing.html, app.css, app.js, index.html, dashboard_v2.html, admin.html
+-->
+<html lang="ru" data-theme="dark-lime">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <title>PM Digest — Delivery Reports в Telegram</title>
+  <meta name="description" content="PM Digest превращает ваши заметки и голосовые сообщения в структурированные delivery reports прямо в Telegram. Бесплатно." />
+
+  <!-- Inline theme bootstrap — runs before CSS paint to avoid flash of wrong theme -->
+  <script>
+    (function () {
+      try {
+        var SKEY   = 'pm-digest-v2-theme';
+        var THEMES = ['dark-lime', 'light-lime', 'wave-blue'];
+        var saved  = localStorage.getItem(SKEY);
+        var theme;
+
+        // Telegram Mini App colorScheme takes highest priority
+        var tg = window.Telegram && window.Telegram.WebApp;
+        if (tg && tg.colorScheme) {
+          theme = tg.colorScheme === 'light' ? 'light-lime' : 'dark-lime';
+        } else if (saved && THEMES.indexOf(saved) !== -1) {
+          theme = saved;
+        } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+          theme = 'light-lime';
+        } else {
+          theme = 'dark-lime';
+        }
+        document.documentElement.dataset.theme = theme;
+        document.body && (document.body.dataset.theme = theme);
+      } catch (e) {
+        document.documentElement.dataset.theme = 'dark-lime';
+      }
+    }());
+  </script>
+
+  <!-- V2 theme tokens (dark-lime, light-lime, wave-blue) -->
+  <link rel="stylesheet" href="/static/v2/themes.css" />
+  <!-- V2 landing layout and components -->
+  <link rel="stylesheet" href="/static/v2/landing_v2.css" />
+</head>
+<body
+  class="v2-body"
+  data-theme="dark-lime"
+  {% if bot_url %}data-bot-url="{{ bot_url }}"{% endif %}
+>
+
+  <!-- Animated background canvas -->
+  <canvas id="v2-bg-canvas" aria-hidden="true"></canvas>
+
+  <div class="v2-above-canvas">
+
+    <!-- ── Navigation ──────────────────────────────────────────── -->
+    <nav class="s1-nav">
+      <div class="s1-brand">PM<mark>·</mark>DIGEST</div>
+
+      <div class="s1-nav-links">
+        <a href="#s1-how">Как работает</a>
+        <a href="#s1-features">Возможности</a>
+        <a href="#s1-pricing">Тарифы</a>
+        <a href="#s1-security">Безопасность</a>
+      </div>
+
+      <div class="s1-nav-right">
+        <!-- Theme switcher: D = dark-lime, L = light-lime, W = wave-blue -->
+        <div class="s1-theme-sw" aria-label="Выбор темы">
+          <button class="s1-theme-btn" data-v2-theme-btn="dark-lime" title="Dark Lime">D</button>
+          <button class="s1-theme-btn" data-v2-theme-btn="light-lime" title="Light Lime">L</button>
+          <button class="s1-theme-btn" data-v2-theme-btn="wave-blue" title="Wave Blue">W</button>
+        </div>
+        {% if bot_url %}
+        <a
+          href="{{ bot_url }}"
+          target="_blank"
+          rel="noopener"
+          class="s1-open-btn"
+          aria-label="Открыть бота @{{ bot_username }} в Telegram"
+        >
+          Открыть бота →
+        </a>
+        {% else %}
+        <span class="s1-open-btn" style="opacity:.5;cursor:default;" aria-hidden="true">Открыть бота →</span>
+        {% endif %}
+      </div>
+    </nav>
+
+    <!-- ── Hero ────────────────────────────────────────────────── -->
+    <div class="s1-hero">
+
+      <div>
+        <div class="s1-eyebrow">Telegram · Mini App · Reports</div>
+        <h1 class="s1-h1">
+          Ваш личный ассистент<br>
+          для <mark>ежедневных отчётов</mark>
+        </h1>
+        <p class="s1-sub">
+          PM Digest превращает заметки, voice и проектные апдейты в структурированный delivery report за минуты. Черновик приходит в Telegram — вы проверяете и отправляете.
+        </p>
+
+        <div class="s1-actions">
+          {% if bot_url %}
+          <a
+            href="{{ bot_url }}"
+            target="_blank"
+            rel="noopener"
+            class="s1-btn-primary s1-btn-primary--hero"
+            aria-label="Открыть бота @{{ bot_username }} в Telegram"
+          >
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+            </svg>
+            <span class="s1-hero-cta-stack">
+              <span class="s1-hero-cta-line">Открыть в Telegram</span>
+              <span class="s1-hero-cta-sub">@{{ bot_username }}</span>
+            </span>
+          </a>
+          {% endif %}
+          <button class="s1-btn-ghost" id="demo-btn" type="button">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+            Смотреть демо
+          </button>
+        </div>
+
+        <div class="s1-benefits">
+          <div class="s1-benefit"><span class="s1-benefit-dot"></span>Работает 24/7</div>
+          <div class="s1-benefit"><span class="s1-benefit-dot"></span>Без авто-постинга</div>
+          <div class="s1-benefit"><span class="s1-benefit-dot"></span>Telegram-native</div>
+        </div>
+      </div>
+
+      <!-- Phone mockup — theme-adaptive accents via CSS variables -->
+      <div class="s1-phone-wrap" aria-hidden="true">
+        <div class="s1-phone">
+          <div class="s1-phone-notch"><div class="s1-phone-notch-pill"></div></div>
+          <div class="s1-phone-screen">
+            <div class="s1-chat-hdr">
+              <div class="s1-chat-av">🤖</div>
+              <div>
+                <div class="s1-chat-name">PM Digest Bot</div>
+                <div class="s1-chat-online">онлайн</div>
+              </div>
+            </div>
+            <div class="s1-msgs">
+              <div class="s1-msg bot">Привет! Пришлите заметку или голосовое — соберу отчёт.</div>
+              <div class="s1-voice">
+                <div class="s1-voice-play">▶</div>
+                <div class="s1-voice-wave">
+                  <span style="height:7px"></span><span style="height:13px"></span>
+                  <span style="height:18px"></span><span style="height:11px"></span>
+                  <span style="height:20px"></span><span style="height:15px"></span>
+                  <span style="height:9px"></span><span style="height:17px"></span>
+                  <span style="height:13px"></span><span style="height:7px"></span>
+                  <span style="height:15px"></span><span style="height:19px"></span>
+                  <span style="height:11px"></span><span style="height:6px"></span>
+                  <span style="height:14px"></span>
+                </div>
+                <div class="s1-voice-dur">0:42</div>
+              </div>
+              <div class="s1-msg bot">
+                Готово! Черновик отчёта:
+                <div class="s1-draft-card">
+                  <div class="s1-draft-title">📋 Project Alpha</div>
+                  <div class="s1-draft-row">
+                    <label>ЧТО СДЕЛАНО</label>
+                    Интеграция API завершена
+                  </div>
+                  <div class="s1-draft-row">
+                    <label>РИСКИ</label>
+                    Задержка внешнего сервиса
+                  </div>
+                  <div class="s1-chat-btns">
+                    <button class="s1-chat-btn pri" type="button">Посмотреть</button>
+                    <button class="s1-chat-btn" type="button">Отправить себе</button>
+                    <button class="s1-chat-btn" type="button">Редактировать</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="s1-phone-home"><div class="s1-phone-home-bar"></div></div>
+        </div>
+      </div>
+
+    </div><!-- /s1-hero -->
+
+    <!-- ── For Whom ─────────────────────────────────────────────── -->
+    <div class="s1-content">
+      <div class="s1-section" id="s1-audience">
+        <div class="s1-sec-eyebrow">Целевая аудитория</div>
+        <h2 class="s1-sec-h2">Для тех, кто <mark>делает отчёты</mark> каждый день</h2>
+        <div class="s1-audience">
+          <div class="s1-audience-left">
+            <p style="font-size:15px;color:var(--text2);line-height:1.65;max-width:460px;margin-bottom:24px;">
+              Для тех, кто каждый день собирает апдейты, риски и планы по нескольким проектам.
+            </p>
+            <div class="s1-roles">
+              <div class="s1-role-pill"><span>📊</span>Project Manager</div>
+              <div class="s1-role-pill"><span>🧭</span>Product Manager</div>
+              <div class="s1-role-pill"><span>🚀</span>Delivery Manager</div>
+              <div class="s1-role-pill"><span>🔧</span>Team Lead</div>
+              <div class="s1-role-pill"><span>👥</span>Руководитель команды</div>
+            </div>
+          </div>
+          <div class="s1-audience-quote">
+            <p>«Раньше я тратил 40 минут на сбор апдейтов по проектам. Теперь диктую голосовые заметки в течение дня — <strong>готовый отчёт через минуту.</strong>»</p>
+            <p style="margin-top:14px;font-size:12px;color:var(--muted);font-style:normal;">— Senior PM, продуктовая команда · 5 проектов</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── How It Works ──────────────────────────────────────────── -->
+    <div class="s1-content">
+      <div class="s1-section" id="s1-how">
+        <div class="s1-sec-eyebrow">Как это работает</div>
+        <h2 class="s1-sec-h2"><mark>4 шага</mark> от заметки до отчёта</h2>
+        <p class="s1-sec-sub">Весь процесс происходит внутри Telegram. Никаких лишних приложений.</p>
+        <div class="s1-steps-grid">
+          <div class="s1-step-card">
+            <div class="s1-step-num">01</div>
+            <div class="s1-step-ico">🎙️</div>
+            <div class="s1-step-title">Пишите или диктуете заметки</div>
+            <div class="s1-step-desc">Текстовая заметка или голосовое сообщение прямо в Telegram-боте. В любое время дня.</div>
+            <div class="s1-step-connector"></div>
+          </div>
+          <div class="s1-step-card">
+            <div class="s1-step-num">02</div>
+            <div class="s1-step-ico">🧠</div>
+            <div class="s1-step-title">PM Digest распознаёт проект, план и риски</div>
+            <div class="s1-step-desc">Автоматически определяет: что сделано, что планируется, какие риски и блокеры.</div>
+            <div class="s1-step-connector"></div>
+          </div>
+          <div class="s1-step-card">
+            <div class="s1-step-num">03</div>
+            <div class="s1-step-ico">📋</div>
+            <div class="s1-step-title">Получаете готовый черновик</div>
+            <div class="s1-step-desc">Структурированный delivery report прямо в чат. Можно открыть в Report Studio для правки.</div>
+            <div class="s1-step-connector"></div>
+          </div>
+          <div class="s1-step-card">
+            <div class="s1-step-num">04</div>
+            <div class="s1-step-ico">✉️</div>
+            <div class="s1-step-title">Копируете, редактируете или отправляете себе</div>
+            <div class="s1-step-desc">Одна кнопка — и отчёт у вас в личке. Никакого авто-постинга в рабочие чаты без вашего ведома.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Features ─────────────────────────────────────────────── -->
+    <div class="s1-content">
+      <div class="s1-section" id="s1-features">
+        <div class="s1-sec-eyebrow">Возможности</div>
+        <h2 class="s1-sec-h2">Всё, что нужно <mark>PM-у в Telegram</mark></h2>
+        <p class="s1-sec-sub">Голос, текст, редактор, экспорт, команда — всё в одном месте.</p>
+        <div class="s1-feat-grid">
+          <div class="s1-feat-card">
+            <div class="s1-feat-ico">🎙️</div>
+            <div class="s1-feat-title">Voice → text</div>
+            <div class="s1-feat-desc">Голосовые апдейты превращаются в понятные структурированные заметки.</div>
+            <span class="s1-feat-tag free">FREE</span>
+          </div>
+          <div class="s1-feat-card">
+            <div class="s1-feat-ico">📋</div>
+            <div class="s1-feat-title">Daily reports</div>
+            <div class="s1-feat-desc">Ежедневный delivery report по каждому проекту. Автоматически, без лишних действий.</div>
+            <span class="s1-feat-tag free">FREE</span>
+          </div>
+          <div class="s1-feat-card">
+            <div class="s1-feat-ico">📅</div>
+            <div class="s1-feat-title">Weekly / Monthly</div>
+            <div class="s1-feat-desc">Сводки за неделю и месяц с динамикой и KPI. Готовы к отправке руководству.</div>
+            <span class="s1-feat-tag pro">PRO</span>
+          </div>
+          <div class="s1-feat-card">
+            <div class="s1-feat-ico">✏️</div>
+            <div class="s1-feat-title">AI-редактор отчёта</div>
+            <div class="s1-feat-desc">Редактирование черновика, executive style, перевод на EN, настройка структуры.</div>
+            <span class="s1-feat-tag pro">PRO</span>
+          </div>
+          <div class="s1-feat-card">
+            <div class="s1-feat-ico">📤</div>
+            <div class="s1-feat-title">Export</div>
+            <div class="s1-feat-desc">PDF, Word и presentation-ready текст. Готово для Slack, Notion, почты и встреч.</div>
+            <span class="s1-feat-tag pro">PRO</span>
+          </div>
+          <div class="s1-feat-card">
+            <div class="s1-feat-ico">👥</div>
+            <div class="s1-feat-title">Team dashboard</div>
+            <div class="s1-feat-desc">Роли Owner / Admin / Member, shared templates, Executive Pulse и пульс по всем проектам.</div>
+            <span class="s1-feat-tag team">TEAM</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Pricing ───────────────────────────────────────────────── -->
+    <div class="s1-content">
+      <div class="s1-section" id="s1-pricing">
+        <div class="s1-sec-eyebrow">Тарифы</div>
+        <h2 class="s1-sec-h2">Начните <mark>бесплатно</mark>, растите с командой</h2>
+        <p class="s1-sec-sub">Все тарифы включают доступ через Telegram и Mini App. Без скрытых комиссий.</p>
+        <div class="s1-pricing-grid">
+
+          <!-- FREE -->
+          <div class="s1-plan-card">
+            <div class="s1-plan-name">FREE</div>
+            <div class="s1-plan-price"><span class="price-free">0</span></div>
+            <div class="s1-plan-subtitle">Для первого теста · без карты</div>
+            <div class="s1-plan-divider"></div>
+            <ul class="s1-plan-features">
+              <li>Ежедневные отчёты</li>
+              <li>3 проекта</li>
+              <li>10 заметок / день</li>
+              <li>7 дней истории</li>
+              <li>Тёмная / светлая темы</li>
+            </ul>
+            {% if bot_url %}
+            <a
+              href="{{ bot_url }}"
+              target="_blank"
+              rel="noopener"
+              class="s1-plan-cta ghost"
+              aria-label="Начать бесплатно в боте @{{ bot_username }}"
+            >
+              Начать бесплатно
+            </a>
+            {% else %}
+            <span class="s1-plan-cta ghost" style="opacity:.6;">Начать бесплатно</span>
+            {% endif %}
+          </div>
+
+          <!-- PRO (highlighted) -->
+          <div class="s1-plan-card popular">
+            <div class="s1-plan-popular-badge">★ Популярный</div>
+            <div class="s1-plan-name">PRO</div>
+            <div class="s1-plan-price">
+              <span>250</span>
+              <span class="price-mo">&thinsp;⭐ / мес</span>
+            </div>
+            <div class="s1-plan-subtitle">~$2.49 · для PM, который работает ежедневно</div>
+            <div class="s1-plan-divider"></div>
+            <ul class="s1-plan-features">
+              <li>Безлимит заметок</li>
+              <li>Weekly / Monthly сводки</li>
+              <li>AI-редактор отчёта</li>
+              <li>Export PDF / Word</li>
+              <li>Premium themes</li>
+              <li>90 дней истории</li>
+            </ul>
+            {% if bot_url %}
+            <a
+              href="{{ bot_url }}"
+              target="_blank"
+              rel="noopener"
+              class="s1-plan-cta primary"
+              aria-label="Перейти на PRO — бот @{{ bot_username }}, команда /buy"
+            >
+              Перейти на PRO
+            </a>
+            <p class="s1-plan-hint">Напишите боту /buy для оплаты</p>
+            {% else %}
+            <span class="s1-plan-cta primary" style="opacity:.6;">Перейти на PRO</span>
+            {% endif %}
+          </div>
+
+          <!-- TEAM -->
+          <div class="s1-plan-card">
+            <div class="s1-plan-name">TEAM</div>
+            <div class="s1-plan-price">
+              <span>700</span>
+              <span class="price-mo">&thinsp;⭐ / мес</span>
+            </div>
+            <div class="s1-plan-subtitle">~$6.99 · для команд и руководителей</div>
+            <div class="s1-plan-divider"></div>
+            <ul class="s1-plan-features">
+              <li>Командное пространство</li>
+              <li>Роли Owner / Admin / Member</li>
+              <li>Общие шаблоны</li>
+              <li>Executive Pulse</li>
+              <li>365 дней истории</li>
+            </ul>
+            {% if bot_url %}
+            <a
+              href="{{ bot_url }}"
+              target="_blank"
+              rel="noopener"
+              class="s1-plan-cta mint"
+              aria-label="Подключить TEAM — бот @{{ bot_username }}, команда /buy team"
+            >
+              Подключить TEAM
+            </a>
+            <p class="s1-plan-hint">Напишите боту /buy team для оплаты</p>
+            {% else %}
+            <span class="s1-plan-cta mint" style="opacity:.6;">Подключить TEAM</span>
+            {% endif %}
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Security ──────────────────────────────────────────────── -->
+    <div class="s1-content">
+      <div class="s1-section" id="s1-security">
+        <div class="s1-sec-eyebrow">Безопасность</div>
+        <h2 class="s1-sec-h2">Ваши данные <mark>под контролем</mark></h2>
+        <div class="s1-security-grid">
+          <div class="s1-sec-trust">
+            <div class="s1-sec-trust-ico">🔒</div>
+            <div class="s1-sec-trust-label">Local-first ready</div>
+          </div>
+          <div class="s1-sec-trust">
+            <div class="s1-sec-trust-ico">👤</div>
+            <div class="s1-sec-trust-label">User-scoped data</div>
+          </div>
+          <div class="s1-sec-trust">
+            <div class="s1-sec-trust-ico">🚫</div>
+            <div class="s1-sec-trust-label">Нет авто-постинга в рабочие чаты</div>
+          </div>
+          <div class="s1-sec-trust">
+            <div class="s1-sec-trust-ico">✈️</div>
+            <div class="s1-sec-trust-label">Telegram auth</div>
+          </div>
+          <div class="s1-sec-trust">
+            <div class="s1-sec-trust-ico">👁️</div>
+            <div class="s1-sec-trust-label">Ручная проверка перед отправкой</div>
+          </div>
+        </div>
+        <div class="s1-sec-note">
+          <strong>PM Digest не публикует отчёты автоматически.</strong> Вы всегда проверяете черновик перед отправкой. Никаких неожиданных сообщений в рабочих чатах.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Footer ────────────────────────────────────────────────── -->
+    <footer class="s1-footer">
+      <div class="s1-footer-brand">PM<mark>·</mark>DIGEST</div>
+      <div>
+        <a
+          href="https://t.me/PM_vibe"
+          target="_blank"
+          rel="noopener"
+          class="s1-support-link"
+        >
+          💬 Нашли проблему или есть идея? Напишите: <b>@PM_vibe</b>
+        </a>
+      </div>
+      <div style="color:var(--muted);font-size:11px;">© 2026 PM Digest</div>
+    </footer>
+
+  </div><!-- /v2-above-canvas -->
+
+  <!-- ── Demo modal ────────────────────────────────────────────── -->
+  <div class="demo-overlay" id="demo-overlay" role="dialog" aria-modal="true" aria-label="Демо PM Digest">
+    <div class="demo-card">
+      <button class="demo-close-btn" id="demo-close-btn" type="button" aria-label="Закрыть демо">✕</button>
+      <div class="demo-pip-row" aria-hidden="true">
+        <div class="demo-pip active"></div>
+        <div class="demo-pip"></div>
+        <div class="demo-pip"></div>
+        <div class="demo-pip"></div>
+      </div>
+      <div class="demo-step-ico" id="demo-ico">📝</div>
+      <div class="demo-step-title" id="demo-title">Заметка или голос</div>
+      <p class="demo-step-desc" id="demo-desc">
+        Пишите текстовую заметку прямо в Telegram или отправьте голосовое — бот распознает и запомнит всё.
+      </p>
+      <div class="demo-nav-row">
+        <button class="demo-nav-btn" id="demo-prev" type="button" style="visibility:hidden;">← Назад</button>
+        <button class="demo-nav-btn pri" id="demo-next" type="button">Далее →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- V2 UI: theme bootstrap, canvas, demo modal -->
+  <script src="/static/v2/v2_ui.js" defer></script>
+
+</body>
+</html>

@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<!-- DESIGN_VERSION: V2_DASHBOARD_SHELL_ROLLBACK_SAFE -->
+<!--
+  PM Digest — V2 Dashboard Shell
+  Enabled by: DASHBOARD_UI_VERSION=v2 in .env
+  Rollback:   Set DASHBOARD_UI_VERSION=v1 to restore index.html instantly.
+  Do not edit: index.html, app.css, app.js, landing.html, landing_v2.html, admin.html
+-->
+<html lang="ru" data-theme="dark-lime">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <title>PM Digest — Dashboard</title>
+
+  <script src="https://telegram.org/js/telegram-web-app.js?62"></script>
+
+  <!-- Inline theme bootstrap — before first paint -->
+  <script>
+    (function () {
+      try {
+        var SKEY   = 'pm-digest-v2-theme';
+        var THEMES = ['dark-lime', 'light-lime', 'wave-blue'];
+        var saved  = localStorage.getItem(SKEY);
+        var theme;
+        var tg = window.Telegram && window.Telegram.WebApp;
+        if (tg && tg.colorScheme) {
+          theme = tg.colorScheme === 'light' ? 'light-lime' : 'dark-lime';
+        } else if (saved && THEMES.indexOf(saved) !== -1) {
+          theme = saved;
+        } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+          theme = 'light-lime';
+        } else {
+          theme = 'dark-lime';
+        }
+        document.documentElement.dataset.theme = theme;
+        document.body && (document.body.dataset.theme = theme);
+      } catch (e) {
+        document.documentElement.dataset.theme = 'dark-lime';
+      }
+    }());
+  </script>
+
+  <link rel="stylesheet" href="/static/v2/themes.css" />
+  <link rel="stylesheet" href="/static/v2/dashboard_v2.css" />
+</head>
+<body class="v2-dash" data-theme="dark-lime" data-auth-required="{{ 'true' if auth_required else 'false' }}">
+
+  <!-- Background canvas (optional; v2_ui.js activates when element present) -->
+  <canvas id="v2-bg-canvas" aria-hidden="true"></canvas>
+
+  <div class="v2-above-canvas">
+
+    <!-- ── Top navigation ─────────────────────────────────────── -->
+    <nav class="v2-topnav" role="navigation" aria-label="Основная навигация">
+      <div class="v2-topnav-brand">PM<mark>·</mark>DIGEST</div>
+      <div class="v2-topnav-sep" aria-hidden="true"></div>
+
+      <div class="v2-topnav-links" role="list">
+        <a href="/dashboard" class="active" role="listitem">Dashboard</a>
+        {% if not auth_required %}
+        <a href="/dashboard#studio" role="listitem">Report Studio</a>
+        {% if user_plan == "team" or is_super_admin %}
+        <a href="/admin" role="listitem">Team Admin</a>
+        {% endif %}
+        {% if is_super_admin %}
+        <a href="/admin#super" role="listitem">Super Admin</a>
+        {% endif %}
+        {% endif %}
+      </div>
+
+      <div class="v2-topnav-right">
+        {% if not auth_required and user %}
+        <!-- Plan badge -->
+        <span class="v2-plan-badge {{ user_plan }}">{{ user_plan | upper }}</span>
+        {% if days_left is not none %}
+        <span class="v2-days-left" title="Дней до конца тарифа">⏳ {{ days_left }}д</span>
+        {% endif %}
+        {% endif %}
+
+        <!-- Theme switcher -->
+        <div class="v2-theme-sw" aria-label="Выбор темы">
+          <button class="v2-theme-btn" data-v2-theme-btn="dark-lime" title="Dark Lime" type="button">D</button>
+          <button class="v2-theme-btn" data-v2-theme-btn="light-lime" title="Light Lime" type="button">L</button>
+          <button class="v2-theme-btn" data-v2-theme-btn="wave-blue" title="Wave Blue" type="button">W</button>
+        </div>
+
+        {% if not auth_required and user %}
+        <!-- User chip -->
+        <div class="v2-user-chip" aria-label="Текущий пользователь">
+          <div class="v2-user-av" aria-hidden="true">
+            {% if user.display_name %}{{ user.display_name[:2] | upper }}{% else %}PM{% endif %}
+          </div>
+          {{ user.display_name or user.telegram_full_name }}
+        </div>
+        <a href="/" class="v2-btn ghost" style="height:28px;padding:0 10px;font-size:12px;" aria-label="На главную">←&thinsp;Лендинг</a>
+        {% endif %}
+
+        <!-- Mobile nav toggle -->
+        <button
+          id="v2-mobile-nav-btn"
+          class="v2-theme-btn"
+          type="button"
+          aria-label="Меню навигации"
+          aria-expanded="false"
+          aria-controls="v2-mobile-nav-menu"
+          style="display:none;"
+        >☰</button>
+      </div>
+    </nav>
+
+    <!-- Mobile nav menu (shown by v2_ui.js on small screens) -->
+    <div id="v2-mobile-nav-menu" role="menu" aria-label="Мобильное меню" style="display:none;">
+      <a href="/dashboard" role="menuitem">Dashboard</a>
+      {% if not auth_required %}
+      <a href="/dashboard#studio" role="menuitem">Report Studio</a>
+      {% if user_plan == "team" or is_super_admin %}
+      <a href="/admin" role="menuitem">Team Admin</a>
+      {% endif %}
+      {% if is_super_admin %}
+      <a href="/admin#super" role="menuitem">Super Admin</a>
+      {% endif %}
+      {% endif %}
+    </div>
+
+    <!-- ── Notice ──────────────────────────────────────────────── -->
+    {% if notice %}
+    <div class="v2-notice" role="status" aria-live="polite">{{ notice | safe }}</div>
+    {% endif %}
+
+    <!-- ── Auth required state ─────────────────────────────────── -->
+    {% if auth_required %}
+    <div class="v2-auth-required">
+      <h2>Откройте Mini App из Telegram</h2>
+      <p>
+        Этот кабинет доступен только через Telegram. Запустите бота и откройте приложение через кнопку
+        в чате — Telegram передаст вашу сессию автоматически.
+      </p>
+    </div>
+
+    {% else %}
+
+    <!-- ── Authenticated dashboard ─────────────────────────────── -->
+    <main class="v2-page">
+
+      <!-- Page header -->
+      <div class="v2-page-header">
+        <div>
+          <div class="v2-page-title">Dashboard</div>
+          <div class="v2-page-sub">{{ today }}{% if user %} · {{ user.display_name or user.telegram_full_name }}{% endif %}</div>
+        </div>
+        <div class="v2-page-actions">
+          <form method="post" action="/draft/build" style="display:contents;">
+            <button type="submit" class="v2-btn primary">Собрать черновик</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- ── KPI row ─────────────────────────────────────────── -->
+      <div class="v2-kpi-row" aria-label="Сводка за сегодня">
+        <div class="v2-kpi-card">
+          <div class="v2-kpi-label">Заметок сегодня</div>
+          <div class="v2-kpi-val">{{ summary.notes_count }}</div>
+          <div class="v2-kpi-unit">заметок</div>
+          {% if summary.activity_trend %}
+          <div class="v2-kpi-badge">{{ summary.activity_trend }}</div>
+          {% endif %}
+        </div>
+
+        <div class="v2-kpi-card">
+          <div class="v2-kpi-label">Проектов</div>
+          <div class="v2-kpi-val">{{ summary.project_count }}</div>
+          <div class="v2-kpi-unit">активных сегодня</div>
+        </div>
+
+        <div class="v2-kpi-card">
+          <div class="v2-kpi-label">Входящие (inbox)</div>
+          <div class="v2-kpi-val">{{ summary.inbox_count }}</div>
+          <div class="v2-kpi-unit">без проекта</div>
+        </div>
+
+        <div class="v2-kpi-card">
+          <div class="v2-kpi-label">Задачи</div>
+          <div class="v2-kpi-val">{{ summary.tasks_count }}</div>
+          <div class="v2-kpi-unit">открытых</div>
+        </div>
+      </div>
+
+      <!-- ── Draft status ────────────────────────────────────── -->
+      <div class="v2-draft-card {% if draft %}has-draft{% endif %}">
+        <div class="v2-card-title">
+          <span class="v2-card-title-dot"></span>
+          {% if draft %}Черновик готов{% else %}Черновик не собран{% endif %}
+        </div>
+
+        {% if draft %}
+        <div class="v2-draft-preview">{{ draft_plain[:400] if draft_plain else (draft | striptags)[:400] }}</div>
+        <div class="v2-draft-actions">
+          <form method="post" action="/draft/send" style="display:contents;">
+            <button type="submit" class="v2-btn primary">Отправить в Telegram</button>
+          </form>
+          <form method="post" action="/draft/finalize" style="display:contents;">
+            <button type="submit" class="v2-btn ghost">Зафиксировать финальный</button>
+          </form>
+          <form method="post" action="/draft/build" style="display:contents;">
+            <button type="submit" class="v2-btn ghost">Пересобрать</button>
+          </form>
+        </div>
+
+        {% elif summary.notes_count > 0 %}
+        <div class="v2-draft-empty">Есть {{ summary.notes_count }} заметок — черновик ещё не собран.</div>
+        <div class="v2-draft-actions">
+          <form method="post" action="/draft/build" style="display:contents;">
+            <button type="submit" class="v2-btn primary">Собрать черновик</button>
+          </form>
+        </div>
+
+        {% else %}
+        <div class="v2-draft-empty">Добавьте заметки, чтобы собрать черновик отчёта.</div>
+        {% endif %}
+      </div>
+
+      <!-- ── Studio grid ─────────────────────────────────────── -->
+      <div id="studio" class="v2-studio-grid">
+
+        <!-- Left: note form + recent notes -->
+        <div class="v2-studio-main">
+
+          <!-- Add note -->
+          <div class="v2-panel">
+            <div class="v2-card-title">
+              <span class="v2-card-title-dot"></span>
+              Добавить апдейт
+            </div>
+            <form method="post" action="/notes" class="v2-note-form">
+              <textarea
+                name="update_text"
+                placeholder="Что сделано, какие риски, следующий шаг…"
+                rows="3"
+                aria-label="Текст апдейта"
+              ></textarea>
+
+              {% if projects %}
+              <div class="v2-note-form-row">
+                <select name="project_name" class="v2-select" aria-label="Проект">
+                  <option value="">Проект автоматически</option>
+                  {% for p in projects %}
+                  <option value="{{ p.name }}">{{ p.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              {% endif %}
+
+              <div class="v2-draft-actions">
+                <button type="submit" name="action" value="save" class="v2-btn primary">Сохранить</button>
+                <button type="submit" name="action" value="save_build" class="v2-btn ghost">Сохранить и собрать</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Recent notes -->
+          {% if notes %}
+          <div class="v2-panel">
+            <div class="v2-sec-row">
+              <div class="v2-sec-row-title">Заметки сегодня</div>
+              <span class="v2-sec-row-count">{{ notes | length }}</span>
+            </div>
+            <div class="v2-notes-list">
+              {% for note in notes[:10] %}
+              <div class="v2-note-item">
+                {% if note.project_name %}
+                <div class="v2-note-item-project">{{ note.project_name }}</div>
+                {% endif %}
+                {{ note.raw_text[:200] if note.raw_text else note.update_text[:200] }}
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Inbox (unresolved notes) -->
+          {% if inbox_cards %}
+          <div class="v2-panel">
+            <div class="v2-sec-row">
+              <div class="v2-sec-row-title">Входящие — без проекта</div>
+              <span class="v2-sec-row-count">{{ inbox_cards | length }}</span>
+            </div>
+            <div class="v2-inbox-list">
+              {% for card in inbox_cards[:8] %}
+              <div class="v2-inbox-card">
+                <div class="v2-inbox-text">{{ card.raw_text[:180] if card.raw_text else "" }}</div>
+                {% if card.candidates %}
+                <div class="v2-inbox-candidates">
+                  {% for name in card.candidates %}
+                  <form method="post" action="/notes" style="display:contents;">
+                    <input type="hidden" name="update_text" value="{{ card.raw_text or '' }}" />
+                    <input type="hidden" name="project_name" value="{{ name }}" />
+                    <button type="submit" class="v2-inbox-candidate" title="Привязать к {{ name }}">{{ name }}</button>
+                  </form>
+                  {% endfor %}
+                </div>
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
+        </div><!-- /studio-main -->
+
+        <!-- Right: recent updates, tasks, quick links -->
+        <div class="v2-studio-aside">
+
+          <!-- Recent updates -->
+          {% if recent_updates %}
+          <div class="v2-panel">
+            <div class="v2-sec-row">
+              <div class="v2-sec-row-title">Последние апдейты</div>
+              <span class="v2-sec-row-count">{{ recent_updates | length }}</span>
+            </div>
+            <div class="v2-updates-list">
+              {% for upd in recent_updates %}
+              <div class="v2-update-row">
+                {% if upd.project_name %}
+                <div class="v2-update-project">{{ upd.project_name[:16] }}</div>
+                {% endif %}
+                <div class="v2-update-text">{{ upd.raw_text[:120] if upd.raw_text else upd.update_text[:120] }}</div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Open tasks -->
+          {% if tasks %}
+          <div class="v2-panel">
+            <div class="v2-sec-row">
+              <div class="v2-sec-row-title">Задачи</div>
+              <span class="v2-sec-row-count">{{ tasks | length }}</span>
+            </div>
+            <div class="v2-tasks-list">
+              {% for task in tasks[:10] %}
+              <div class="v2-task-row">
+                <div class="v2-task-status {{ task.status }}" title="{{ task.status }}" aria-hidden="true"></div>
+                <div class="v2-task-title">{{ task.title }}</div>
+                <div class="v2-task-actions">
+                  {% if task.status != "done" %}
+                  <form method="post" action="/tasks/{{ task.id }}/status" style="display:contents;">
+                    <input type="hidden" name="status" value="done" />
+                    <button type="submit" class="v2-task-btn" title="Закрыть задачу">✓</button>
+                  </form>
+                  {% endif %}
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+
+            <!-- Add task -->
+            <form method="post" action="/tasks" style="margin-top:12px;display:flex;gap:6px;">
+              <input
+                type="text"
+                name="title"
+                placeholder="Новая задача…"
+                class="v2-select"
+                style="flex:1;height:34px;padding:0 10px;"
+                aria-label="Название новой задачи"
+              />
+              <button type="submit" class="v2-btn primary" style="height:34px;padding:0 12px;">+</button>
+            </form>
+          </div>
+
+          {% else %}
+          <div class="v2-panel">
+            <div class="v2-sec-row-title" style="margin-bottom:10px;">Задачи</div>
+            <div class="v2-empty-state">Нет открытых задач</div>
+            <form method="post" action="/tasks" style="margin-top:12px;display:flex;gap:6px;">
+              <input
+                type="text"
+                name="title"
+                placeholder="Добавить задачу…"
+                class="v2-select"
+                style="flex:1;height:34px;padding:0 10px;"
+                aria-label="Название новой задачи"
+              />
+              <button type="submit" class="v2-btn primary" style="height:34px;padding:0 12px;">+</button>
+            </form>
+          </div>
+          {% endif %}
+
+          <!-- Final report status -->
+          {% if final_report %}
+          <div class="v2-panel">
+            <div class="v2-card-title">
+              <span class="v2-card-title-dot"></span>
+              Финальный отчёт
+            </div>
+            <div class="v2-draft-preview">{{ final_plain[:300] if final_plain else (final_report | striptags)[:300] }}</div>
+            <div class="v2-draft-actions" style="margin-top:12px;">
+              <form method="post" action="/draft/send" style="display:contents;">
+                <button type="submit" class="v2-btn mint">Отправить ещё раз</button>
+              </form>
+            </div>
+          </div>
+          {% endif %}
+
+        </div><!-- /studio-aside -->
+
+      </div><!-- /studio-grid -->
+
+    </main>
+
+    {% endif %}{# /auth_required #}
+
+  </div><!-- /v2-above-canvas -->
+
+  <script src="/static/v2/v2_ui.js" defer></script>
+
+  <!-- Telegram Mini App auth bootstrap (mirrors V1 pattern) -->
+  <script>
+    (function () {
+      var tg = window.Telegram && window.Telegram.WebApp;
+      if (!tg) return;
+      tg.ready();
+      tg.expand();
+
+      // Auto-authenticate if Mini App initData is present
+      var initData = tg.initData;
+      if (!initData) return;
+      var body = document.body;
+      if (body.dataset.authRequired !== 'true') return;
+
+      fetch('/auth/telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ init_data: initData }),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.ok) {
+            window.location.reload();
+          }
+        })
+        .catch(function () {});
+    }());
+  </script>
+
+</body>
+</html>

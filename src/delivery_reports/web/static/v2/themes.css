@@ -1,0 +1,154 @@
+/*
+   PM DIGEST V2 Themes
+   Purpose:
+     Shared theme tokens for V2 Landing, Dashboard, Report Studio, Admin.
+   Rollback:
+     Safe because this file is not imported by V1.
+   Source:
+     docs/prototypes/pm_digest_v2_preview.html
+*/
+
+/* Default fallback (dark-lime aligned) until body[data-theme] is set */
+:root {
+  --bg: #040506;
+  --surface: rgba(5, 7, 5, 0.68);
+  --surface-strong: rgba(8, 11, 8, 0.86);
+  --text: #f2f4ef;
+  --text2: #c6cac3;
+  --muted: #8b9287;
+  --primary: #a3e635;
+  --primary2: #00c878;
+  --primary-bg: rgba(163, 230, 53, 0.14);
+  --primary-border: rgba(163, 230, 53, 0.32);
+  --border: rgba(255, 255, 255, 0.06);
+  --border2: rgba(255, 255, 255, 0.13);
+  --glow: rgba(163, 230, 53, 0.58);
+  --shadow: 0 28px 72px rgba(0, 0, 0, 0.62), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --status-ok: #a3e635;
+  --status-wait: #a6ff4d;
+  --status-risk: #dfff5a;
+  --status-blocked: #00f5c8;
+  --status-critical: #ff4d4d;
+  /* Canvas background (v2_ui.js) */
+  --c-dot: rgba(163, 230, 53, 0.58);
+  --c-line: rgba(163, 230, 53, 0.12);
+  --c-ambient: rgba(163, 230, 53, 0.2);
+}
+
+body[data-theme="dark-lime"] {
+  /* Dark neon: near-black base, lime primary, emerald/mint as secondary accent */
+  --bg: #040506;
+  --surface: rgba(5, 7, 5, 0.68);
+  --surface-strong: rgba(8, 11, 8, 0.86);
+  --text: #f2f4ef;
+  --text2: #c6cac3;
+  --muted: #8b9287;
+  --primary: #a3e635;
+  --primary2: #00c878;
+  --primary-bg: rgba(163, 230, 53, 0.14);
+  --primary-border: rgba(163, 230, 53, 0.32);
+  --border: rgba(255, 255, 255, 0.06);
+  --border2: rgba(255, 255, 255, 0.13);
+  --glow: rgba(163, 230, 53, 0.58);
+  --shadow: 0 28px 72px rgba(0, 0, 0, 0.62), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --status-ok: #a3e635;
+  --status-wait: #a6ff4d;
+  --status-risk: #dfff5a;
+  --status-blocked: #00f5c8;
+  --status-critical: #ff4d4d;
+  /* Extended status (compatible with prototype status chips / borders) */
+  --status-ok-2: #7cff00;
+  --status-wait-bg: rgba(166, 255, 77, 0.1);
+  --status-wait-border: rgba(166, 255, 77, 0.38);
+  --status-risk-2: #b9ff00;
+  --status-risk-bg: rgba(185, 255, 0, 0.1);
+  --status-risk-border: rgba(223, 255, 90, 0.45);
+  --status-blocked-2: #004d3a;
+  --status-blocked-bg: rgba(0, 245, 200, 0.1);
+  --status-blocked-border: rgba(0, 245, 200, 0.42);
+  --status-critical-2: #ff6b6b;
+  --status-critical-bg: rgba(255, 77, 77, 0.1);
+  --status-critical-border: rgba(255, 77, 77, 0.35);
+  /* Canvas background (v2_ui.js) */
+  --c-dot: rgba(163, 230, 53, 0.62);
+  --c-line: rgba(163, 230, 53, 0.14);
+  --c-ambient: rgba(163, 230, 53, 0.22);
+}
+
+body[data-theme="light-lime"] {
+  /* Soft off-white / sage, lime & mint accents, dark readable text */
+  --bg: #f4f7ee;
+  --surface: rgba(255, 255, 255, 0.72);
+  --surface-strong: rgba(255, 255, 255, 0.92);
+  --text: #101812;
+  --text2: #2c3828;
+  --muted: #697268;
+  --primary: #84cc16;
+  --primary2: #00a36c;
+  --primary-bg: rgba(132, 204, 22, 0.12);
+  --primary-border: rgba(132, 204, 22, 0.28);
+  --border: rgba(16, 24, 12, 0.1);
+  --border2: rgba(16, 24, 12, 0.2);
+  --glow: rgba(132, 204, 22, 0.3);
+  --shadow: 0 20px 60px rgba(20, 40, 18, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  --status-ok: #4d8c00;
+  --status-wait: #5f7a18;
+  --status-risk: #8a9a00;
+  --status-blocked: #007a64;
+  --status-critical: #cc1a1a;
+  --status-ok-2: #5fa300;
+  --status-wait-bg: rgba(95, 122, 24, 0.1);
+  --status-wait-border: rgba(95, 122, 24, 0.32);
+  --status-risk-2: #7a8800;
+  --status-risk-bg: rgba(138, 154, 0, 0.1);
+  --status-risk-border: rgba(138, 154, 0, 0.34);
+  --status-blocked-2: #005a4a;
+  --status-blocked-bg: rgba(0, 122, 100, 0.08);
+  --status-blocked-border: rgba(0, 122, 100, 0.3);
+  --status-critical-2: #e03232;
+  --status-critical-bg: rgba(204, 26, 26, 0.08);
+  --status-critical-border: rgba(204, 26, 26, 0.28);
+  /* Canvas background (v2_ui.js) */
+  --c-dot: rgba(0, 200, 120, 0.28);
+  --c-line: rgba(0, 200, 120, 0.1);
+  --c-ambient: rgba(124, 255, 0, 0.16);
+}
+
+body[data-theme="wave-blue"] {
+  /* Light blue / off-white, blue primary, cyan secondary, dark readable text */
+  --bg: #f1f6ff;
+  --surface: rgba(255, 255, 255, 0.7);
+  --surface-strong: rgba(255, 255, 255, 0.92);
+  --text: #182a44;
+  --text2: #2a3f60;
+  --muted: #6378a0;
+  --primary: #2f7dff;
+  --primary2: #00c8e8;
+  --primary-bg: rgba(47, 125, 255, 0.12);
+  --primary-border: rgba(47, 125, 255, 0.28);
+  --border: rgba(47, 125, 255, 0.14);
+  --border2: rgba(47, 125, 255, 0.28);
+  --glow: rgba(47, 125, 255, 0.28);
+  --shadow: 0 20px 60px rgba(20, 50, 120, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  --status-ok: #0a7a50;
+  --status-wait: #3d6b1f;
+  --status-risk: #6e7a00;
+  --status-blocked: #007a9a;
+  --status-critical: #cc1a1a;
+  --status-ok-2: #0d9864;
+  --status-wait-bg: rgba(61, 107, 31, 0.1);
+  --status-wait-border: rgba(61, 107, 31, 0.28);
+  --status-risk-2: #5a6600;
+  --status-risk-bg: rgba(110, 122, 0, 0.08);
+  --status-risk-border: rgba(110, 122, 0, 0.3);
+  --status-blocked-2: #005a72;
+  --status-blocked-bg: rgba(0, 122, 154, 0.08);
+  --status-blocked-border: rgba(0, 122, 154, 0.28);
+  --status-critical-2: #e03232;
+  --status-critical-bg: rgba(204, 26, 26, 0.08);
+  --status-critical-border: rgba(204, 26, 26, 0.26);
+  /* Canvas background (v2_ui.js) */
+  --c-dot: rgba(47, 125, 255, 0.3);
+  --c-line: rgba(47, 125, 255, 0.1);
+  --c-ambient: rgba(0, 200, 232, 0.16);
+}

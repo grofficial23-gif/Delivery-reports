@@ -66,7 +66,17 @@ def build_web_app(settings: Settings, repository: Repository) -> FastAPI:
     async def landing(request: Request) -> HTMLResponse:
         # Simple anonymous event if no user context
         repository.log_event(0, "visit_landing", request.client.host if request.client else "")
-        return templates.TemplateResponse(request=request, name="landing.html", context={"request": request})
+        template_name = "landing_v2.html" if settings.landing_ui_version == "v2" else "landing.html"
+        return templates.TemplateResponse(
+            request=request,
+            name=template_name,
+            context={
+                "request": request,
+                "bot_username": settings.bot_username,
+                "bot_url": f"https://t.me/{settings.bot_username}",
+                "public_web_app_url": settings.public_web_app_url,
+            },
+        )
 
     @app.get("/admin", response_class=HTMLResponse)
     async def admin_page(request: Request) -> HTMLResponse:
@@ -176,7 +186,8 @@ def build_web_app(settings: Settings, repository: Repository) -> FastAPI:
     @app.get("/dashboard", response_class=HTMLResponse)
     async def dashboard(request: Request) -> HTMLResponse:
         context = _build_dashboard_context(request, repository, settings)
-        return templates.TemplateResponse(request=request, name="index.html", context=context)
+        template_name = "dashboard_v2.html" if settings.dashboard_ui_version == "v2" else "index.html"
+        return templates.TemplateResponse(request=request, name=template_name, context=context)
 
     @app.post("/auth/telegram")
     async def auth_telegram(request: Request) -> JSONResponse:
