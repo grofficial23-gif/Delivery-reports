@@ -144,7 +144,7 @@ html { scroll-behavior: smooth; }
   display: inline-flex; align-items: center; justify-content: center; gap: 4px;
   height: 38px; padding: 0 18px; border-radius: 10px;
   background: var(--primary); color: #080f02;
-  font-size: 13px; font-weight: 800;
+  font-size: 13px; font-weight: 800; letter-spacing: -0.01em;
   line-height: 1.2;
   box-shadow: 0 3px 14px color-mix(in srgb, var(--glow) 40%, transparent);
   transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
@@ -191,7 +191,7 @@ html { scroll-behavior: smooth; }
   font-weight: 400;
   max-width: 500px; margin-bottom: 40px;
 }
-.s1-actions { display: flex; gap: 14px; flex-wrap: wrap; }
+.s1-actions { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
 .s1-btn-primary {
   font-family: inherit;
   height: 52px; padding: 0 28px; border-radius: 14px;
@@ -202,11 +202,14 @@ html { scroll-behavior: smooth; }
   transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
 }
 .s1-btn-primary--hero {
-  height: auto;
-  min-height: 48px;
-  padding: 10px 28px;
+  height: 52px;
+  padding: 0 28px;
   align-items: center;
   gap: 10px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
 }
 .s1-hero-cta-fwd {
   margin-left: 2px; color: #080f02;
@@ -214,30 +217,19 @@ html { scroll-behavior: smooth; }
 }
 .s1-btn-primary--hero:hover { transform: translateY(-1px); box-shadow: 0 12px 36px var(--glow); }
 .s1-btn-primary--hero:hover .s1-hero-cta-fwd {
-  transform: translateX(3px);
+  transform: translateX(5px);
   filter: drop-shadow(0 0 4px color-mix(in srgb, var(--glow) 35%, transparent));
 }
 .s1-btn-primary--hero:active { transform: translateY(1px); box-shadow: 0 5px 18px var(--glow); }
 .s1-btn-primary--hero > svg { transition: filter 0.2s, transform 0.2s var(--ease); }
 .s1-btn-primary--hero:hover > svg {
   filter: drop-shadow(0 0 8px color-mix(in srgb, var(--glow) 50%, transparent));
-  transform: translate(2px, -1px) scale(1.03);
+  transform: translate(1px, -1px) scale(1.03);
 }
-.s1-hero-cta-stack {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  line-height: 1.2;
-  text-align: left;
-}
-.s1-hero-cta-line { font-size: 14px; font-weight: 700; letter-spacing: -0.01em; }
-.s1-hero-cta-sub {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  color: rgba(8, 15, 2, 0.72);
-}
+/* Legacy classes — kept for safety but not used in clean hero CTA */
+.s1-hero-cta-stack { display: none; }
+.s1-hero-cta-line { font-size: 15px; font-weight: 800; letter-spacing: -0.01em; }
+.s1-hero-cta-sub  { display: none; }
 .s1-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 14px 40px var(--glow); }
 .s1-btn-primary:active { transform: translateY(1px); }
 .s1-btn-ghost {
@@ -258,7 +250,7 @@ html { scroll-behavior: smooth; }
 .s1-btn-demo {
   font-family: inherit;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: -0.015em;
   transition: border-color 0.2s, color 0.2s, transform 0.2s var(--ease), box-shadow 0.2s;
 }
@@ -742,10 +734,10 @@ html { scroll-behavior: smooth; }
   .s1-hero { grid-template-columns: 1fr; padding: 48px 48px 56px; }
   .s1-phone-wrap { display: none; }
 }
-/* Hide the PRO hint before it can ever crowd the "Открыть бота" button */
-@media (max-width: 1100px) {
+/* Hide the PRO hint early enough that it can never crowd the "Открыть бота" button */
+@media (max-width: 1280px) {
   .s1-theme-pro-hint { display: none; }
-  .s1-nav-right { gap: 8px; flex-wrap: nowrap; }
+  .s1-nav-right { gap: 8px; }
 }
 @media (max-width: 900px) {
   .s1-content { padding: 0 24px; }
@@ -771,6 +763,9 @@ html { scroll-behavior: smooth; }
   .demo-card { padding: 32px 18px 24px; }
   .demo-nav-btn { font-size: 12px; padding: 6px 12px; }
   .demo-nav-btn.pri { padding: 6px 12px; }
+  .s1-actions { flex-direction: column; align-items: stretch; }
+  .s1-btn-primary--hero,
+  .s1-btn-demo { width: 100%; justify-content: center; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

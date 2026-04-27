@@ -213,7 +213,31 @@
 /* PMD:V2:REPORT_STUDIO ─────────────────────────────────── */
 
 /* Scroll target for Report Studio — lands below sticky 56px topnav */
-#studio { scroll-margin-top: 72px; }
+/* ── Report Studio scroll target ──────────────────────────────── */
+#studio { scroll-margin-top: 80px; }
+
+/* Temporary anchor glow when navigating to #studio via link */
+@keyframes v2-studio-arrive {
+  0%   { border-top-color: var(--primary); }
+  70%  { border-top-color: color-mix(in srgb, var(--primary) 40%, transparent); }
+  100% { border-top-color: transparent; }
+}
+#studio {
+  border-top: 2px solid transparent;
+  transition: border-top-color 0.3s;
+}
+#studio:target {
+  animation: v2-studio-arrive 1.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Reusable button arrow utility ──────────────────────────────── */
+.v2-arrow {
+  display: inline-block;
+  margin-left: 4px;
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.v2-btn:hover .v2-arrow { transform: translateX(4px); }
+.v2-btn:active .v2-arrow { transform: translateX(2px); }
 
 /* Three-column layout: mini-nav | editor | AI panel */
 .v2-studio-shell {

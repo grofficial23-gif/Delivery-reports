@@ -94,7 +94,7 @@
     </nav>
 
     <!-- ── Hero ────────────────────────────────────────────────── -->
-    <div class="s1-hero">
+    <div id="top" class="s1-hero">
 
       <div>
         <div class="s1-eyebrow">Telegram · Mini App · Reports</div>
@@ -114,14 +114,12 @@
             rel="noopener"
             class="s1-btn-primary s1-btn-primary--hero"
             aria-label="Открыть бота @{{ bot_username }} в Telegram"
+            title="@{{ bot_username }}"
           >
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
             </svg>
-            <span class="s1-hero-cta-stack">
-              <span class="s1-hero-cta-line">Открыть в Telegram</span>
-              <span class="s1-hero-cta-sub">@{{ bot_username }}</span>
-            </span>
+            Открыть в Telegram
             <span class="s1-btn-arrow s1-hero-cta-fwd" aria-hidden="true">→</span>
           </a>
           {% endif %}
