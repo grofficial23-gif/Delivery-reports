@@ -22,15 +22,18 @@
         var THEMES = ['dark-lime', 'light-lime', 'wave-blue'];
         var saved  = localStorage.getItem(SKEY);
         var theme;
-        var tg = window.Telegram && window.Telegram.WebApp;
-        if (tg && tg.colorScheme) {
-          theme = tg.colorScheme === 'light' ? 'light-lime' : 'dark-lime';
-        } else if (saved && THEMES.indexOf(saved) !== -1) {
+        // Saved preference wins — allows PRO/TEAM to keep Wave Blue across reloads.
+        if (saved && THEMES.indexOf(saved) !== -1) {
           theme = saved;
-        } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
-          theme = 'light-lime';
         } else {
-          theme = 'dark-lime';
+          var tg = window.Telegram && window.Telegram.WebApp;
+          if (tg && tg.colorScheme) {
+            theme = tg.colorScheme === 'light' ? 'light-lime' : 'dark-lime';
+          } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+            theme = 'light-lime';
+          } else {
+            theme = 'dark-lime';
+          }
         }
         document.documentElement.dataset.theme = theme;
         document.body && (document.body.dataset.theme = theme);
@@ -59,7 +62,7 @@
         <a href="#top" class="active" role="listitem">Dashboard</a>
         {% if not auth_required %}
         <a href="#studio" role="listitem">Report Studio</a>
-        {% if user_plan == "team" or is_super_admin %}
+        {% if is_team_owner %}
         <a href="/admin" role="listitem">Team Admin</a>
         {% endif %}
         {% if is_super_admin %}
@@ -115,7 +118,7 @@
       <a href="#top" role="menuitem">Dashboard</a>
       {% if not auth_required %}
       <a href="#studio" role="menuitem">Report Studio</a>
-      {% if user_plan == "team" or is_super_admin %}
+      {% if is_team_owner %}
       <a href="/admin" role="menuitem">Team Admin</a>
       {% endif %}
       {% if is_super_admin %}
@@ -163,9 +166,6 @@
           <div class="v2-kpi-label">Заметок сегодня</div>
           <div class="v2-kpi-val">{{ summary.notes_count }}</div>
           <div class="v2-kpi-unit">заметок</div>
-          {% if summary.activity_trend %}
-          <div class="v2-kpi-badge">{{ summary.activity_trend }}</div>
-          {% endif %}
         </div>
 
         <div class="v2-kpi-card">
@@ -217,7 +217,7 @@
               <li class="v2-pc-on">Шаблоны</li>
               <li class="v2-pc-dim">Экспорт — скоро</li>
               <li class="v2-pc-dim">История 90 дней — скоро</li>
-              {% if user_plan == 'team' or is_super_admin %}
+              {% if is_team_owner or is_super_admin %}
               <li class="v2-pc-on">Team workspace</li>
               <li class="v2-pc-on">Team Admin</li>
               {% endif %}
@@ -245,7 +245,7 @@
              aria-label="Открыть Super Admin">
             Открыть Super Admin <span class="v2-arrow" aria-hidden="true">→</span>
           </a>
-          {% elif user_plan == 'team' %}
+          {% elif is_team_owner %}
           <a href="/admin"
              class="v2-btn ghost v2-pc-cta"
              aria-label="Открыть Team Admin">
@@ -423,7 +423,7 @@
                 {% if note.project_name %}
                 <div class="v2-note-item-project">{{ note.project_name }}</div>
                 {% endif %}
-                {{ note.raw_text[:200] if note.raw_text else note.update_text[:200] }}
+                {{ note.preview_text[:200] if note.preview_text else "" }}
               </div>
               {% endfor %}
             </div>
@@ -440,7 +440,7 @@
             <div class="v2-inbox-list">
               {% for card in inbox_cards[:8] %}
               <div class="v2-inbox-card">
-                <div class="v2-inbox-text">{{ card.raw_text[:180] if card.raw_text else "" }}</div>
+                <div class="v2-inbox-text">{{ card.preview_text[:180] if card.preview_text else "" }}</div>
                 {% if card.candidates %}
                 <div class="v2-inbox-candidates">
                   {% for name in card.candidates %}
@@ -514,15 +514,31 @@
               <span class="v2-card-title-dot"></span>
               История версий
             </div>
+            {% if recent_report_history %}
+            <div class="v2-history-list" aria-label="Последние отчёты">
+              {% for entry in recent_report_history %}
+              <div class="v2-history-item">
+                <div class="v2-history-top">
+                  <span class="v2-history-date">{{ entry.date }}</span>
+                  {% if entry.type == "final" %}
+                  <span class="v2-history-badge final">Final</span>
+                  {% else %}
+                  <span class="v2-history-badge draft">Draft</span>
+                  {% endif %}
+                </div>
+                <div class="v2-history-snippet">{{ entry.snippet if entry.snippet else "Без текста" }}</div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="v2-empty-state">История появится после первых отчётов</div>
+            {% endif %}
             <div class="v2-disabled-cards">
-              <button type="button" class="v2-stub-card" disabled aria-disabled="true" title="Скоро: история и версии будут подключены отдельным endpoint.">
-                История отчётов
-              </button>
-              <button type="button" class="v2-stub-card" disabled aria-disabled="true" title="Скоро: история и версии будут подключены отдельным endpoint.">
+              <button type="button" class="v2-stub-card" disabled aria-disabled="true" title="Скоро: версионирование будет подключено отдельным endpoint.">
                 Версии черновика
               </button>
             </div>
-            <div class="v2-disabled-note">Скоро: история и версии будут подключены отдельным endpoint.</div>
+            <div class="v2-disabled-note">MVP: история доступна только для просмотра. Версии пока отключены.</div>
           </div>
 
           <!-- Recent updates -->
@@ -538,7 +554,7 @@
                 {% if upd.project_name %}
                 <div class="v2-update-project">{{ upd.project_name[:16] }}</div>
                 {% endif %}
-                <div class="v2-update-text">{{ upd.raw_text[:120] if upd.raw_text else upd.update_text[:120] }}</div>
+                <div class="v2-update-text">{{ upd.preview_text[:120] if upd.preview_text else "" }}</div>
               </div>
               {% endfor %}
             </div>

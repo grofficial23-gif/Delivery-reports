@@ -399,6 +399,64 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 8px;
+  margin-top: 10px;
+}
+.v2-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.v2-history-item {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: var(--surface-strong, var(--surface));
+}
+.v2-history-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.v2-history-date {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  font-family: var(--font-mono);
+}
+.v2-history-badge {
+  height: 18px;
+  padding: 0 8px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.v2-history-badge.draft {
+  background: var(--primary-bg);
+  color: var(--primary);
+  border: 1px solid var(--primary-border);
+}
+.v2-history-badge.final {
+  background: rgba(0, 245, 200, 0.1);
+  color: #00f5c8;
+  border: 1px solid rgba(0, 245, 200, 0.35);
+}
+.v2-history-snippet {
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .v2-stub-card {
   width: 100%;

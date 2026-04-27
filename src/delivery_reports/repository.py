@@ -956,6 +956,36 @@ class Repository:
                 ).fetchone()
         return row["content"] if row else None
 
+    def list_recent_drafts(self, user_id: int, limit: int = 7) -> list[dict]:
+        safe_limit = max(1, min(limit, 50))
+        with self.db.connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT id, draft_date, content, created_at
+                FROM drafts
+                WHERE owner_user_id = ?
+                ORDER BY draft_date DESC, id DESC
+                LIMIT ?
+                """,
+                (user_id, safe_limit),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def list_recent_final_reports(self, user_id: int, limit: int = 7) -> list[dict]:
+        safe_limit = max(1, min(limit, 50))
+        with self.db.connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT id, report_date, content, created_at, language, style
+                FROM final_reports
+                WHERE author_user_id = ?
+                ORDER BY report_date DESC, id DESC
+                LIMIT ?
+                """,
+                (user_id, safe_limit),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
     def replace_jira_issues(self, issues: list[JiraIssue]) -> None:
         with self.db.connect() as conn:
             conn.execute("DELETE FROM jira_issues")

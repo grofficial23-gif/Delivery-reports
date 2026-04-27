@@ -22,16 +22,18 @@
         var saved  = localStorage.getItem(SKEY);
         var theme;
 
-        // Telegram Mini App colorScheme takes highest priority
-        var tg = window.Telegram && window.Telegram.WebApp;
-        if (tg && tg.colorScheme) {
-          theme = tg.colorScheme === 'light' ? 'light-lime' : 'dark-lime';
-        } else if (saved && THEMES.indexOf(saved) !== -1) {
+        // Saved preference wins — allows PRO/TEAM to keep Wave Blue across reloads.
+        if (saved && THEMES.indexOf(saved) !== -1) {
           theme = saved;
-        } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
-          theme = 'light-lime';
         } else {
-          theme = 'dark-lime';
+          var tg = window.Telegram && window.Telegram.WebApp;
+          if (tg && tg.colorScheme) {
+            theme = tg.colorScheme === 'light' ? 'light-lime' : 'dark-lime';
+          } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+            theme = 'light-lime';
+          } else {
+            theme = 'dark-lime';
+          }
         }
         document.documentElement.dataset.theme = theme;
         document.body && (document.body.dataset.theme = theme);

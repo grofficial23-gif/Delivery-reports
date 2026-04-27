@@ -21,18 +21,19 @@
   var THEMES = ['dark-lime', 'light-lime', 'wave-blue'];
 
   function resolveTheme() {
-    // 1. Telegram Mini App colorScheme (when running inside TMA)
+    // 1. Saved preference — wins over Telegram colorScheme so PRO/TEAM users
+    //    can persist Wave Blue across Mini App reloads.
+    try {
+      var saved = localStorage.getItem(SKEY);
+      if (saved && THEMES.indexOf(saved) !== -1) return saved;
+    } catch (_) {}
+
+    // 2. Telegram Mini App colorScheme (only when no saved preference)
     try {
       var tg = window.Telegram && window.Telegram.WebApp;
       if (tg && tg.colorScheme) {
         return tg.colorScheme === 'light' ? 'light-lime' : 'dark-lime';
       }
-    } catch (_) {}
-
-    // 2. Saved preference
-    try {
-      var saved = localStorage.getItem(SKEY);
-      if (saved && THEMES.indexOf(saved) !== -1) return saved;
     } catch (_) {}
 
     // 3. System prefers-color-scheme

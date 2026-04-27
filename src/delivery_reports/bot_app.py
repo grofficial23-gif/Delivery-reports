@@ -441,7 +441,7 @@ async def cmd_weekly(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
                 needs_review=bool(r["needs_review"])
             ))
 
-    projects = repository.get_all_projects(user.telegram_user_id) # Using director's projects for mapping
+    projects = repository.list_projects(owner_user_id=user.telegram_user_id)
     end_date = today_date()
     from datetime import timedelta
     start_date = end_date - timedelta(days=7)

@@ -89,12 +89,20 @@ def build_web_app(settings: Settings, repository: Repository) -> FastAPI:
             from .services.subscription import SubscriptionService
             sub_svc = SubscriptionService(repository.db)
             if sub_svc.get_user_plan(user.telegram_user_id) == "team":
-                is_team_admin = True
-            
+                # Only the team owner sees Team Admin; members without an owned team
+                # row are redirected with a friendly notice.
+                with repository.db.connect() as _conn:
+                    _owns = _conn.execute(
+                        "SELECT 1 FROM teams WHERE owner_user_id = ?",
+                        (user.telegram_user_id,),
+                    ).fetchone()
+                if _owns:
+                    is_team_admin = True
+
             if user.telegram_username:
                 admin_svc = AdminService(repository.db, settings)
                 is_admin = admin_svc.is_super_admin(user.telegram_username)
-        
+
         if not is_admin and not is_team_admin:
             return RedirectResponse(url="/dashboard?notice=" + quote_plus("Нет доступа к админке"))
             
@@ -451,6 +459,8 @@ def _build_dashboard_context(request: Request, repository: Repository, settings:
         return {
             **base_context,
             "auth_required": True,
+            "is_super_admin": False,
+            "is_team_owner": False,
             "user": None,
             "summary": {
                 "notes_count": 0,
@@ -471,6 +481,7 @@ def _build_dashboard_context(request: Request, repository: Repository, settings:
             "draft_plain": "",
             "final_report": None,
             "final_plain": "",
+            "recent_report_history": [],
             "templates": repository.list_report_templates(active_only=True),
             "current_template_key": "team",
             "show_onboarding": False,
@@ -525,6 +536,32 @@ def _build_dashboard_context(request: Request, repository: Repository, settings:
     final_plain = html_report_to_plain_text(final_report or "")
     draft_chunks = split_telegram_chunks(draft_plain)
     final_chunks = split_telegram_chunks(final_plain)
+    history_items: list[dict[str, str]] = []
+    for draft_row in repository.list_recent_drafts(user.telegram_user_id, limit=7):
+        draft_snippet = html_report_to_plain_text(draft_row.get("content", ""))
+        history_items.append(
+            {
+                "date": draft_row.get("draft_date", ""),
+                "type": "draft",
+                "snippet": draft_snippet[:180],
+                "created_at": draft_row.get("created_at", ""),
+            }
+        )
+    for final_row in repository.list_recent_final_reports(user.telegram_user_id, limit=7):
+        final_snippet = html_report_to_plain_text(final_row.get("content", ""))
+        history_items.append(
+            {
+                "date": final_row.get("report_date", ""),
+                "type": "final",
+                "snippet": final_snippet[:180],
+                "created_at": final_row.get("created_at", ""),
+            }
+        )
+    history_items.sort(
+        key=lambda item: ((item.get("created_at") or ""), (item.get("date") or "")),
+        reverse=True,
+    )
+    recent_report_history = history_items[:10]
     summary = {
         "notes_count": len(notes),
         "project_count": _project_count_for_notes(notes, repository, user.telegram_user_id),
@@ -534,14 +571,7 @@ def _build_dashboard_context(request: Request, repository: Repository, settings:
         "has_final": bool(final_report),
         "draft_chunks": len(draft_chunks),
         "final_chunks": len(final_chunks),
-        # Luxury Metrics
         "activity_count": len(notes),
-        "activity_trend": "+18%",
-        "ai_accuracy": "91%",
-        "ai_accuracy_trend": "+7%",
-        "retention": "84%",
-        "conversion": "12%",
-        "security_status": "High"
     }
     is_super_admin = False
     user_plan = "free"
@@ -556,11 +586,24 @@ def _build_dashboard_context(request: Request, repository: Repository, settings:
             from .services.admin import AdminService
             is_super_admin = AdminService(repository.db, settings).is_super_admin(user.telegram_username)
 
+    # True only when the authenticated user is the owner of a team row.
+    # Non-owner TEAM members have user_plan=="team" but no teams.owner_user_id row.
+    is_team_owner = False
+    if user and user_plan == "team" and not is_super_admin:
+        with repository.db.connect() as conn:
+            owns = conn.execute(
+                "SELECT 1 FROM teams WHERE owner_user_id = ?",
+                (user.telegram_user_id,),
+            ).fetchone()
+        if owns:
+            is_team_owner = True
+
     return {
         **base_context,
         "auth_required": False,
         "user": user,
         "is_super_admin": is_super_admin,
+        "is_team_owner": is_team_owner,
         "user_plan": user_plan,
         "days_left": days_left,
         "summary": summary,
@@ -573,6 +616,7 @@ def _build_dashboard_context(request: Request, repository: Repository, settings:
         "draft_plain": draft_plain,
         "final_report": final_report,
         "final_plain": final_plain,
+        "recent_report_history": recent_report_history,
         "templates": templates,
         "current_template_key": current_template_key,
         "show_onboarding": repository.get_state(_onboarding_key(user.telegram_user_id)) != "1",
