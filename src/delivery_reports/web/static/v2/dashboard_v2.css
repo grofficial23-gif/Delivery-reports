@@ -212,6 +212,9 @@
 
 /* PMD:V2:REPORT_STUDIO ─────────────────────────────────── */
 
+/* Scroll target for Report Studio — lands below sticky 56px topnav */
+#studio { scroll-margin-top: 72px; }
+
 /* Three-column layout: mini-nav | editor | AI panel */
 .v2-studio-shell {
   display: grid;
@@ -985,6 +988,18 @@
 }
 .ta-empty svg { margin-bottom: 12px; opacity: 0.35; }
 .ta-empty h3 { font-size: 15px; font-weight: 800; color: var(--text2); margin-bottom: 6px; }
+
+/* Team tools row (disabled future buttons) */
+.ta-tools-row {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;
+}
+.ta-btn-future {
+  opacity: 0.45; cursor: not-allowed;
+  border-style: dashed !important;
+}
+.ta-tools-note {
+  font-size: 12px; color: var(--muted); line-height: 1.5;
+}
 
 /* Responsive */
 @media (max-width: 900px) {

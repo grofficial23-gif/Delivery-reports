@@ -378,13 +378,13 @@
 
           <div class="ta-kpi-card">
             <div class="ta-kpi-label">Активны (7 дней)</div>
-            <div class="ta-kpi-val" id="ta-active-count">—</div>
+            <div class="ta-kpi-val" id="ta-active-count">0</div>
             <div class="ta-kpi-unit">участников с заметками</div>
           </div>
 
           <div class="ta-kpi-card">
             <div class="ta-kpi-label">Заметок (7 дней)</div>
-            <div class="ta-kpi-val" id="ta-notes-7d">—</div>
+            <div class="ta-kpi-val" id="ta-notes-7d">0</div>
             <div class="ta-kpi-unit">по всей команде</div>
           </div>
         </div>
@@ -469,6 +469,26 @@
             Invite link will appear after TEAM setup
           </div>
           {% endif %}
+        </div>
+
+        <!-- ── Team tools (future) ───────────────────────────── -->
+        <div class="ta-panel">
+          <div class="ta-panel-title">
+            <span class="ta-panel-title-dot"></span>
+            Инструменты команды
+          </div>
+          <div class="ta-tools-row">
+            <button type="button" class="ta-btn ghost ta-btn-future" disabled aria-disabled="true" title="Скоро">
+              📋 Шаблоны команды
+            </button>
+            <button type="button" class="ta-btn ghost ta-btn-future" disabled aria-disabled="true" title="Скоро">
+              💳 Billing
+            </button>
+            <button type="button" class="ta-btn ghost ta-btn-future" disabled aria-disabled="true" title="Скоро">
+              ⚙️ Settings
+            </button>
+          </div>
+          <div class="ta-tools-note">Функции появятся в следующих обновлениях.</div>
         </div>
 
       </main>

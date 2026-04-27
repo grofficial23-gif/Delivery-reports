@@ -77,8 +77,8 @@ html { scroll-behavior: smooth; }
 .s1-nav-links a:hover { color: var(--text); background: var(--primary-bg); }
 .s1-nav-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .s1-theme-row {
-  display: flex; align-items: center; gap: 6px 10px; flex-wrap: wrap;
-  justify-content: flex-end;
+  display: flex; align-items: center; gap: 6px 10px; flex-wrap: nowrap;
+  justify-content: flex-end; overflow: hidden;
 }
 .s1-theme-sw {
   display: inline-flex; align-items: center; flex-shrink: 0;
@@ -128,7 +128,8 @@ html { scroll-behavior: smooth; }
   color: var(--muted); line-height: 1.25; max-width: 100px;
   opacity: 0.5;
   white-space: nowrap;
-  flex-shrink: 0;
+  /* Allows it to shrink away before it could ever push the CTA button */
+  flex-shrink: 1; min-width: 0; overflow: hidden;
   align-self: center;
   padding-top: 1px;
 }
@@ -741,6 +742,11 @@ html { scroll-behavior: smooth; }
   .s1-hero { grid-template-columns: 1fr; padding: 48px 48px 56px; }
   .s1-phone-wrap { display: none; }
 }
+/* Hide the PRO hint before it can ever crowd the "Открыть бота" button */
+@media (max-width: 1100px) {
+  .s1-theme-pro-hint { display: none; }
+  .s1-nav-right { gap: 8px; flex-wrap: nowrap; }
+}
 @media (max-width: 900px) {
   .s1-content { padding: 0 24px; }
   .s1-footer { padding: 24px; flex-direction: column; align-items: flex-start; }
@@ -752,17 +758,6 @@ html { scroll-behavior: smooth; }
   .s1-hero { padding: 32px 20px 48px; }
   .s1-steps-grid { grid-template-columns: repeat(2, 1fr); }
   .s1-feat-grid { grid-template-columns: repeat(2, 1fr); }
-  /* Hide the PRO hint on narrow screens to prevent overlap with the CTA button */
-  .s1-theme-pro-hint { display: none; }
-  /* Keep nav-right from wrapping awkwardly */
-  .s1-nav-right { gap: 8px; flex-shrink: 0; flex-wrap: nowrap; }
-  .s1-theme-row { flex-wrap: nowrap; }
-}
-@media (max-width: 480px) {
-  .demo-card { padding: 32px 18px 24px; }
-  .demo-nav-btn { font-size: 12px; padding: 6px 12px; }
-  .demo-nav-btn.pri { padding: 6px 12px; }
-  .s1-nav-right { flex-wrap: wrap; justify-content: flex-end; row-gap: 6px; }
 }
 @media (max-width: 760px) {
   .s1-pricing-grid { grid-template-columns: 1fr; }
@@ -771,6 +766,11 @@ html { scroll-behavior: smooth; }
   .s1-steps-grid { grid-template-columns: 1fr; }
   .s1-feat-grid { grid-template-columns: 1fr; }
   .s1-security-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .demo-card { padding: 32px 18px 24px; }
+  .demo-nav-btn { font-size: 12px; padding: 6px 12px; }
+  .demo-nav-btn.pri { padding: 6px 12px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

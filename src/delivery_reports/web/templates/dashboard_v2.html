@@ -56,14 +56,14 @@
       <div class="v2-topnav-sep" aria-hidden="true"></div>
 
       <div class="v2-topnav-links" role="list">
-        <a href="/dashboard" class="active" role="listitem">Dashboard</a>
+        <a href="#top" class="active" role="listitem">Dashboard</a>
         {% if not auth_required %}
-        <a href="/dashboard#studio" role="listitem">Report Studio</a>
+        <a href="#studio" role="listitem">Report Studio</a>
         {% if user_plan == "team" or is_super_admin %}
         <a href="/admin" role="listitem">Team Admin</a>
         {% endif %}
         {% if is_super_admin %}
-        <a href="/admin#super" role="listitem">Super Admin</a>
+        <a href="/admin" role="listitem">Super Admin</a>
         {% endif %}
         {% endif %}
       </div>
@@ -112,14 +112,14 @@
 
     <!-- Mobile nav menu (shown by v2_ui.js on small screens) -->
     <div id="v2-mobile-nav-menu" role="menu" aria-label="Мобильное меню" style="display:none;">
-      <a href="/dashboard" role="menuitem">Dashboard</a>
+      <a href="#top" role="menuitem">Dashboard</a>
       {% if not auth_required %}
-      <a href="/dashboard#studio" role="menuitem">Report Studio</a>
+      <a href="#studio" role="menuitem">Report Studio</a>
       {% if user_plan == "team" or is_super_admin %}
       <a href="/admin" role="menuitem">Team Admin</a>
       {% endif %}
       {% if is_super_admin %}
-      <a href="/admin#super" role="menuitem">Super Admin</a>
+      <a href="/admin" role="menuitem">Super Admin</a>
       {% endif %}
       {% endif %}
     </div>
@@ -142,7 +142,7 @@
     {% else %}
 
     <!-- ── Authenticated dashboard ─────────────────────────────── -->
-    <main class="v2-page">
+    <main class="v2-page" id="top">
 
       <!-- Page header -->
       <div class="v2-page-header">
