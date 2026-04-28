@@ -19,8 +19,8 @@
     <!-- V1 stylesheet — keeps super admin styles intact -->
     <link rel="stylesheet" href="/static/app.css" />
     <!-- V2 tokens and team admin shell styles -->
-    <link rel="stylesheet" href="/static/v2/themes.css" />
-    <link rel="stylesheet" href="/static/v2/dashboard_v2.css" />
+    <link rel="stylesheet" href="/static/v2/themes.css?v={{ app_version }}" />
+    <link rel="stylesheet" href="/static/v2/dashboard_v2.css?v={{ app_version }}" />
     <style>
       /* ── Super Admin styles (UNCHANGED from V1) ── */
       .admin-layout {
@@ -301,7 +301,7 @@
         </section>
       </main>
     </div>
-    <script src="/static/v2/v2_ui.js" defer></script>
+    <script src="/static/v2/v2_ui.js?v={{ app_version }}" defer></script>
   </body>
 
   {% else %}
@@ -612,7 +612,7 @@
     </script>
 
     <!-- V2 UI (theme switcher + canvas) -->
-    <script src="/static/v2/v2_ui.js" defer></script>
+    <script src="/static/v2/v2_ui.js?v={{ app_version }}" defer></script>
 
   </body>
   {% endif %}

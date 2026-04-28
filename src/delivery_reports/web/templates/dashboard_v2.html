@@ -43,8 +43,8 @@
     }());
   </script>
 
-  <link rel="stylesheet" href="/static/v2/themes.css" />
-  <link rel="stylesheet" href="/static/v2/dashboard_v2.css" />
+  <link rel="stylesheet" href="/static/v2/themes.css?v={{ app_version }}" />
+  <link rel="stylesheet" href="/static/v2/dashboard_v2.css?v={{ app_version }}" />
 </head>
 <body class="v2-dash" data-theme="dark-lime" data-auth-required="{{ 'true' if auth_required else 'false' }}">
 
@@ -673,7 +673,7 @@
 
   </div><!-- /v2-above-canvas -->
 
-  <script src="/static/v2/v2_ui.js" defer></script>
+  <script src="/static/v2/v2_ui.js?v={{ app_version }}" defer></script>
 
   <!-- Telegram Mini App auth bootstrap (mirrors V1 pattern) -->
   <script>

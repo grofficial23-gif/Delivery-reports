@@ -91,3 +91,21 @@
 **Reason:** Reduce repeated context in AI prompts; give agents a stable reference instead of re-explaining requirements.
 
 **Rollback notes:** Documentation only. No code changed.
+
+---
+
+## 2026-04-28 — v2.23.1: Mobile polish + asset cache busting (Step 25)
+
+**Task:** Fix V2 mobile layout issues and introduce automatic cache busting for all V2 static assets.
+
+**Files changed:**
+- `src/delivery_reports/config.py` — bumped default `app_version` to `"v2.23.1"` (both dataclass default and `load_settings` fallback); added versioning discipline comment (patch/minor/major semantics).
+- `src/delivery_reports/web/static/v2/dashboard_v2.css` — added `PMD:V2:MOBILE_POLISH` block: CTA buttons get `height:auto; min-height:52px; line-height:1.2; word-break:normal` at ≤760px; topnav progressively hides non-critical elements (days-left, "←Лендинг", plan badge) at ≤760px/≤480px; user chip collapses to avatar-only at ≤480px; ≤360px minimum survival rules.
+- `src/delivery_reports/web/static/v2/landing_v2.css` — added `PMD:V2:LANDING_MOBILE_NAV` block: `.s1-open-btn` hardened with `flex-shrink:0!important`; `.s1-theme-row` hidden at ≤480px so the "Открыть бота" CTA is always the only nav action on phones.
+- `src/delivery_reports/web/templates/dashboard_v2.html` — CSS/JS `<link>`/`<script>` tags now carry `?v={{ app_version }}` query strings.
+- `src/delivery_reports/web/templates/landing_v2.html` — same cache-busting query strings.
+- `src/delivery_reports/web/templates/admin.html` — same cache-busting query strings for both V2 CSS and both V2 JS script tags.
+
+**Reason:** Telegram Mini App and CDN/Render caches serve stale CSS after deploys. A version query string forces a cache miss on every new build. The mobile layout fixes resolve CTA text clipping and topnav overflow at 390px viewport.
+
+**Rollback notes:** Revert `app_version` to `"v2.23.0"` in `config.py` and remove the `?v=` suffixes from the three templates. CSS blocks are clearly delimited and can be removed independently.

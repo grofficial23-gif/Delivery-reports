@@ -58,7 +58,12 @@ class Settings:
     web_session_secret: str = ""
     dashboard_ui_version: str = "v1"
     super_admin_usernames: frozenset[str] = frozenset({"pm_vibe"})  # e.g. {'PM_vibe'}
-    app_version: str = "v2.23.0"
+    # Versioning discipline:
+    #   patch (+0.0.1) — UI/copy/CSS/bugfix, no new product behaviour
+    #   minor (+0.1.0) — new user-visible product feature
+    #   major (+1.0.0) — incompatible change or release milestone
+    # Override at deploy time via APP_VERSION env var.
+    app_version: str = "v2.23.1"
 
 
 def load_settings() -> Settings:
@@ -88,5 +93,5 @@ def load_settings() -> Settings:
             for u in os.getenv("SUPER_ADMIN_USERNAMES", "PM_vibe").split(",")
             if u.strip()
         ),
-        app_version=(os.getenv("APP_VERSION", "v2.23.0").strip() or "v2.23.0"),
+        app_version=(os.getenv("APP_VERSION", "v2.23.1").strip() or "v2.23.1"),
     )
