@@ -44,6 +44,29 @@ class ParsingTests(unittest.TestCase):
         self.assertEqual(parsed.plan_text, "согласовать ночные окна")
         self.assertEqual(parsed.risk_text, "сжатые сроки по освобождению здания")
 
+    def test_splits_long_unstructured_monolog_into_atomic_blocks(self) -> None:
+        text = (
+            "Закрыли релиз 2.4 по проекту DC701 сегодня утром, "
+            "ушли на ревью QA. "
+            "Завтра планирую провести демо с заказчиком и собрать обратную связь. "
+            "Блокер: ждём ответ от подрядчика по железу, без этого не уедем дальше."
+        )
+        blocks = parse_note_blocks(text, self.projects)
+
+        self.assertGreaterEqual(len(blocks), 2)
+        all_done = " ".join(b.parsed.done_text for b in blocks)
+        all_plan = " ".join(b.parsed.plan_text for b in blocks)
+        all_risk = " ".join(b.parsed.risk_text for b in blocks)
+        self.assertIn("релиз", all_done.lower())
+        self.assertIn("демо", all_plan.lower())
+        self.assertIn("подрядчика", all_risk.lower())
+        # Each atomic block must keep its raw fragment.
+        self.assertTrue(all(b.raw_text.strip() for b in blocks))
+
+    def test_short_text_does_not_invoke_long_split(self) -> None:
+        blocks = parse_note_blocks("Сделал релиз DC701", self.projects)
+        self.assertEqual(len(blocks), 1)
+
     def test_splits_blocks_when_message_contains_multiple_dates(self) -> None:
         blocks = parse_note_blocks(
             (

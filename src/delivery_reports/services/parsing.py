@@ -5,6 +5,11 @@ import re
 
 from ..repository import Project
 from ..shared import JIRA_KEY_RE
+from .long_update_split import (
+    AtomicUpdate,
+    looks_long_unstructured,
+    split_long_update,
+)
 
 
 JIRA_LINK_RE = re.compile(r"https?://\S+/browse/[A-Z][A-Z0-9]+-\d+", re.IGNORECASE)
@@ -49,7 +54,67 @@ def parse_note_text(raw_text: str, projects: list[Project]) -> ParsedNote:
 
 def parse_note_blocks(raw_text: str, projects: list[Project]) -> list[ParsedNoteBlock]:
     blocks = _split_into_blocks(raw_text, projects)
+    if (
+        len(blocks) == 1
+        and not _has_explicit_section_markers(blocks[0])
+        and looks_long_unstructured(blocks[0])
+    ):
+        atoms = split_long_update(blocks[0], projects)
+        if len(atoms) >= 2:
+            return [_atomic_to_block(atom, projects) for atom in atoms]
     return [ParsedNoteBlock(raw_text=block, parsed=parse_note_text(block, projects)) for block in blocks]
+
+
+# ── Long-update integration helpers ───────────────────────────────────
+
+
+_INTENT_TO_PREFIX: dict[str, str] = {
+    # Re-uses existing _split_by_intent keyword routing to avoid duplicating
+    # field-mapping logic.
+    "done": "Что сделано: ",
+    "plan": "План: ",
+    "risk": "Риск: ",
+    "blocker": "Риск: блокер — ",
+    "decision": "Что сделано: решение — ",
+    "question": "Что сделано: вопрос — ",
+    "other": "",
+}
+
+
+def _atomic_to_block(atom: AtomicUpdate, projects: list[Project]) -> ParsedNoteBlock:
+    prefix = _INTENT_TO_PREFIX.get(atom.intent, "")
+    virtual_lines: list[str] = []
+    if atom.project_name_hint:
+        virtual_lines.append(f"Проект: {atom.project_name_hint}")
+    body = atom.text.strip()
+    virtual_lines.append(f"{prefix}{body}" if prefix else body)
+    virtual_text = "\n".join(virtual_lines)
+    parsed = parse_note_text(virtual_text, projects)
+    return ParsedNoteBlock(raw_text=atom.text.strip(), parsed=parsed)
+
+
+def _has_explicit_section_markers(text: str) -> bool:
+    """True if the text uses *heading-style* section markers.
+
+    We only trip on actual headings — e.g. a line starting with
+    "Что сделано:" / "План:" / "Проект:" — NOT on the same words appearing
+    inside a free-form sentence ("план на завтра demo").
+    """
+    heading_prefixes = (
+        "что сделано", "сделано за сегодня",
+        "план на завтра", "планы на завтра",
+        "план:", "планы:",
+        "риск:", "риски:", "блокер:", "блокеры:",
+        "статус:", "проект:", "эпик:", "дата:",
+        "менеджер:", "руководитель:",
+    )
+    for line in text.splitlines():
+        lowered = line.strip().lower().lstrip("-•* \t")
+        if not lowered:
+            continue
+        if any(lowered.startswith(prefix) for prefix in heading_prefixes):
+            return True
+    return False
 
 
 def _extract_jira_links(raw_text: str, projects: list[Project]) -> list[str]:

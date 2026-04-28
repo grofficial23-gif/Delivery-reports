@@ -2151,3 +2151,88 @@ details.v2-extras[open] .v2-extras-summary::before { content: '▾ '; }
 }
 
 /* PMD:V2:WOW_POLISH:end ──────────────────────────────── */
+
+
+/* PMD:V2:STEP22_FIXES:start ──────────────────────────────
+   Step 22 — UX bug fixes (no behavior changes):
+   - Mobile next-action CTA: graceful wrap, never breaks word-mid.
+   - Inbox triage: collapsible "more" group to reduce noise.
+   ────────────────────────────────────────────────────── */
+
+/* ── Inbox: collapsible "more" group ─────────────────── */
+.v2-inbox-more {
+  margin-top: 6px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: var(--surface-2, rgba(255,255,255,0.03));
+  overflow: hidden;
+}
+.v2-inbox-more-summary {
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+  padding: 10px 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.v2-inbox-more-summary::-webkit-details-marker { display: none; }
+.v2-inbox-more-summary::before {
+  content: "▸";
+  font-size: 11px;
+  color: var(--muted);
+  transition: transform 0.18s var(--ease, ease);
+}
+details.v2-inbox-more[open] .v2-inbox-more-summary::before { content: "▾"; }
+.v2-inbox-more-summary:hover { color: var(--text2); }
+.v2-inbox-more-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 12px 12px;
+}
+.v2-inbox-overflow-note {
+  margin: 6px 0 0;
+  font-size: 11.5px;
+  color: var(--muted);
+  opacity: 0.85;
+  line-height: 1.45;
+}
+
+/* ── Mobile next-action CTA: wrap-friendly ───────────── */
+@media (max-width: 760px) {
+  .v2-next-action-cta .v2-btn,
+  .v2-next-action-cta .v2-btn-lg {
+    line-height: 1.25;
+    min-height: 48px;
+    padding: 10px 16px !important;
+    text-align: center;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+  .v2-next-action-cta .v2-btn.primary,
+  .v2-next-action-cta .v2-btn-lg {
+    flex: 1 1 100%;
+  }
+  .v2-next-action-cta .v2-btn.ghost {
+    flex: 0 0 auto;
+    min-width: auto;
+    padding: 10px 14px !important;
+    min-height: 42px;
+  }
+}
+
+@media (max-width: 480px) {
+  .v2-next-action-cta .v2-btn,
+  .v2-next-action-cta .v2-btn-lg {
+    font-size: 13.5px !important;
+    padding: 10px 14px !important;
+  }
+  .v2-inbox-card-actions { gap: 6px; }
+  .v2-inbox-candidate { font-size: 11.5px; }
+}
+
+/* PMD:V2:STEP22_FIXES:end ────────────────────────────── */

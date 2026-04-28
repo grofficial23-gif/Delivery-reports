@@ -417,7 +417,8 @@ def build_web_app(settings: Settings, repository: Repository) -> FastAPI:
             resolve_manager_name(project, user, settings),
             resolve_lead_name(project, user, settings),
         )
-        return _redirect_with_notice(f"Заметка note#{note_id} привязана к проекту {project.name}.")
+        notice = quote_plus(f"Заметка note#{note_id} привязана к проекту {project.name}.")
+        return RedirectResponse(url=f"/dashboard?notice={notice}#inbox", status_code=303)
 
     @app.post("/template")
     async def choose_template(request: Request) -> RedirectResponse:
@@ -639,7 +640,7 @@ def _build_dashboard_context(request: Request, repository: Repository, settings:
             "kind": "review_draft",
             "title": "Проверьте и отправьте черновик",
             "description": "Черновик готов. Отправьте себе в Telegram для проверки.",
-            "primary_label": "Отправить себе в Telegram",
+            "primary_label": "Отправить в Telegram",
             "target": "#draft",
         }
     elif final_report:

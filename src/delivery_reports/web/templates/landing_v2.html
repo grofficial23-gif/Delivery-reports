@@ -71,13 +71,20 @@
       </div>
 
       <div class="s1-nav-right">
-        <!-- FREE themes: D/L only. Wave blue is PRO (see hint). -->
+        <!-- FREE themes: D/L. Wave blue (W) is locked: PRO-only, shown as a non-interactive pill INSIDE the switcher so it can never crowd the CTA. -->
         <div class="s1-theme-row">
-          <div class="s1-theme-sw" aria-label="Бесплатные темы: тёмная и светлая">
+          <div class="s1-theme-sw" aria-label="Темы оформления: тёмная, светлая, премиум-волна (PRO)">
             <button class="s1-theme-btn" type="button" data-v2-theme-btn="dark-lime" title="Dark Lime — FREE">D</button>
             <button class="s1-theme-btn" type="button" data-v2-theme-btn="light-lime" title="Light Lime — FREE">L</button>
+            <button
+              class="s1-theme-locked"
+              type="button"
+              disabled
+              aria-disabled="true"
+              title="Wave Blue — премиум-тема. Доступна на тарифе PRO."
+              aria-label="Премиум-тема Wave Blue, доступна в PRO"
+            >W<span class="s1-theme-locked-ico" aria-hidden="true">🔒</span></button>
           </div>
-          <span class="s1-theme-pro-hint">Premium themes в PRO</span>
         </div>
         {% if bot_url %}
         <a

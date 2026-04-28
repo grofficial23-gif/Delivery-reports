@@ -473,9 +473,11 @@
             Бот не смог распознать его автоматически — выберите вручную из кандидатов или из формы заметки.
           </p>
         </div>
-        {% for card in inbox_cards[:8] %}
+        {% set inbox_visible = inbox_cards[:3] %}
+        {% set inbox_rest = inbox_cards[3:8] %}
+        {% for card in inbox_visible %}
         <div class="v2-inbox-card-v2">
-          <div class="v2-inbox-card-text">{{ card.preview_text[:280] if card.preview_text else "—" }}</div>
+          <div class="v2-inbox-card-text">{{ card.preview_text[:240] if card.preview_text else "—" }}</div>
           <div class="v2-inbox-card-actions">
             {% if card.candidates %}
             <span class="v2-inbox-label">Привязать к:</span>
@@ -490,6 +492,36 @@
           </div>
         </div>
         {% endfor %}
+        {% if inbox_rest %}
+        <details class="v2-inbox-more">
+          <summary class="v2-inbox-more-summary">Показать ещё {{ inbox_rest | length }} заметок</summary>
+          <div class="v2-inbox-more-list">
+            {% for card in inbox_rest %}
+            <div class="v2-inbox-card-v2">
+              <div class="v2-inbox-card-text">{{ card.preview_text[:200] if card.preview_text else "—" }}</div>
+              <div class="v2-inbox-card-actions">
+                {% if card.candidates %}
+                <span class="v2-inbox-label">Привязать к:</span>
+                {% for name in card.candidates %}
+                <form method="post" action="/inbox/{{ card.note.id }}/resolve" style="display:contents;">
+                  <button type="submit" name="project_name" value="{{ name }}" class="v2-inbox-candidate" title="Привязать к {{ name }}">{{ name }}</button>
+                </form>
+                {% endfor %}
+                {% else %}
+                <span class="v2-inbox-no-candidates">Нет автокандидата — используйте форму заметки.</span>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </details>
+        {% endif %}
+        {% if inbox_cards | length > 8 %}
+        <p class="v2-inbox-overflow-note">
+          Показано {{ inbox_visible | length + (inbox_rest | length) }} из {{ inbox_cards | length }}.
+          Остальные привяжутся при следующем заходе или при ручном вводе проекта в форме.
+        </p>
+        {% endif %}
       </section>
       {% endif %}
 
