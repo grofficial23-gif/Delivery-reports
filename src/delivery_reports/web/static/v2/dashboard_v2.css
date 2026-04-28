@@ -2477,3 +2477,55 @@ details.v2-inbox-more[open] .v2-inbox-more-summary::before { content: "▾"; }
 }
 
 /* PMD:V2:MOBILE_POLISH:end ──────────────────────────── */
+
+
+/* PMD:V2:INBOX_BIND:start ───────────────────────────────
+   Step 27 — Manual project binding inside inbox cards.
+   ────────────────────────────────────────────────────── */
+.v2-inbox-bind {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+}
+.v2-inbox-bind-label {
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.v2-inbox-bind-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+.v2-inbox-bind-select {
+  flex: 1 1 180px;
+  min-width: 0;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border2);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+}
+.v2-inbox-bind-select:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+  border-color: var(--primary);
+}
+.v2-inbox-bind-btn {
+  flex: 0 0 auto;
+  height: 36px !important;
+  padding: 0 16px !important;
+  font-size: 13px !important;
+}
+@media (max-width: 480px) {
+  .v2-inbox-bind-row { flex-direction: column; gap: 6px; }
+  .v2-inbox-bind-btn { width: 100%; justify-content: center; }
+}
+/* PMD:V2:INBOX_BIND:end ─────────────────────────────── */

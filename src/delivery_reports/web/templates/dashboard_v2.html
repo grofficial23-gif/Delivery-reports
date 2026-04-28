@@ -495,10 +495,26 @@
               <button type="submit" name="project_name" value="{{ name }}" class="v2-inbox-candidate" title="Привязать к {{ name }}">{{ name }}</button>
             </form>
             {% endfor %}
-            {% else %}
-            <span class="v2-inbox-no-candidates">Бот не нашёл проект-кандидат — добавьте его через форму заметки ниже.</span>
             {% endif %}
           </div>
+          {% if projects %}
+          <form method="post" action="/inbox/{{ card.note.id }}/resolve" class="v2-inbox-bind">
+            <label class="v2-inbox-bind-label">
+              Выберите проект — заметка попадёт в нужный блок отчёта.
+            </label>
+            <div class="v2-inbox-bind-row">
+              <select name="project_name" class="v2-inbox-bind-select" required aria-label="Проект для привязки">
+                <option value="" disabled selected>— выберите проект —</option>
+                {% for project in projects %}
+                <option value="{{ project.name }}">{{ project.name }}</option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="v2-btn primary v2-inbox-bind-btn">Привязать</button>
+            </div>
+          </form>
+          {% else %}
+          <p class="v2-inbox-no-candidates">Сначала добавьте проект через форму заметки ниже.</p>
+          {% endif %}
         </div>
         {% endfor %}
         {% if inbox_rest %}
@@ -522,10 +538,24 @@
                   <button type="submit" name="project_name" value="{{ name }}" class="v2-inbox-candidate" title="Привязать к {{ name }}">{{ name }}</button>
                 </form>
                 {% endfor %}
-                {% else %}
-                <span class="v2-inbox-no-candidates">Нет автокандидата — используйте форму заметки.</span>
                 {% endif %}
               </div>
+              {% if projects %}
+              <form method="post" action="/inbox/{{ card.note.id }}/resolve" class="v2-inbox-bind">
+                <label class="v2-inbox-bind-label">
+                  Выберите проект — заметка попадёт в нужный блок отчёта.
+                </label>
+                <div class="v2-inbox-bind-row">
+                  <select name="project_name" class="v2-inbox-bind-select" required aria-label="Проект для привязки">
+                    <option value="" disabled selected>— выберите проект —</option>
+                    {% for project in projects %}
+                    <option value="{{ project.name }}">{{ project.name }}</option>
+                    {% endfor %}
+                  </select>
+                  <button type="submit" class="v2-btn primary v2-inbox-bind-btn">Привязать</button>
+                </div>
+              </form>
+              {% endif %}
             </div>
             {% endfor %}
           </div>

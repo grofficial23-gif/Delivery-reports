@@ -32,14 +32,19 @@ def compact_section_items(items: list[str], section: str, max_chars: int = 220) 
 
 
 def limit_section_items(items: list[str], section: str, style: str) -> list[str]:
-    concise_limits = {"done": 2, "plan": 1, "risk": 1}
-    standard_limits = {"done": 6, "plan": 4, "risk": 3}
+    # Per-style per-section caps. Sections not listed are unlimited.
+    # concise = "Только главное" — strict 2-3 bullets per section.
+    concise_limits = {
+        "done": 2, "plan": 1, "risk": 1, "blocker": 1,
+        "decision": 1, "question": 1,
+    }
+    standard_limits = {"done": 6, "plan": 4, "risk": 3, "blocker": 3}
     active_limits = concise_limits if style == "concise" else standard_limits
     limit = active_limits.get(section, len(items))
     if len(items) <= limit:
         return items
     hidden_count = len(items) - limit
-    return [*items[:limit], f"Еще {hidden_count} пункт(а) в исходных заметках."]
+    return [*items[:limit], f"… ещё {hidden_count} пункт(а)"]
 
 
 def build_note_preview(note: Note, max_chars: int = 420) -> str:

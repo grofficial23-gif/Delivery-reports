@@ -249,6 +249,63 @@ class WebAppTests(unittest.TestCase):
         v2_settings = dataclasses.replace(self.settings, dashboard_ui_version="v2")
         return TestClient(build_web_app(v2_settings, self.repository), base_url="https://testserver")
 
+    # ── Step 27 / A — manual project binding form in V2 inbox ─────────
+    def test_v2_inbox_card_renders_project_select_form(self) -> None:
+        v2_client = self._build_v2_client()
+        self._authenticate(v2_client, user_id=42, username="grafkin", full_name="Анатолий Графкин")
+        # Add an extra project so the select has more than one option.
+        self.repository.upsert_project(
+            name="Delivery Reports",
+            manager_name="Анатолий Графкин",
+            lead_name="Дмитрий Кононенко",
+            jira_base_url="",
+            aliases=["Delivery", "DR"],
+            is_special_control=False,
+            owner_user_id=42,
+        )
+        v2_client.post(
+            "/notes",
+            data={"text": "обсуждали что-то общее без проекта", "action": "save"},
+            follow_redirects=True,
+        )
+
+        dashboard = v2_client.get("/dashboard")
+        self.assertEqual(dashboard.status_code, 200)
+        self.assertIn('class="v2-inbox-bind"', dashboard.text)
+        self.assertIn('select name="project_name"', dashboard.text)
+        self.assertIn(">Delivery Reports</option>", dashboard.text)
+        self.assertIn(">DC701</option>", dashboard.text)
+        self.assertIn("Привязать", dashboard.text)
+        self.assertIn(
+            "Выберите проект — заметка попадёт в нужный блок отчёта.",
+            dashboard.text,
+        )
+
+    def test_inbox_resolve_post_still_binds_note_to_project(self) -> None:
+        self._authenticate(self.client, user_id=42, username="grafkin", full_name="Анатолий Графкин")
+        self.client.post(
+            "/notes",
+            data={"text": "что-то без проекта для inbox", "action": "save"},
+            follow_redirects=True,
+        )
+        unresolved = self.repository.list_unresolved_notes_for_user(42)
+        self.assertGreaterEqual(len(unresolved), 1)
+        note_id = unresolved[0].id
+
+        response = self.client.post(
+            f"/inbox/{note_id}/resolve",
+            data={"project_name": "DC701"},
+            follow_redirects=False,
+        )
+        self.assertEqual(response.status_code, 303)
+        self.assertIn("#inbox", response.headers["location"])
+        bound = self.repository.get_note(note_id)
+        assert bound is not None
+        self.assertFalse(bound.needs_review)
+        bound_project = self.repository.get_project(bound.project_id, owner_user_id=42)
+        assert bound_project is not None
+        self.assertEqual(bound_project.name, "DC701")
+
 
     def test_second_user_does_not_see_first_user_data(self) -> None:
         self._authenticate(self.client, user_id=42, username="grafkin", full_name="Анатолий Графкин")

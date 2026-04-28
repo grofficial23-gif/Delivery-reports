@@ -78,6 +78,25 @@ class AliasRecognitionTests(unittest.TestCase):
         )
         self.assertTrue(all(a.project_name_hint == "Bank Dashboard" for a in atoms))
 
+    def test_numeric_only_alias_2055_maps_to_cashback_project(self) -> None:
+        # Add the numeric alias matching the demo seeder configuration.
+        self.projects[2] = _project(
+            3,
+            "Внедрение категорийного кэшбэка (BONUS-2055)",
+            ["BONUS-2055", "2055", "BONUS", "MCC", "ГТС", "МФС", "Антифрод", "High Risk Visa"],
+            is_special=True,
+        )
+        atoms = split_long_update(
+            "По 2055 закрыли финальные тесты. Завтра запускаем продакшен.",
+            self.projects,
+        )
+        self.assertGreaterEqual(len(atoms), 1)
+        for atom in atoms:
+            self.assertEqual(
+                atom.project_name_hint,
+                "Внедрение категорийного кэшбэка (BONUS-2055)",
+            )
+
     def test_bonus_2055_alias_maps_to_cashback_project(self) -> None:
         atoms = split_long_update(
             "По BONUS-2055 разработали MCC-классификатор. "

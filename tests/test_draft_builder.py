@@ -193,5 +193,89 @@ class DraftBuilderTests(unittest.TestCase):
         self.assertIn("<b>Риск:</b>", draft)
 
 
+    # ── Step 27 / C — templates visibly affect draft output ─────────
+    def _note_with_full_intent_mix(self) -> Note:
+        return Note(
+            id=1,
+            note_date=self.target_date.isoformat(),
+            user_id=100,
+            source="text",
+            raw_text="",
+            project_id=1,
+            manager_name="Анатолий Графкин",
+            lead_name="Дмитрий Кононенко",
+            epic="",
+            status_text="",
+            done_text=(
+                "закрыли релиз 2.4\n"
+                "решение — на MVP оставить voice\n"
+                "вопрос — кто владелец справочника?"
+            ),
+            plan_text="завтра делаем демо\nдоделать топнав",
+            risk_text=(
+                "Telegram WebView может закэшировать ассеты\n"
+                "блокер — нет доступа к Jira API"
+            ),
+            jira_links=[],
+            needs_review=False,
+        )
+
+    def test_standard_and_executive_templates_produce_different_output(self) -> None:
+        note = self._note_with_full_intent_mix()
+        std = build_daily_draft(
+            target_date=self.target_date, notes=[note], projects=[self.project],
+            default_manager_name="Анатолий Графкин", default_lead_name="Дмитрий Кононенко",
+            style="standard",
+        )
+        exe = build_daily_draft(
+            target_date=self.target_date, notes=[note], projects=[self.project],
+            default_manager_name="Анатолий Графкин", default_lead_name="Дмитрий Кононенко",
+            style="risk_focus",
+        )
+        # Output must visibly differ between templates.
+        self.assertNotEqual(std, exe)
+
+    def test_concise_template_trims_and_emits_overflow_marker(self) -> None:
+        note = Note(
+            id=1, note_date=self.target_date.isoformat(), user_id=100,
+            source="text", raw_text="", project_id=1,
+            manager_name="Анатолий Графкин", lead_name="Дмитрий Кононенко",
+            epic="", status_text="",
+            done_text="один\nдва\nтри\nчетыре\nпять",
+            plan_text="",
+            risk_text="",
+            jira_links=[],
+            needs_review=False,
+        )
+        draft = build_daily_draft(
+            target_date=self.target_date, notes=[note], projects=[self.project],
+            default_manager_name="Анатолий Графкин", default_lead_name="Дмитрий Кононенко",
+            style="concise",
+        )
+        # done section limited to 2 in concise mode + overflow marker.
+        self.assertIn("• Один.", draft)
+        self.assertIn("• Два.", draft)
+        self.assertNotIn("• Три.", draft)
+        self.assertIn("ещё", draft)
+
+    def test_executive_template_puts_blockers_and_risks_before_done(self) -> None:
+        note = self._note_with_full_intent_mix()
+        draft = build_daily_draft(
+            target_date=self.target_date, notes=[note], projects=[self.project],
+            default_manager_name="Анатолий Графкин", default_lead_name="Дмитрий Кононенко",
+            style="risk_focus",
+        )
+        idx_blocker = draft.find("⛔ Блокеры")
+        idx_risk = draft.find("⚠️ Риски")
+        idx_done = draft.find("✅ Что сделано")
+        self.assertGreater(idx_blocker, -1)
+        self.assertGreater(idx_risk, -1)
+        self.assertGreater(idx_done, -1)
+        self.assertLess(idx_blocker, idx_done)
+        self.assertLess(idx_risk, idx_done)
+        # Status verdict surfaces the warning.
+        self.assertIn("<b>Статус:</b> Требует внимания.", draft)
+
+
 if __name__ == "__main__":
     unittest.main()

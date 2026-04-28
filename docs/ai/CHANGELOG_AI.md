@@ -131,6 +131,27 @@ The `Project.aliases` column already supports any list of strings; no schema cha
 
 ---
 
+## 2026-04-28 — v2.24.1: Manual project binding + template-driven drafts (Step 27)
+
+**Task:** Three demo-blockers: (1) inbox cards had no clear way to bind a note to a project, (2) numeric project codes like "2055" weren't recognized, (3) the four templates produced almost identical drafts.
+
+**Files changed:**
+- `src/delivery_reports/web/templates/dashboard_v2.html` — every inbox card (visible + collapsed) now renders a `POST /inbox/{id}/resolve` form with a `<select name="project_name">` populated from `projects` plus a "Привязать" button. Helper text explains the value. Existing candidate buttons remain when present. Existing `#inbox` redirect preserved.
+- `src/delivery_reports/web/static/v2/dashboard_v2.css` — added `PMD:V2:INBOX_BIND` styles for the new bind form (label, select, button, mobile stacking).
+- `src/delivery_reports/services/draft_builder.py` — `_render_project_block` now picks distinct section orders per style: `standard` (full picture), `concise` (trimmed: blockers, done, plan, risks only), `risk_focus` (blockers/risks/decisions/done/plan/questions). `_resolve_status_line` accepts `question_items` so the executive verdict "Требует внимания" fires when blockers, risks, or open questions exist.
+- `src/delivery_reports/services/report_presenter.py` — `limit_section_items` extended to all section keys (`done/plan/risk/blocker/decision/question`); concise caps stay tight (done≤2, others≤1) and the overflow trailer reads "… ещё N пункт(а)".
+- `src/delivery_reports/config.py` — `app_version` v2.24.0 → v2.24.1 (patch: UX + visible template differences, no schema or routes touched).
+- `scripts/seed_demo_aliases.py` — extended BONUS-2055 alias list with "2055", "категорийный кешбэк", "High Risk Visa", "справочники".
+- `tests/test_web_app.py` — 2 new tests: V2 inbox card renders the bind form with project options ("Delivery Reports", "DC701"); `POST /inbox/{id}/resolve` still binds the note and redirects to `#inbox`.
+- `tests/test_report_quality.py` — 1 new test: numeric alias "2055" maps to the cashback project.
+- `tests/test_draft_builder.py` — 3 new tests: standard vs executive draft outputs differ; concise mode trims long sections and shows "ещё"; risk_focus places blockers/risks before done with "Требует внимания" status.
+
+**Reason:** Make report quality demo-ready. Users now have a one-click manual override when auto-binding fails, numeric codes resolve correctly, and switching templates in the dashboard produces a visibly different report.
+
+**Rollback notes:** No DB / route / schema changes. To revert visually: restore the previous `_render_project_block` body and `dashboard_v2.html` inbox-card markup; bump `app_version` back to v2.24.0.
+
+---
+
 ## 2026-04-28 — v2.23.2: Prevent failed voice transcription from polluting reports (Step 26)
 
 **Task:** Failed voice transcriptions were saved as technical garbage notes (`voice-note: transcription failed; file_id=...`), polluting the dashboard, inbox, and generated drafts. This step silences that path entirely.

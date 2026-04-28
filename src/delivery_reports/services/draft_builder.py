@@ -335,9 +335,9 @@ def _render_project_block(index: int, aggregate: ProjectAggregate, style: str) -
     done_items = _limit_items(_compact_items(_clean_items(aggregate.done_items), "done"), style, "done")
     plan_items = _limit_items(_compact_items(_clean_items(aggregate.plan_items), "plan"), style, "plan")
     risk_items = _limit_items(_compact_items(_clean_items(aggregate.risk_items), "risk"), style, "risk")
-    blocker_items = _limit_items(_compact_items(_clean_items(aggregate.blocker_items), "risk"), style, "risk")
-    decision_items = _compact_items(_clean_items(aggregate.decision_items), "done")
-    question_items = _compact_items(_clean_items(aggregate.question_items), "done")
+    blocker_items = _limit_items(_compact_items(_clean_items(aggregate.blocker_items), "blocker"), style, "blocker")
+    decision_items = _limit_items(_compact_items(_clean_items(aggregate.decision_items), "decision"), style, "decision")
+    question_items = _limit_items(_compact_items(_clean_items(aggregate.question_items), "question"), style, "question")
     if _risk_items_are_empty(risk_items):
         risk_items = []
     if _risk_items_are_empty(blocker_items):
@@ -352,20 +352,29 @@ def _render_project_block(index: int, aggregate: ProjectAggregate, style: str) -
     if aggregate.epics and not _is_epic_promoted_to_title(aggregate):
         lines.append(f"<b>Эпик:</b> {escape(', '.join(sorted(aggregate.epics)))}")
     lines.append(
-        f"<b>Статус:</b> {escape(_resolve_status_line(aggregate, done_items, plan_items, risk_items + blocker_items, style))}"
+        f"<b>Статус:</b> {escape(_resolve_status_line(aggregate, done_items, plan_items, risk_items + blocker_items, style, question_items))}"
     )
 
-    section_order: list[tuple[str, str, list[str]]]
+    # Per-style section order. concise = "Только главное" trims everything;
+    # risk_focus = "Для руководителя" surfaces problems first; standard =
+    # "Баланс" shows the full picture; team_examples uses a separate path.
     if style == "risk_focus":
         section_order = [
             ("⛔ Блокеры", "blocker", blocker_items),
             ("⚠️ Риски", "risk", risk_items),
-            ("✅ Что сделано", "done", done_items),
             ("◆ Решение", "decision", decision_items),
+            ("✅ Что сделано", "done", done_items),
             ("🧭 План", "plan", plan_items),
             ("❓ Вопросы", "question", question_items),
         ]
-    else:
+    elif style == "concise":
+        section_order = [
+            ("⛔ Блокеры", "blocker", blocker_items),
+            ("✅ Что сделано", "done", done_items),
+            ("🧭 План", "plan", plan_items),
+            ("⚠️ Риски", "risk", risk_items),
+        ]
+    else:  # standard ("Баланс") — full picture
         section_order = [
             ("✅ Что сделано", "done", done_items),
             ("◆ Решение", "decision", decision_items),
@@ -450,10 +459,11 @@ def _resolve_status_line(
     plan_items: list[str],
     risk_items: list[str],
     style: str,
+    question_items: list[str] | None = None,
 ) -> str:
     if aggregate.explicit_statuses:
         return _select_common_value(aggregate.explicit_statuses, aggregate.explicit_statuses[0])
-    return _build_status_line(done_items, plan_items, risk_items, style)
+    return _build_status_line(done_items, plan_items, risk_items, style, question_items or [])
 
 
 def _build_status_line(
@@ -461,8 +471,10 @@ def _build_status_line(
     plan_items: list[str],
     risk_items: list[str],
     style: str,
+    question_items: list[str],
 ) -> str:
-    if risk_items and style == "risk_focus":
+    # Executive verdict: any blocker/risk/question → "Требует внимания".
+    if style == "risk_focus" and (risk_items or question_items):
         return "Требует внимания."
     if done_items and _looks_completed(done_items) and not plan_items:
         return "Завершено."
