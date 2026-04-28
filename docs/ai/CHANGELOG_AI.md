@@ -245,6 +245,36 @@ The `Project.aliases` column already supports any list of strings; no schema cha
 
 ---
 
+## 2026-04-28 — v2.25.2: Project setup + report-date clarity (Step 31)
+
+**Task:** Make project creation, inbox routing and the report-date model obvious without slash commands.
+
+**Files changed:**
+- `src/delivery_reports/web_app.py`
+  - New `POST /projects` route. Reuses `resolve_or_create_project` (no DB schema change), then merges optional comma-separated aliases via `repository.upsert_project`. Redirects back to dashboard with notice.
+  - `_build_dashboard_context` now exposes `today_iso` and `report_date_label`.
+- `src/delivery_reports/web/templates/dashboard_v2.html`
+  - Page header gets a prominent "📅 Отчёт за: <date> · сегодня" label.
+  - Draft-meta date item now reads "📅 Отчёт за: <date>".
+  - Empty/no-project state: full-width "🚀 Начните с проекта" card with `project_name` + `aliases` form posting to `/projects`.
+  - With existing projects: collapsed `<details>` "+ Новый проект" anchor (`#v2-project-setup`) so the inbox can link in.
+  - Every inbox-bind row now includes "+ Новый проект" link to `#v2-project-setup`.
+  - Replaced "Сначала создайте проект в Super Admin..." with "Добавьте проект здесь или выберите существующий — после этого заметка попадёт в отчёт.".
+- `src/delivery_reports/web/static/v2/dashboard_v2.css`
+  - New `PMD:V2:STEP31_PROJECT_SETUP` block: `.v2-report-date-label`, `.v2-project-setup` (empty + collapsed variants), inputs/textarea styles, `.v2-inbox-new-project` button, mobile stacking.
+- `src/delivery_reports/config.py` — `app_version` v2.25.1 → v2.25.2.
+- `tests/test_web_app.py` — 6 new tests:
+  - `test_v2_dashboard_shows_project_setup_card_when_no_projects`
+  - `test_v2_dashboard_collapsed_setup_when_projects_exist`
+  - `test_v2_dashboard_renders_report_date_label`
+  - `test_v2_inbox_card_includes_new_project_link`
+  - `test_post_projects_creates_project_with_aliases`
+  - `test_post_projects_rejects_blank_name`
+
+**Tests:** 140 passed (was 134), `compileall` clean.
+
+---
+
 ## 2026-04-28 — v2.25.1: Landing sales polish (Step 30B)
 
 **Task:** Improve landing page sales quality after text-first repositioning.

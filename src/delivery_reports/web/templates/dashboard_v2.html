@@ -160,7 +160,11 @@
         <div>
           <div class="v2-page-title">Dashboard</div>
           <div class="v2-page-sub">
-            {{ today }}{% if user %} · {{ user.display_name or user.telegram_full_name }}{% endif %}
+            <span class="v2-report-date-label" title="Дата текущего отчёта">
+              📅 Отчёт за: <strong>{{ report_date_label }}</strong>
+              <span class="v2-report-date-today" aria-hidden="true">· сегодня</span>
+            </span>
+            {% if user %}<span class="v2-page-sub-sep" aria-hidden="true">·</span> {{ user.display_name or user.telegram_full_name }}{% endif %}
           </div>
         </div>
         <div class="v2-page-header-right">
@@ -170,6 +174,79 @@
           {% endif %}
         </div>
       </div>
+
+      {# Step 31 — project setup card.
+         Renders open by default for users with zero real projects ("Начните с проекта").
+         Renders as a collapsed <details> for users with existing projects so the
+         "+ Новый проект" inbox links / dropdown anchors always have a target. #}
+      {% if not projects %}
+      <section class="v2-project-setup v2-project-setup--empty" id="v2-project-setup" aria-label="Создать первый проект">
+        <div class="v2-project-setup-head">
+          <div class="v2-project-setup-title">🚀 Начните с проекта</div>
+          <div class="v2-project-setup-desc">
+            Добавьте первый проект — так PM Digest поймёт, куда относить заметки.
+          </div>
+        </div>
+        <form method="post" action="/projects" class="v2-project-setup-form">
+          <div class="v2-project-setup-row">
+            <input
+              type="text"
+              name="project_name"
+              class="v2-input"
+              placeholder="Например: BONUS-2055 или Bank Dashboard"
+              required
+              maxlength="120"
+              aria-label="Название проекта"
+            />
+          </div>
+          <div class="v2-project-setup-row">
+            <textarea
+              name="aliases"
+              class="v2-textarea v2-project-setup-aliases"
+              placeholder="Псевдонимы через запятую — необязательно (например: 2055, кешбэк, BONUS-2055)"
+              rows="2"
+              aria-label="Псевдонимы проекта"
+            ></textarea>
+          </div>
+          <div class="v2-project-setup-actions">
+            <button type="submit" class="v2-btn primary">Создать проект</button>
+            <span class="v2-project-setup-hint">Псевдонимы помогают боту узнавать проект в коротких заметках.</span>
+          </div>
+        </form>
+      </section>
+      {% else %}
+      <details class="v2-project-setup v2-project-setup--collapsed" id="v2-project-setup">
+        <summary class="v2-project-setup-summary">+ Новый проект</summary>
+        <div class="v2-project-setup-desc">
+          Добавьте ещё один проект — заметки сразу будут попадать в нужный блок отчёта.
+        </div>
+        <form method="post" action="/projects" class="v2-project-setup-form">
+          <div class="v2-project-setup-row">
+            <input
+              type="text"
+              name="project_name"
+              class="v2-input"
+              placeholder="Например: BONUS-2055 или Bank Dashboard"
+              required
+              maxlength="120"
+              aria-label="Название проекта"
+            />
+          </div>
+          <div class="v2-project-setup-row">
+            <textarea
+              name="aliases"
+              class="v2-textarea v2-project-setup-aliases"
+              placeholder="Псевдонимы через запятую — необязательно"
+              rows="2"
+              aria-label="Псевдонимы проекта"
+            ></textarea>
+          </div>
+          <div class="v2-project-setup-actions">
+            <button type="submit" class="v2-btn primary">Создать проект</button>
+          </div>
+        </form>
+      </details>
+      {% endif %}
 
       <!-- ── A2. Onboarding 3-step guide (localStorage-hideable) ─ -->
       <section class="v2-onboarding" id="v2-onboarding" aria-label="Как собрать отчёт">
@@ -289,7 +366,7 @@
               {% endif %}
             </div>
             <div class="v2-draft-meta">
-              <span class="v2-draft-meta-item" title="Дата отчёта">📅 {{ today }}</span>
+              <span class="v2-draft-meta-item" title="Дата отчёта">📅 Отчёт за: <strong>{{ report_date_label }}</strong></span>
               <span class="v2-draft-meta-sep" aria-hidden="true">·</span>
               <span class="v2-draft-meta-item" title="Менеджер — автор отчёта">
                 👤 Менеджер: <strong>{% if user %}{{ user.display_name or user.telegram_full_name }}{% else %}—{% endif %}</strong>
@@ -544,10 +621,14 @@
                 {% endfor %}
               </select>
               <button type="submit" class="v2-btn primary v2-inbox-bind-btn">Привязать</button>
+              <a href="#v2-project-setup" class="v2-inbox-new-project" title="Создать новый проект">+ Новый проект</a>
             </div>
           </form>
           {% else %}
-          <p class="v2-inbox-no-candidates">Сначала создайте проект в Super Admin или добавьте проект в форме заметки.</p>
+          <p class="v2-inbox-no-candidates">
+            Добавьте проект здесь или выберите существующий — после этого заметка попадёт в отчёт.
+          </p>
+          <a href="#v2-project-setup" class="v2-inbox-new-project v2-inbox-new-project--block">+ Новый проект</a>
           {% endif %}
         </div>
         {% endfor %}
@@ -587,8 +668,11 @@
                     {% endfor %}
                   </select>
                   <button type="submit" class="v2-btn primary v2-inbox-bind-btn">Привязать</button>
+                  <a href="#v2-project-setup" class="v2-inbox-new-project" title="Создать новый проект">+ Новый проект</a>
                 </div>
               </form>
+              {% else %}
+              <a href="#v2-project-setup" class="v2-inbox-new-project v2-inbox-new-project--block">+ Новый проект</a>
               {% endif %}
             </div>
             {% endfor %}

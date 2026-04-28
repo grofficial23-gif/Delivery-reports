@@ -423,6 +423,37 @@ def build_web_app(settings: Settings, repository: Repository) -> FastAPI:
         notice = quote_plus(f"Заметка note#{note_id} привязана к проекту {project.name}.")
         return RedirectResponse(url=f"/dashboard?notice={notice}#inbox", status_code=303)
 
+    @app.post("/projects")
+    async def create_project(request: Request) -> RedirectResponse:
+        # Step 31 — minimal "create project from dashboard" route.
+        # Reuses resolve_or_create_project (already exposed for /notes
+        # and /inbox/{id}/resolve), then upgrades aliases if user passed any.
+        user = _authenticated_user(request, repository, settings)
+        if user is None:
+            return _redirect_with_notice("Откройте приложение из Telegram.")
+        payload = await _parse_payload(request)
+        name = payload.get("project_name", "").strip()
+        if not name:
+            return _redirect_with_notice("Введите название проекта.")
+        project, created = resolve_or_create_project(name, repository, user, settings)
+        aliases_raw = payload.get("aliases", "").strip()
+        if aliases_raw:
+            new_aliases = [a.strip() for a in aliases_raw.replace(";", ",").split(",") if a.strip()]
+            if new_aliases:
+                merged = sorted({*(project.aliases or []), project.name, *new_aliases})
+                project = repository.upsert_project(
+                    name=project.name,
+                    manager_name=project.manager_name,
+                    lead_name=project.lead_name,
+                    jira_base_url=project.jira_base_url,
+                    aliases=merged,
+                    is_special_control=project.is_special_control,
+                    owner_user_id=user.telegram_user_id,
+                )
+        verb = "создан" if created else "обновлён"
+        notice = quote_plus(f"Проект «{project.name}» {verb}.")
+        return RedirectResponse(url=f"/dashboard?notice={notice}#add-note", status_code=303)
+
     @app.post("/template")
     async def choose_template(request: Request) -> RedirectResponse:
         user = _authenticated_user(request, repository, settings)
@@ -453,6 +484,8 @@ def _build_dashboard_context(request: Request, repository: Repository, settings:
     base_context = {
         "request": request,
         "today": target_date.strftime("%d.%m.%Y"),
+        "today_iso": target_date.isoformat(),
+        "report_date_label": target_date.strftime("%d.%m.%Y"),
         "notice": request.query_params.get("notice", ""),
         "public_web_app_url": settings.public_web_app_url,
         "bot_username": settings.bot_username,

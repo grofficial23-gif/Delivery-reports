@@ -366,6 +366,83 @@ class WebAppTests(unittest.TestCase):
             dashboard.text,
         )
 
+    # ── Step 31 — project setup card + report-date label + "+ Новый проект" ─
+    def test_v2_dashboard_shows_project_setup_card_when_no_projects(self) -> None:
+        # Fresh user owns no projects (DC701 belongs to user_id=42).
+        v2_client = self._build_v2_client()
+        self._authenticate(v2_client, user_id=555_001, username="brandnew", full_name="Новый PM")
+
+        dashboard = v2_client.get("/dashboard")
+        self.assertEqual(dashboard.status_code, 200)
+        self.assertIn("Начните с проекта", dashboard.text)
+        self.assertIn("Добавьте первый проект", dashboard.text)
+        self.assertIn('id="v2-project-setup"', dashboard.text)
+        self.assertIn('action="/projects"', dashboard.text)
+        self.assertIn('name="project_name"', dashboard.text)
+        self.assertIn('name="aliases"', dashboard.text)
+        self.assertIn("Создать проект", dashboard.text)
+
+    def test_v2_dashboard_collapsed_setup_when_projects_exist(self) -> None:
+        v2_client = self._build_v2_client()
+        self._authenticate(v2_client, user_id=42, username="grafkin", full_name="Анатолий Графкин")
+
+        dashboard = v2_client.get("/dashboard")
+        self.assertEqual(dashboard.status_code, 200)
+        # Collapsed details with "+ Новый проект" summary still available.
+        self.assertIn('id="v2-project-setup"', dashboard.text)
+        self.assertIn("+ Новый проект", dashboard.text)
+        # Empty-state copy must NOT show when user already has projects.
+        self.assertNotIn("Добавьте первый проект", dashboard.text)
+
+    def test_v2_dashboard_renders_report_date_label(self) -> None:
+        v2_client = self._build_v2_client()
+        self._authenticate(v2_client, user_id=42, username="grafkin", full_name="Анатолий Графкин")
+
+        dashboard = v2_client.get("/dashboard")
+        self.assertEqual(dashboard.status_code, 200)
+        self.assertIn("Отчёт за:", dashboard.text)
+        self.assertIn("v2-report-date-label", dashboard.text)
+
+    def test_v2_inbox_card_includes_new_project_link(self) -> None:
+        v2_client = self._build_v2_client()
+        self._authenticate(v2_client, user_id=42, username="grafkin", full_name="Анатолий Графкин")
+        v2_client.post(
+            "/notes",
+            data={"text": "что-то общее без проекта", "action": "save"},
+            follow_redirects=True,
+        )
+
+        dashboard = v2_client.get("/dashboard")
+        self.assertEqual(dashboard.status_code, 200)
+        # "+ Новый проект" link from inbox card to the setup form.
+        self.assertIn("v2-inbox-new-project", dashboard.text)
+        self.assertIn('href="#v2-project-setup"', dashboard.text)
+        # Old vague Super Admin copy must be gone.
+        self.assertNotIn("Сначала создайте проект в Super Admin", dashboard.text)
+
+    def test_post_projects_creates_project_with_aliases(self) -> None:
+        self._authenticate(self.client, user_id=42, username="grafkin", full_name="Анатолий Графкин")
+        response = self.client.post(
+            "/projects",
+            data={"project_name": "BONUS-2055", "aliases": "2055, кешбэк, BONUS-2055"},
+            follow_redirects=False,
+        )
+        self.assertEqual(response.status_code, 303)
+        self.assertIn("/dashboard", response.headers["location"])
+        project = self.repository.find_project_by_name_or_alias("2055", owner_user_id=42)
+        self.assertIsNotNone(project)
+        assert project is not None
+        self.assertEqual(project.name, "BONUS-2055")
+        # Alias лookup also works for "кешбэк".
+        by_alias = self.repository.find_project_by_name_or_alias("кешбэк", owner_user_id=42)
+        self.assertIsNotNone(by_alias)
+
+    def test_post_projects_rejects_blank_name(self) -> None:
+        self._authenticate(self.client, user_id=42, username="grafkin", full_name="Анатолий Графкин")
+        response = self.client.post("/projects", data={"project_name": "   "}, follow_redirects=False)
+        self.assertEqual(response.status_code, 303)
+        self.assertIn("notice=", response.headers["location"])
+
     def test_inbox_resolve_post_still_binds_note_to_project(self) -> None:
         self._authenticate(self.client, user_id=42, username="grafkin", full_name="Анатолий Графкин")
         self.client.post(
