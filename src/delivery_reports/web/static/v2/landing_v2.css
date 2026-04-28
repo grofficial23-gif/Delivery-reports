@@ -800,3 +800,43 @@ html { scroll-behavior: smooth; }
     transition-duration: 0.001ms !important;
   }
 }
+
+/* PMD:V2:LANDING_MOBILE_NAV:start ───────────────────────
+   Step 25 — Guard the landing topnav on narrow screens:
+   - "Открыть бота" (s1-open-btn) must always be visible.
+   - Theme switcher collapses early to free space.
+   - s1-nav-right must never overflow or push CTA off-screen.
+   ────────────────────────────────────────────────────── */
+.s1-nav-right {
+  /* Ensure right side group never grows past available space */
+  min-width: 0;
+  overflow: hidden;
+}
+.s1-open-btn {
+  /* Belt-and-suspenders: always shrink-proof */
+  flex-shrink: 0 !important;
+  white-space: nowrap;
+}
+/* At medium breakpoints make the nav less roomy so CTA fits */
+@media (max-width: 680px) {
+  .s1-nav { padding: 0 16px; gap: 12px; }
+  .s1-nav-right { gap: 8px; }
+  /* Compact the theme switcher pill */
+  .s1-theme-sw { padding: 2px; }
+  .s1-theme-btn { min-width: 28px; height: 28px; padding: 0 8px; font-size: 10px; }
+  .s1-theme-locked { min-width: 32px; height: 28px; padding: 0 8px; }
+}
+@media (max-width: 480px) {
+  .s1-nav { padding: 0 12px; gap: 8px; }
+  .s1-nav-right { gap: 6px; }
+  /* Hide the whole theme switcher in nav at very narrow widths —
+     the CTA ("Открыть бота") must always be the dominant action */
+  .s1-theme-row { display: none; }
+  /* Tighten the CTA button itself */
+  .s1-open-btn {
+    font-size: 12.5px;
+    padding: 0 14px;
+    height: 36px;
+  }
+}
+/* PMD:V2:LANDING_MOBILE_NAV:end ─────────────────────── */

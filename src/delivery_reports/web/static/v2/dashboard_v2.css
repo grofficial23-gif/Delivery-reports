@@ -2372,3 +2372,108 @@ details.v2-inbox-more[open] .v2-inbox-more-summary::before { content: "▾"; }
 }
 
 /* PMD:V2:STEP23_INTENT:end ──────────────────────────── */
+
+
+/* PMD:V2:MOBILE_POLISH:start ────────────────────────────
+   Step 25 — Mobile layout polish.
+   Goal: 390px viewport must have:
+   - Topnav that fits without overflow.
+   - CTA buttons that never clip text (height→auto + min-height).
+   - No 3-line word-wrap in primary actions.
+   CSS-only; no HTML/backend changes.
+   ────────────────────────────────────────────────────── */
+
+/* ── Base button: allow height growth on wrap ─────────── */
+/* We only fix the height for mobile, keeping desktop as-is */
+@media (max-width: 760px) {
+  /* CTA buttons in next-action and empty-draft primary slot */
+  .v2-next-action-cta .v2-btn,
+  .v2-next-action-cta .v2-btn-lg,
+  .v2-draft-actions-empty .v2-btn,
+  .v2-draft-actions-empty .v2-btn-lg {
+    height: auto !important;
+    min-height: 52px;
+    line-height: 1.2;
+    padding: 12px 18px !important;
+    word-break: normal;
+    overflow-wrap: normal;
+    hyphens: none;
+    -webkit-hyphens: none;
+    white-space: normal;
+  }
+  /* Primary slot: full width, centered */
+  .v2-next-action-cta .v2-btn.primary,
+  .v2-next-action-cta .v2-btn-lg,
+  .v2-draft-actions-empty .v2-btn.primary,
+  .v2-draft-actions-empty .v2-btn-lg {
+    width: 100%;
+    flex: 1 1 100%;
+    justify-content: center;
+    text-align: center;
+  }
+  /* Ghost secondary in next-action: auto-width, smaller */
+  .v2-next-action-cta .v2-btn.ghost {
+    height: auto !important;
+    min-height: 42px;
+    padding: 10px 16px !important;
+    flex: 0 0 auto;
+  }
+  /* Empty-state secondary (ghost peer of primary) */
+  .v2-draft-actions-empty .v2-btn.ghost {
+    flex: 1 1 auto;
+    justify-content: center;
+    text-align: center;
+  }
+}
+
+/* ── Topnav: progressive disclosure on narrow screens ─── */
+@media (max-width: 760px) {
+  .v2-topnav { padding: 0 12px; gap: 10px; }
+  /* Nav link row is replaced by hamburger menu at this width */
+  .v2-topnav-links { display: none; }
+  .v2-topnav-sep { display: none; }
+  /* Reduce right-side gaps */
+  .v2-topnav-right { gap: 6px; }
+  /* Hide "← Лендинг" link — takes too much space on mobile */
+  .v2-topnav-right > a.v2-btn.ghost { display: none; }
+  /* Truncate user name text but keep avatar */
+  .v2-user-chip {
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* Days-left is redundant on mobile (shown in status strip) */
+  .v2-days-left { display: none; }
+}
+
+@media (max-width: 480px) {
+  .v2-topnav { padding: 0 10px; gap: 6px; }
+  .v2-topnav-right { gap: 4px; }
+  /* Plan badge in topnav: hide at narrow (page-header shows it) */
+  .v2-topnav-right > .v2-plan-badge { display: none; }
+  /* User chip: show only the avatar, hide the text */
+  .v2-user-chip {
+    /* shrink to just the avatar: remove horizontal padding, fix width */
+    padding: 0 4px;
+    max-width: 30px;
+    gap: 0;
+  }
+  /* Hide text node inside .v2-user-chip — it's a bare text node, so we
+     clip via overflow on the parent.  The avatar (.v2-user-av) has
+     flex-shrink:0 and is shown correctly. */
+  /* Also shrink theme switcher to save space */
+  .v2-theme-sw { gap: 2px; }
+  .v2-theme-btn { width: 26px; height: 26px; font-size: 10px; }
+}
+
+@media (max-width: 360px) {
+  /* Absolute minimum — keep brand + avatar + theme toggle only */
+  .v2-topnav-right > .v2-plan-badge { display: none; }
+  .v2-version-chip { display: none; }
+  .v2-user-chip { max-width: 26px; padding: 0 3px; }
+  .v2-theme-btn { width: 24px; height: 24px; }
+  .v2-topnav-brand { font-size: 14px; }
+}
+
+/* PMD:V2:MOBILE_POLISH:end ──────────────────────────── */
