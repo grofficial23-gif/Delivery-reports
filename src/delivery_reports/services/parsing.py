@@ -10,6 +10,7 @@ from .long_update_split import (
     looks_long_unstructured,
     split_long_update,
 )
+from .report_text_cleaner import clean_report_item_text
 
 
 JIRA_LINK_RE = re.compile(r"https?://\S+/browse/[A-Z][A-Z0-9]+-\d+", re.IGNORECASE)
@@ -86,11 +87,54 @@ def _atomic_to_block(atom: AtomicUpdate, projects: list[Project]) -> ParsedNoteB
     virtual_lines: list[str] = []
     if atom.project_name_hint:
         virtual_lines.append(f"Проект: {atom.project_name_hint}")
-    body = atom.text.strip()
+    # Pre-clean: first strip "По <known-project>" from the start, then run
+    # the generic cleaner.  This removes user-typed leading labels like
+    # "Блокер по Bank Dashboard:" AND voice-dictation intros like
+    # "По Delivery Reports сделал …".  Together they guarantee the stored
+    # text never duplicates marker nesting like "блокер — Блокер по …".
+    body_pre = _strip_leading_project_intro(atom.text, projects)
+    body_clean = clean_report_item_text(body_pre)
+    body = body_clean or body_pre.strip()
     virtual_lines.append(f"{prefix}{body}" if prefix else body)
     virtual_text = "\n".join(virtual_lines)
     parsed = parse_note_text(virtual_text, projects)
     return ParsedNoteBlock(raw_text=atom.text.strip(), parsed=parsed)
+
+
+def _strip_leading_project_intro(text: str, projects: list[Project]) -> str:
+    """Remove a leading 'По <ProjectName>' / 'По <alias>' from *text*.
+
+    Only strips when the candidate matches a known project name or alias
+    exactly.  Tries the longest candidate first so phrase aliases
+    ("Bank Dashboard") win over single-word ones ("Bank").  Returns the
+    text unchanged when no candidate matches.
+    """
+    if not text:
+        return text
+    lowered = text.lower().lstrip()
+    if not lowered.startswith("по "):
+        return text
+    candidates: list[str] = []
+    for project in projects:
+        name = (project.name or "").strip()
+        if not name or name.lower() == "без проекта":
+            continue
+        candidates.append(name)
+        for alias in project.aliases or ():
+            alias_clean = (alias or "").strip()
+            if alias_clean:
+                candidates.append(alias_clean)
+    candidates.sort(key=len, reverse=True)
+    stripped_text = text.lstrip()
+    leading_ws = text[: len(text) - len(stripped_text)]
+    stripped_lower = stripped_text.lower()
+    for candidate in candidates:
+        prefix = f"по {candidate.lower()}"
+        if stripped_lower.startswith(prefix):
+            tail = stripped_text[len(prefix):]
+            tail_stripped = tail.lstrip(" \t,:;.-—")
+            return f"{leading_ws}{tail_stripped}" if tail_stripped else ""
+    return text
 
 
 def _has_explicit_section_markers(text: str) -> bool:
@@ -250,6 +294,11 @@ def _split_by_intent(raw_text: str) -> tuple[str, str, str, str]:
         value = line.strip("-• \t")
         if not value:
             continue
+        # Skip pure metadata lines (Проект:, Эпик:, Дата:, …).  They are
+        # not bullet content and would otherwise leak into the draft as
+        # "- Проект: Delivery." noise.
+        if _is_metadata_line(value):
+            continue
         lowered = value.lower()
         if any(token in lowered for token in ("план", "завтра", "дальше", "следующ", "next")):
             plan_lines.append(value)
@@ -258,7 +307,7 @@ def _split_by_intent(raw_text: str) -> tuple[str, str, str, str]:
             risk_lines.append(value)
             continue
         done_lines.append(value)
-    if not done_lines and raw_text.strip():
+    if not done_lines and raw_text.strip() and not _is_metadata_line(raw_text.strip()):
         done_lines = [raw_text.strip()]
     return "", "\n".join(done_lines), "\n".join(plan_lines), "\n".join(risk_lines)
 

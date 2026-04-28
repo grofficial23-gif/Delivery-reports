@@ -8,9 +8,11 @@ from ..repository import NewNote, Repository, UserProfile
 from .intent import (
     INTENT_KIND_OTHER,
     infer_intent_kind,
+    label_for_kind,
     summarize_intents,
 )
 from .parsing import ParsedNote, parse_note_blocks
+from .report_text_cleaner import clean_report_item_text
 from .project_resolution import (
     fallback_project_ids,
     project_names_by_ids,
@@ -108,10 +110,12 @@ def store_notes(
 
 
 def render_saved_note_message(result: StoredNoteResult) -> str:
+    intent_label = label_for_kind(result.intent_kind)
+    project_display = _project_display(result)
     lines = [
         "<b>Заметка сохранена</b>",
         "",
-        f"<b>Проект:</b> {escape(result.project_name)}",
+        f"<b>{escape(intent_label)} · {escape(project_display)}</b>",
         f"<b>Менеджер:</b> {escape(result.manager_name or '-')}",
         f"<b>Руководитель:</b> {escape(result.lead_name or '-')}",
     ]
@@ -132,16 +136,24 @@ def render_saved_notes_message(results: list[StoredNoteResult]) -> str:
     if len(results) == 1:
         return render_saved_note_message(results[0])
 
-    lines = [f"<b>Сообщение разделил на {len(results)} блока</b>"]
+    block_word = _pluralize_blocks(len(results))
+    lines = [f"<b>Сообщение разделил на {len(results)} {block_word}</b>"]
     summary = summarize_intents([result.intent_kind for result in results])
     if summary:
         lines.append(escape(summary))
     lines.append("")
     for index, result in enumerate(results, start=1):
-        lines.append(f"<b>{index}. {escape(result.project_name)}</b>")
-        lines.append(f"- {'Нужно уточнить проект.' if result.needs_review else 'Сохранено.'}")
+        intent_label = label_for_kind(result.intent_kind)
+        project_part = _project_display(result)
+        lines.append(
+            f"<b>{index}. {escape(intent_label)} · {escape(project_part)}</b>"
+        )
         if result.summary_line:
             lines.append(f"- {escape(result.summary_line)}")
+        elif result.needs_review and result.candidate_names:
+            lines.append(
+                f"- Варианты: {escape(', '.join(result.candidate_names))}"
+            )
     unresolved = [result for result in results if result.needs_review]
     if unresolved:
         last = unresolved[-1]
@@ -153,11 +165,40 @@ def render_saved_notes_message(results: list[StoredNoteResult]) -> str:
     return "\n".join(lines)
 
 
+def _project_display(result: StoredNoteResult) -> str:
+    """Display name for the project on the bot reply.
+
+    When the project couldn't be resolved (`needs_review=True` with the
+    sentinel "Не уверен" / "" name), show the explicit
+    "📥 Нужно уточнить проект" hint.  Otherwise the actual project name
+    wins so the user immediately sees that auto-matching worked.
+    """
+    name = (result.project_name or "").strip()
+    if result.needs_review and name in ("", "Не уверен"):
+        return "📥 Нужно уточнить проект"
+    return name or "Без проекта"
+
+
+def _pluralize_blocks(count: int) -> str:
+    last_two = count % 100
+    last_one = count % 10
+    if 11 <= last_two <= 14:
+        return "блоков"
+    if last_one == 1:
+        return "блок"
+    if 2 <= last_one <= 4:
+        return "блока"
+    return "блоков"
+
+
 def short_summary_line(parsed: ParsedNote) -> str:
     for field in (parsed.done_text, parsed.plan_text, parsed.risk_text):
         if not field:
             continue
         first_line = field.splitlines()[0].strip()
+        cleaned = clean_report_item_text(first_line)
+        if cleaned:
+            return cleaned
         if first_line:
             return first_line
     return ""

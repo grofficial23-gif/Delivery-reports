@@ -94,6 +94,43 @@
 
 ---
 
+## 2026-04-28 — v2.24.0: Project recognition + clean report output (Step 25)
+
+**Task:** Make report quality demo-ready. The 9-block test message had three failures: every block was tagged "Не уверен", neutral mentions of words like "блокер" caused false-positive blocker classification, and synthetic prefixes ("вопрос — Вопрос по Bank Dashboard:") leaked into bullets. This step fixes all three.
+
+**Files changed:**
+- `src/delivery_reports/services/long_update_split.py` — replaced substring keyword matching with **strict regex-driven `_classify_intent`**. Strong start patterns now require `:` / `-` / `—` / preposition after the marker; e.g. `^Блокер:`, `^Блокер по X`, `^Риск на`. Anywhere-in-sentence verbs are word-boundary aware (`\bне\s+можем\s+продолжить\b`, etc.). Neutral mentions of "сделано / план / риск / блокер" inside ordinary sentences NO LONGER trigger any intent. Added `_is_project_only_sentence` to drop pure project-label noise like "Проект: Delivery." Improved `_detect_project_by_alias`: phrase aliases ("Bank Dashboard") score before single-word aliases ("Bank"), single-word aliases under 3 chars are skipped (no false matches on "ID"/"QA"). Restricted item merging to `{done, plan, other}` so blockers/risks/decisions/questions get dedicated bullets.
+- `src/delivery_reports/services/parsing.py` — `_split_by_intent` unstructured path now skips metadata lines (`Проект:`, `Эпик:`, …), preventing them from becoming bullets. New `_strip_leading_project_intro(text, projects)` strips `"По <known-project-or-alias>"` from the start of voice-dictated atoms. `_atomic_to_block` pre-cleans the body via `clean_report_item_text` BEFORE injecting our synthetic prefix, so the stored text holds only ONE marker (no "блокер — Блокер по …" duplication).
+- `src/delivery_reports/services/report_text_cleaner.py` — **NEW** pure module. `clean_report_item_text(text, *, project_name=None, intent_kind=None)` strips synthetic prefixes ("вопрос —", "блокер —", "решение —"), user-typed labels ("Блокер по X:", "Что сделано:", "План на завтра:"), project-switch intros ("Теперь по X:", "Касательно X:", "Дальше по X:"), and pure project-label lines ("Проект: Delivery."). Iterates until stable; capitalizes first letter; returns "" for empty / project-only input.
+- `src/delivery_reports/services/draft_builder.py` — new emoji section format: `📌 <Project>` / `✅ Что сделано` / `◆ Решение` / `🧭 План` / `⚠️ Риски` / `❓ Вопросы` / `⛔ Блокеры` / `📥 Нужно уточнить проект`. Empty sections are skipped entirely (no `- нет` filler). Bullets use `•` prefix. New routing helpers `_route_done_lines` (splits done_text into done/decision/question by prefix) and `_route_risk_lines` (splits risk_text into risk/blocker). Every bullet runs through `_clean_items` → `clean_report_item_text` before display. `risk_focus` style still places blockers/risks before plan; `team_examples` retains its original layout but applies cleaning. `build_weekly_summary` updated to consume the new buckets.
+- `src/delivery_reports/services/note_capture.py` — `render_saved_notes_message` now shows **intent badge + project · cleaned preview** per block instead of the old "Не уверен / Сохранено" pattern. Russian-correct pluralization for "блок/блока/блоков". `short_summary_line` runs the cleaner. New `_project_display` swaps to "📥 Нужно уточнить проект" only when the resolution sentinel ("" / "Не уверен") is present, preserving any explicit project name.
+- `src/delivery_reports/config.py` — bumped `app_version` to `"v2.24.0"` (minor: visible product feature).
+- `tests/test_report_quality.py` — **NEW** 27 end-to-end tests: alias recognition for Delivery Reports / Bank Dashboard / BONUS-2055 / MCC / ГТС / МФС / Антифрод; intent strictness (neutral word lists are not blocker, explicit `Блокер: …` / `Риск: …` / `План: …` / `Вопрос: …` / `Решение: …` are recognized); `clean_report_item_text` regression suite (synthetic prefix stripping, user-typed labels, project-only line drops, idempotency); final-draft hygiene (no `Вопрос — Вопрос`, no `- Проект: …` bullets, unknown projects route to the inbox section, recognized projects get `📌` emoji).
+- `tests/test_draft_builder.py` — updated 3 existing tests to assert the new emoji section format (`✅ Что сделано`, `🧭 План`, `⚠️ Риски`) and `•` bullet prefix; the empty-risk filler `- нет` is no longer rendered.
+- `scripts/seed_demo_aliases.py` — **NEW** idempotent helper. Run `python -m scripts.seed_demo_aliases <owner_user_id>` to ensure Delivery Reports / Bank Dashboard / Внедрение категорийного кэшбэка (BONUS-2055) projects exist with their demo aliases. Uses `repository.upsert_project`; merges with any existing aliases; never deletes data; no schema change.
+
+**Reason:** Hardening report quality before tomorrow's demo. The system must turn a long voice/text monolog into a project-first structured daily report without false blockers, without duplicated section labels, and without "Не уверен" appearing for projects that have aliases.
+
+**Rollback notes:** Schema unchanged. To revert: restore the old keyword-substring `_classify_intent` in `long_update_split.py`, remove `report_text_cleaner.py`, restore the prior `_render_project_block` in `draft_builder.py`, and revert `config.py` to `v2.23.2`. Existing notes in the DB remain readable; only rendering output differs.
+
+### How to add demo aliases
+
+The `Project.aliases` column already supports any list of strings; no schema change is needed.
+
+1. **Easy path (recommended)** — run the seeder for your Telegram user id:
+
+   ```bash
+   python -m scripts.seed_demo_aliases 123456789
+   ```
+
+   It merges the canonical demo aliases with whatever you already have. Idempotent: safe to re-run after each deploy.
+
+2. **Manual path** — edit `scripts/seed_demo_aliases.py:DEMO_PROJECTS` to add your own projects, then re-run the script.
+
+3. **Programmatic path** — call `repository.upsert_project(name="…", aliases=[…], …, owner_user_id=…)` from any boot/admin code.
+
+---
+
 ## 2026-04-28 — v2.23.2: Prevent failed voice transcription from polluting reports (Step 26)
 
 **Task:** Failed voice transcriptions were saved as technical garbage notes (`voice-note: transcription failed; file_id=...`), polluting the dashboard, inbox, and generated drafts. This step silences that path entirely.

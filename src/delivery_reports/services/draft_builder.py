@@ -7,6 +7,7 @@ from html import escape
 
 from ..repository import Note, Project
 from .report_presenter import compact_section_items, limit_section_items
+from .report_text_cleaner import clean_report_item_text
 
 
 def _tpl(value: str) -> str:
@@ -26,6 +27,9 @@ class ProjectAggregate:
     done_items: list[str] = field(default_factory=list)
     plan_items: list[str] = field(default_factory=list)
     risk_items: list[str] = field(default_factory=list)
+    blocker_items: list[str] = field(default_factory=list)
+    decision_items: list[str] = field(default_factory=list)
+    question_items: list[str] = field(default_factory=list)
     jira_links: set[str] = field(default_factory=set)
     needs_review_count: int = 0
 
@@ -87,9 +91,14 @@ def build_daily_draft(
             aggregate.epics.add(note.epic)
         if note.status_text.strip():
             aggregate.explicit_statuses.append(note.status_text.strip())
-        _append_lines(aggregate.done_items, note.done_text)
+        _route_done_lines(
+            aggregate.done_items,
+            aggregate.decision_items,
+            aggregate.question_items,
+            note.done_text,
+        )
         _append_lines(aggregate.plan_items, note.plan_text)
-        _append_lines(aggregate.risk_items, note.risk_text)
+        _route_risk_lines(aggregate.risk_items, aggregate.blocker_items, note.risk_text)
         for link in note.jira_links:
             aggregate.jira_links.add(link)
         if note.needs_review:
@@ -170,9 +179,14 @@ def build_weekly_summary(
             grouped[group_key] = ProjectAggregate(project=project)
             aggregate = grouped[group_key]
         
-        _append_lines(aggregate.done_items, note.done_text)
+        _route_done_lines(
+            aggregate.done_items,
+            aggregate.decision_items,
+            aggregate.question_items,
+            note.done_text,
+        )
         _append_lines(aggregate.plan_items, note.plan_text)
-        _append_lines(aggregate.risk_items, note.risk_text)
+        _route_risk_lines(aggregate.risk_items, aggregate.blocker_items, note.risk_text)
 
     lines: list[str] = []
     lines.append(f"📈 <b>Weekly Executive Summary: {escape(team_name)}</b>")
@@ -185,8 +199,8 @@ def build_weekly_summary(
         return "\n".join(lines).strip()
 
     for index, aggregate in enumerate(sorted(grouped.values(), key=lambda a: a.project.name.lower()), start=1):
-        done_items = _limit_items(_compact_items(aggregate.done_items, "done"), "standard", "done")
-        risk_items = _limit_items(_compact_items(aggregate.risk_items, "risk"), "standard", "risk")
+        done_items = _limit_items(_compact_items(_clean_items(aggregate.done_items + aggregate.decision_items), "done"), "standard", "done")
+        risk_items = _limit_items(_compact_items(_clean_items(aggregate.risk_items + aggregate.blocker_items), "risk"), "standard", "risk")
         
         lines.append(f"<b>{index}. {escape(aggregate.project.name)}</b>")
         if done_items:
@@ -239,6 +253,69 @@ def _append_lines(buffer: list[str], block_text: str | None) -> None:
             buffer.append(line)
 
 
+def _route_done_lines(
+    done_buffer: list[str],
+    decision_buffer: list[str],
+    question_buffer: list[str],
+    block_text: str | None,
+) -> None:
+    """Split note.done_text lines into done / decision / question buckets.
+
+    The parser injects synthetic prefixes ("решение —", "вопрос —") on
+    atomic items.  Honor those here so the draft can render dedicated
+    "◆ Решение" and "❓ Вопросы" sections.
+    """
+    if not block_text:
+        return
+    for line in (part.strip("-• \t") for part in block_text.splitlines()):
+        if not line:
+            continue
+        lowered = line.lower()
+        if lowered.startswith(("решение —", "решение -")):
+            decision_buffer.append(line)
+        elif lowered.startswith(("вопрос —", "вопрос -")):
+            question_buffer.append(line)
+        else:
+            done_buffer.append(line)
+
+
+def _route_risk_lines(
+    risk_buffer: list[str],
+    blocker_buffer: list[str],
+    block_text: str | None,
+) -> None:
+    """Split note.risk_text lines into risk / blocker buckets."""
+    if not block_text:
+        return
+    for line in (part.strip("-• \t") for part in block_text.splitlines()):
+        if not line:
+            continue
+        lowered = line.lower()
+        if lowered.startswith(("блокер —", "блокер -")) or lowered.startswith("блокер:"):
+            blocker_buffer.append(line)
+        else:
+            risk_buffer.append(line)
+
+
+def _clean_items(items: list[str]) -> list[str]:
+    """Apply clean_report_item_text to every item, dropping empties.
+
+    Empties happen when the line was a pure project label
+    ("Проект: Delivery.") or a leftover synthetic prefix.
+    """
+    cleaned: list[str] = []
+    for item in items:
+        out = clean_report_item_text(item)
+        if out:
+            cleaned.append(out)
+    return cleaned
+
+
+def _render_modern_bullets(items: list[str]) -> list[str]:
+    """Render bullets in the demo-ready format (• prefix, normalized end)."""
+    return [f"• {escape(_normalize_sentence(item))}" for item in items]
+
+
 def _select_common_value(values: list[str], fallback: str) -> str:
     if not values:
         return fallback
@@ -247,35 +324,70 @@ def _select_common_value(values: list[str], fallback: str) -> str:
 
 
 def _render_project_block(index: int, aggregate: ProjectAggregate, style: str) -> list[str]:
-    done_items = _limit_items(_compact_items(aggregate.done_items, "done"), style, "done")
-    plan_items = _limit_items(_compact_items(aggregate.plan_items, "plan"), style, "plan")
-    risk_items = _limit_items(_compact_items(aggregate.risk_items, "risk"), style, "risk")
+    """Render one project section in the demo-ready emoji format.
+
+    Sections are skipped entirely when empty — no "- нет" filler.
+    Each bullet is run through clean_report_item_text() to strip
+    synthetic prefixes ("блокер —", "вопрос —") and user-typed labels
+    ("Блокер по Bank Dashboard:") so the reader sees only the actual
+    content.
+    """
+    done_items = _limit_items(_compact_items(_clean_items(aggregate.done_items), "done"), style, "done")
+    plan_items = _limit_items(_compact_items(_clean_items(aggregate.plan_items), "plan"), style, "plan")
+    risk_items = _limit_items(_compact_items(_clean_items(aggregate.risk_items), "risk"), style, "risk")
+    blocker_items = _limit_items(_compact_items(_clean_items(aggregate.blocker_items), "risk"), style, "risk")
+    decision_items = _compact_items(_clean_items(aggregate.decision_items), "done")
+    question_items = _compact_items(_clean_items(aggregate.question_items), "done")
     if _risk_items_are_empty(risk_items):
         risk_items = []
+    if _risk_items_are_empty(blocker_items):
+        blocker_items = []
+
+    is_unresolved = aggregate.project.name.strip().lower() == "без проекта"
+    title_emoji = "📥" if is_unresolved else "📌"
+    title_text = "Нужно уточнить проект" if is_unresolved else aggregate.project.name
+
     lines: list[str] = []
-    lines.append(f"<b>{index}. {escape(aggregate.project.name)}</b>")
+    lines.append(f"{title_emoji} <b>{escape(title_text)}</b>")
     if aggregate.epics and not _is_epic_promoted_to_title(aggregate):
         lines.append(f"<b>Эпик:</b> {escape(', '.join(sorted(aggregate.epics)))}")
-
     lines.append(
-        f"<b>Статус:</b> {escape(_resolve_status_line(aggregate, done_items, plan_items, risk_items, style))}"
+        f"<b>Статус:</b> {escape(_resolve_status_line(aggregate, done_items, plan_items, risk_items + blocker_items, style))}"
     )
 
-    if done_items:
-        lines.append("<b>Что сделано:</b>")
-        lines.extend(_render_bullets(done_items))
-
+    section_order: list[tuple[str, str, list[str]]]
     if style == "risk_focus":
-        lines.extend(_render_risk_section(risk_items))
-        lines.extend(_render_plan_section(plan_items))
+        section_order = [
+            ("⛔ Блокеры", "blocker", blocker_items),
+            ("⚠️ Риски", "risk", risk_items),
+            ("✅ Что сделано", "done", done_items),
+            ("◆ Решение", "decision", decision_items),
+            ("🧭 План", "plan", plan_items),
+            ("❓ Вопросы", "question", question_items),
+        ]
     else:
-        lines.extend(_render_plan_section(plan_items))
-        lines.extend(_render_risk_section(risk_items))
+        section_order = [
+            ("✅ Что сделано", "done", done_items),
+            ("◆ Решение", "decision", decision_items),
+            ("🧭 План", "plan", plan_items),
+            ("⚠️ Риски", "risk", risk_items),
+            ("❓ Вопросы", "question", question_items),
+            ("⛔ Блокеры", "blocker", blocker_items),
+        ]
+
+    for label, _key, items in section_order:
+        if not items:
+            continue
+        lines.append("")
+        lines.append(f"<b>{label}</b>")
+        lines.extend(_render_modern_bullets(items))
 
     if aggregate.jira_links:
+        lines.append("")
         lines.append(f"<b>Jira:</b> {_render_links(sorted(aggregate.jira_links))}")
 
-    if aggregate.needs_review_count:
+    if aggregate.needs_review_count and not is_unresolved:
+        lines.append("")
         lines.append(f"<b>Нужно уточнить:</b> автопривязка заметок ({aggregate.needs_review_count})")
 
     lines.append("")
@@ -283,9 +395,9 @@ def _render_project_block(index: int, aggregate: ProjectAggregate, style: str) -
 
 
 def _render_team_examples_project_block(index: int, aggregate: ProjectAggregate) -> list[str]:
-    done_items = _limit_items(_compact_items(aggregate.done_items, "done"), "team_examples", "done")
-    plan_items = _limit_items(_compact_items(aggregate.plan_items, "plan"), "team_examples", "plan")
-    risk_items = _limit_items(_compact_items(aggregate.risk_items, "risk"), "team_examples", "risk")
+    done_items = _limit_items(_compact_items(_clean_items(aggregate.done_items + aggregate.decision_items + aggregate.question_items), "done"), "team_examples", "done")
+    plan_items = _limit_items(_compact_items(_clean_items(aggregate.plan_items), "plan"), "team_examples", "plan")
+    risk_items = _limit_items(_compact_items(_clean_items(aggregate.risk_items + aggregate.blocker_items), "risk"), "team_examples", "risk")
     if _risk_items_are_empty(risk_items):
         risk_items = []
     lines: list[str] = []

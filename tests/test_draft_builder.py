@@ -48,11 +48,16 @@ class DraftBuilderTests(unittest.TestCase):
             default_lead_name="Дмитрий Кононенко",
         )
 
-        self.assertIn("<b>Что сделано:</b>", draft)
-        self.assertIn("<b>План на завтра:</b>", draft)
-        self.assertIn("<b>Риски:</b>", draft)
-        self.assertIn("- нет", draft)
+        self.assertIn("<b>✅ Что сделано</b>", draft)
+        self.assertIn("<b>🧭 План</b>", draft)
+        # Empty risk section must NOT render a "- нет" filler line.
+        self.assertNotIn("⚠️ Риски", draft)
+        self.assertNotIn("- нет", draft)
+        # Title gets the project emoji.
+        self.assertIn("📌 <b>Caller ID</b>", draft)
         self.assertIn("<b>Статус:</b> В работе.", draft)
+        # Bullets use the modern • marker.
+        self.assertIn("• Завершили аналитику.", draft)
 
     def test_concise_style_limits_number_of_items(self) -> None:
         note = Note(
@@ -82,13 +87,13 @@ class DraftBuilderTests(unittest.TestCase):
             style="concise",
         )
 
-        self.assertIn("- Первый пункт.", draft)
-        self.assertIn("- Второй пункт.", draft)
-        self.assertNotIn("- Третий пункт.", draft)
-        self.assertIn("- Первый план.", draft)
-        self.assertNotIn("- Второй план.", draft)
-        self.assertIn("- Первый риск.", draft)
-        self.assertNotIn("- Второй риск.", draft)
+        self.assertIn("• Первый пункт.", draft)
+        self.assertIn("• Второй пункт.", draft)
+        self.assertNotIn("• Третий пункт.", draft)
+        self.assertIn("• Первый план.", draft)
+        self.assertNotIn("• Второй план.", draft)
+        self.assertIn("• Первый риск.", draft)
+        self.assertNotIn("• Второй риск.", draft)
 
     def test_risk_focus_places_risk_before_plan(self) -> None:
         note = Note(
@@ -119,7 +124,8 @@ class DraftBuilderTests(unittest.TestCase):
         )
 
         self.assertIn("<b>Статус:</b> Требует внимания.", draft)
-        self.assertLess(draft.index("<b>Риск:</b>"), draft.index("<b>План на завтра:</b>"))
+        # In risk_focus the risk section comes before the plan section.
+        self.assertLess(draft.index("<b>⚠️ Риски</b>"), draft.index("<b>🧭 План</b>"))
 
     def test_uses_explicit_status_from_note_when_present(self) -> None:
         note = Note(
