@@ -342,6 +342,66 @@
   }
 
   // ---------------------------------------------------------------------------
+  // Copy draft text to clipboard + toast
+  // Used by the Report Workspace "Копировать" button (Step 21A).
+  // Activates when an element with [data-copy-target] is present.
+  // ---------------------------------------------------------------------------
+  function showToast(text) {
+    var t = document.getElementById('v2-toast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'v2-toast';
+      t.className = 'v2-toast';
+      t.setAttribute('role', 'status');
+      t.setAttribute('aria-live', 'polite');
+      document.body.appendChild(t);
+    }
+    t.textContent = text;
+    t.classList.add('show');
+    clearTimeout(t._hideTimer);
+    t._hideTimer = setTimeout(function () { t.classList.remove('show'); }, 1800);
+  }
+
+  function copyText(text) {
+    if (!text) return Promise.reject(new Error('empty'));
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text);
+    }
+    // Fallback for older Telegram WebViews.
+    return new Promise(function (resolve, reject) {
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        var ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        ok ? resolve() : reject(new Error('execCommand failed'));
+      } catch (e) { reject(e); }
+    });
+  }
+
+  function initCopyDraft() {
+    var btns = document.querySelectorAll('[data-copy-target]');
+    if (!btns.length) return;
+    btns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var targetId = btn.getAttribute('data-copy-target');
+        var node = targetId && document.getElementById(targetId);
+        var text = node ? node.innerText : '';
+        copyText(text).then(function () {
+          showToast('Скопировано в буфер');
+        }).catch(function () {
+          showToast('Не удалось скопировать');
+        });
+      });
+    });
+  }
+
+  // ---------------------------------------------------------------------------
   // Init on DOMContentLoaded
   // ---------------------------------------------------------------------------
   function init() {
@@ -351,6 +411,7 @@
     initCanvas();
     initDemoModal();
     initMobileNav();
+    initCopyDraft();
   }
 
   if (document.readyState === 'loading') {

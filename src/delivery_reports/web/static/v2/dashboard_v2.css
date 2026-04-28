@@ -1662,3 +1662,492 @@ details.v2-extras[open] .v2-extras-summary::before { content: '▾ '; }
 }
 
 /* PMD:V2:MVP_RESHAPE:end ─────────────────────────────────── */
+
+
+/* PMD:V2:WORKSPACE_WOW:start ─────────────────────────────
+   Step 21A — Report Workspace Wow.
+   Polish on top of MVP_RESHAPE:
+   - Editor-style draft header (title, status pill, meta row).
+   - "Paper" surface for the draft text — premium typography.
+   - Educational empty state with example notes + voice hint.
+   - AI rail icons + intro line.
+   - Inbox triage: stronger explanation + disabled "оставить" stub.
+   - Copy button + toast support (paired with v2_ui.js).
+   ────────────────────────────────────────────────────── */
+
+/* ── Draft header ──────────────────────────────────────── */
+.v2-draft-header {
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.v2-draft-header-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.v2-draft-h {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+}
+.v2-draft-status-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+.v2-draft-status-pill.empty { color: var(--muted); }
+.v2-draft-status-pill.ready {
+  border-color: var(--primary-border);
+  color: var(--primary);
+  background: var(--primary-bg, rgba(132, 204, 22, 0.08));
+}
+.v2-draft-status-pill.final {
+  border-color: var(--accent-light, #a78bfa);
+  color: var(--accent-light, #a78bfa);
+  background: rgba(167, 139, 250, 0.08);
+}
+
+/* Meta row (date · template select · chunks) */
+.v2-draft-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--muted);
+}
+.v2-draft-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.v2-draft-meta-label { font-weight: 600; }
+.v2-draft-meta .v2-template-inline-form {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Draft "paper" — premium editor surface ────────────── */
+.v2-draft-paper {
+  display: block;
+  flex: 1;
+  font-family: "Geist", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  background:
+    linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.012) 100%),
+    var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 22px 26px;
+  margin: 0 0 16px;
+  min-height: 320px;
+  max-height: 560px;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  position: relative;
+  outline: none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.v2-draft-paper:focus-visible {
+  border-color: var(--primary-border);
+  box-shadow: 0 0 0 3px rgba(132, 204, 22, 0.12);
+}
+.v2-draft-paper::-webkit-scrollbar { width: 8px; }
+.v2-draft-paper::-webkit-scrollbar-track { background: transparent; }
+.v2-draft-paper::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+.v2-draft-paper::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+.v2-draft-actions-rich {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.v2-draft-actions-rich .v2-btn { font-weight: 700; }
+
+/* ── Empty state (rich, educational) ───────────────────── */
+.v2-draft-empty-rich {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 28px 22px;
+  background:
+    radial-gradient(60% 80% at 50% -10%, rgba(132,204,22,0.08), transparent 70%),
+    var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+}
+.v2-empty-illustration {
+  font-size: 44px;
+  line-height: 1;
+  margin-bottom: 14px;
+  opacity: 0.85;
+}
+.v2-empty-title {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  margin: 0 0 8px;
+}
+.v2-empty-desc {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+  max-width: 460px;
+  margin: 0 0 20px;
+}
+
+.v2-example-notes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 16px;
+}
+.v2-example-note {
+  text-align: left;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2, rgba(255,255,255,0.03));
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.v2-example-tag {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+.v2-example-text {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.v2-voice-hint-center {
+  text-align: center;
+  margin: 0 0 20px;
+}
+
+.v2-draft-actions-empty {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+}
+
+/* ── AI rail polish ────────────────────────────────────── */
+.v2-ai-rail-desc {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin: -2px 0 6px;
+}
+.v2-ai-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+.v2-ai-btn-ico {
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+/* ── Inbox triage polish ───────────────────────────────── */
+.v2-inbox-triage-sub strong { color: var(--text); font-weight: 700; }
+.v2-inbox-skip {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px dashed var(--border);
+  background: transparent;
+  color: var(--muted);
+  cursor: not-allowed;
+  opacity: 0.65;
+  margin-left: auto;
+}
+
+/* ── Copy toast (paired with v2_ui.js initCopyDraft) ───── */
+.v2-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--text);
+  color: var(--bg);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 18px;
+  border-radius: 999px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.32);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease, transform 220ms ease;
+  z-index: 9999;
+}
+.v2-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── Responsive ────────────────────────────────────────── */
+@media (max-width: 760px) {
+  .v2-draft-paper {
+    padding: 18px 16px;
+    font-size: 13px;
+    min-height: 240px;
+  }
+  .v2-example-notes {
+    grid-template-columns: 1fr;
+  }
+  .v2-empty-illustration { font-size: 36px; }
+  .v2-empty-title { font-size: 16px; }
+  .v2-draft-meta { gap: 10px; }
+  .v2-draft-actions-rich .v2-btn,
+  .v2-draft-actions-empty .v2-btn {
+    flex: 1;
+    min-width: 130px;
+    justify-content: center;
+  }
+  .v2-inbox-skip { margin-left: 0; }
+}
+
+/* PMD:V2:WORKSPACE_WOW:end ────────────────────────────── */
+
+
+/* PMD:V2:WOW_POLISH:start ────────────────────────────────
+   Step 21 — Report Editor WOW polish.
+   Goals:
+   - Editor-style header with manager + recipient + template + date.
+   - Calmer paper surface, single-line action row with clear primary.
+   - Inline next-step hint after actions.
+   - Voice callout in the note panel (real CTA, not a tiny grey hint).
+   - Mobile/Telegram Mini App: full-width primary, no overlap, ≥40px taps.
+   ────────────────────────────────────────────────────── */
+
+/* ── Draft meta — separators & emphasis ────────────────── */
+.v2-draft-meta {
+  font-size: 12.5px;
+  color: var(--text2, var(--muted));
+  row-gap: 6px;
+}
+.v2-draft-meta-item strong {
+  color: var(--text);
+  font-weight: 700;
+}
+.v2-draft-meta-sep {
+  color: var(--muted);
+  opacity: 0.55;
+  font-weight: 700;
+  user-select: none;
+}
+
+/* ── Paper — calmer, more "editor"-feel ────────────────── */
+.v2-draft-paper {
+  background:
+    linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.014) 100%),
+    var(--surface);
+  -moz-tab-size: 2;
+  tab-size: 2;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+}
+.v2-draft-paper-foot {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin: -8px 0 14px;
+  padding: 0 4px;
+  opacity: 0.85;
+}
+
+/* ── Actions row — primary clearly dominates ───────────── */
+.v2-draft-actions-rich {
+  gap: 10px;
+  align-items: stretch;
+}
+.v2-action-primary {
+  font-weight: 800 !important;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.05) inset, 0 6px 18px rgba(0,0,0,0.18);
+}
+.v2-action-finalize {
+  font-weight: 700 !important;
+}
+.v2-action-secondary {
+  font-weight: 600 !important;
+}
+
+/* ── Next-step hint under the actions ──────────────────── */
+.v2-draft-hint {
+  margin: 14px 0 0;
+  padding: 10px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text2, var(--muted));
+  background: var(--surface-2, rgba(255,255,255,0.03));
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.v2-draft-hint strong { color: var(--text); font-weight: 700; }
+.v2-draft-hint-ico {
+  font-size: 14px;
+  line-height: 1.4;
+  flex-shrink: 0;
+}
+
+/* ── AI rail — slightly tinted, more "rail" feel ───────── */
+.v2-ai-rail {
+  background:
+    linear-gradient(180deg, rgba(132,204,22,0.04) 0%, transparent 60%),
+    var(--surface-2, rgba(255,255,255,0.03));
+}
+.v2-ai-rail-desc {
+  margin-bottom: 8px;
+}
+
+/* ── Voice callout in the note panel ───────────────────── */
+.v2-voice-callout {
+  margin-top: 14px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background:
+    linear-gradient(180deg, rgba(132,204,22,0.05) 0%, transparent 80%),
+    var(--surface-2, rgba(255,255,255,0.03));
+  border: 1px solid var(--primary-border);
+  border-radius: 12px;
+}
+.v2-voice-callout-ico {
+  font-size: 26px;
+  line-height: 1;
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  background: var(--primary-bg, rgba(132,204,22,0.10));
+  border: 1px solid var(--primary-border);
+  display: grid; place-items: center;
+  flex-shrink: 0;
+}
+.v2-voice-callout-body { flex: 1; min-width: 0; }
+.v2-voice-callout-title {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 2px;
+  letter-spacing: -0.01em;
+}
+.v2-voice-callout-desc {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.v2-voice-callout-cta {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ── Mobile / Telegram Mini App ────────────────────────── */
+@media (max-width: 760px) {
+  .v2-page { padding: 18px 14px 56px; gap: 18px; }
+
+  .v2-draft-meta { gap: 8px; font-size: 12px; }
+  .v2-draft-meta-sep { display: none; }
+  .v2-draft-meta-item { width: 100%; }
+  .v2-draft-meta-item.v2-draft-meta-label { width: auto; }
+
+  .v2-draft-actions-rich {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .v2-draft-actions-rich .v2-action-primary {
+    grid-column: 1 / -1;
+    min-height: 44px;
+    width: 100%;
+    justify-content: center;
+  }
+  .v2-draft-actions-rich .v2-action-finalize,
+  .v2-draft-actions-rich .v2-action-secondary {
+    min-height: 42px;
+    justify-content: center;
+  }
+
+  .v2-draft-hint {
+    font-size: 12px;
+    padding: 10px 12px;
+  }
+
+  .v2-voice-callout {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: left;
+    gap: 12px;
+    padding: 14px;
+  }
+  .v2-voice-callout-ico { width: 38px; height: 38px; font-size: 22px; }
+  .v2-voice-callout-cta {
+    width: 100%;
+    justify-content: center;
+    min-height: 42px;
+  }
+
+  .v2-note-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .v2-note-actions .v2-btn { min-height: 42px; justify-content: center; }
+}
+
+@media (max-width: 480px) {
+  .v2-page { padding: 14px 12px 48px; gap: 16px; }
+  .v2-draft-paper {
+    padding: 16px 14px;
+    font-size: 13px;
+    line-height: 1.7;
+    min-height: 220px;
+  }
+  .v2-draft-h { font-size: 16px; }
+  .v2-draft-status-pill { font-size: 10px; padding: 3px 8px; }
+  .v2-draft-hint { font-size: 11.5px; padding: 9px 11px; gap: 8px; }
+  .v2-voice-callout-title { font-size: 13px; }
+  .v2-voice-callout-desc { font-size: 12px; }
+  .v2-page-title { font-size: 19px; }
+  .v2-next-action { padding: 16px 16px; }
+  .v2-next-action-title { font-size: 15.5px; }
+  .v2-next-action-desc { font-size: 12.5px; }
+}
+
+/* PMD:V2:WOW_POLISH:end ──────────────────────────────── */

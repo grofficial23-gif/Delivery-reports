@@ -480,6 +480,7 @@ def _build_dashboard_context(request: Request, repository: Repository, settings:
                 "target": "",
             },
             "notes": [],
+            "recent_updates": [],  # V1 (index.html) still reads this — V2 ignores.
             "inbox_cards": [],
             "tasks": [],
             "projects": [],
@@ -669,6 +670,7 @@ def _build_dashboard_context(request: Request, repository: Repository, settings:
         "summary": summary,
         "next_action": next_action,
         "notes": note_cards,
+        "recent_updates": note_cards[:6],  # V1 (index.html) still reads this — V2 ignores.
         "inbox_cards": inbox_cards,
         "tasks": tasks,
         "projects": projects,

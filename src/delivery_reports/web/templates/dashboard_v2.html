@@ -242,81 +242,174 @@
           </div>
         </div>
 
-        <!-- Center: draft text + actions -->
+        <!-- Center: draft header + paper + actions -->
         <div class="v2-draft-main">
-          <!-- Template select in header -->
-          <div class="v2-draft-template-row">
-            <form method="post" action="/template" class="v2-template-inline-form">
-              <label for="template-select" class="v2-draft-template-label">Шаблон:</label>
-              <select id="template-select" name="template_key" class="v2-select v2-select-sm" aria-label="Шаблон отчёта">
-                {% for t in templates %}
-                <option value="{{ t.template_key }}" {% if t.template_key == current_template_key %}selected{% endif %}>
-                  {{ t.title }}
-                </option>
-                {% endfor %}
-              </select>
-              <button type="submit" class="v2-btn ghost v2-btn-xs">Применить</button>
-            </form>
+
+          <!-- Editor-style header -->
+          <div class="v2-draft-header">
+            <div class="v2-draft-header-top">
+              <h2 class="v2-draft-h">Черновик отчёта</h2>
+              {% if summary.has_final %}
+              <span class="v2-draft-status-pill final">✓ Финал зафиксирован</span>
+              {% elif draft_plain %}
+              <span class="v2-draft-status-pill ready">Готов к проверке</span>
+              {% else %}
+              <span class="v2-draft-status-pill empty">Не собран</span>
+              {% endif %}
+            </div>
+            <div class="v2-draft-meta">
+              <span class="v2-draft-meta-item" title="Дата отчёта">📅 {{ today }}</span>
+              <span class="v2-draft-meta-sep" aria-hidden="true">·</span>
+              <span class="v2-draft-meta-item" title="Менеджер — автор отчёта">
+                👤 Менеджер: <strong>{% if user %}{{ user.display_name or user.telegram_full_name }}{% else %}—{% endif %}</strong>
+              </span>
+              <span class="v2-draft-meta-sep" aria-hidden="true">·</span>
+              <span class="v2-draft-meta-item" title="Куда уйдёт отчёт">📤 Получатель: <strong>вы → Telegram</strong></span>
+              <span class="v2-draft-meta-sep" aria-hidden="true">·</span>
+              <form method="post" action="/template" class="v2-template-inline-form" aria-label="Шаблон отчёта">
+                <label for="template-select" class="v2-draft-meta-item v2-draft-meta-label">📋 Шаблон:</label>
+                <select id="template-select" name="template_key" class="v2-select v2-select-sm" aria-label="Шаблон отчёта">
+                  {% for t in templates %}
+                  <option value="{{ t.template_key }}" {% if t.template_key == current_template_key %}selected{% endif %}>
+                    {{ t.title }}
+                  </option>
+                  {% endfor %}
+                </select>
+                <button type="submit" class="v2-btn ghost v2-btn-xs">Применить</button>
+              </form>
+            </div>
           </div>
 
           {% if draft_plain %}
-          <!-- Draft text -->
-          <div class="v2-draft-text" aria-label="Текст черновика" role="region">{{ draft_plain }}</div>
-          <!-- Draft actions -->
-          <div class="v2-draft-actions">
+          <!-- Draft "paper" -->
+          <article class="v2-draft-paper" id="v2-draft-paper" data-draft-text aria-label="Текст черновика" role="region" tabindex="0">{{ draft_plain }}</article>
+
+          {% if summary.draft_chunks and summary.draft_chunks > 1 %}
+          <div class="v2-draft-paper-foot" aria-label="Длина отчёта в Telegram">
+            📨 В Telegram отправится {{ summary.draft_chunks }} сообщений — длинный черновик режется автоматически.
+          </div>
+          {% endif %}
+
+          <!-- Draft actions: primary leads, secondary follows -->
+          <div class="v2-draft-actions v2-draft-actions-rich">
             <form method="post" action="/draft/send" style="display:contents;">
-              <button type="submit" class="v2-btn primary">Отправить себе <span class="v2-arrow" aria-hidden="true">→</span></button>
+              <button type="submit" class="v2-btn primary v2-action-primary">📤 Отправить себе <span class="v2-arrow" aria-hidden="true">→</span></button>
             </form>
             <form method="post" action="/draft/finalize" style="display:contents;">
-              <button type="submit" class="v2-btn ghost">Зафиксировать финал</button>
+              <button type="submit" class="v2-btn mint v2-action-finalize" title="Зафиксировать как финальный отчёт">✓ Зафиксировать финал</button>
             </form>
+            <button type="button" id="v2-copy-draft-btn" class="v2-btn ghost v2-action-secondary" data-copy-target="v2-draft-paper" title="Скопировать в буфер обмена">📋 Копировать</button>
             <form method="post" action="/draft/build" style="display:contents;">
-              <button type="submit" class="v2-btn ghost">Пересобрать</button>
+              <button type="submit" class="v2-btn ghost v2-action-secondary" title="Пересобрать черновик из заметок">↻ Пересобрать</button>
             </form>
           </div>
+
+          <!-- Next-step hint -->
+          <p class="v2-draft-hint" role="note">
+            <span class="v2-draft-hint-ico" aria-hidden="true">💡</span>
+            <span>
+              Проверьте текст в Telegram и, если всё ок, нажмите
+              <strong>«Зафиксировать финал»</strong> — это закроет отчёт за {{ today }}.
+            </span>
+          </p>
           {% else %}
-          <div class="v2-draft-empty">
-            {% if summary.notes_count > 0 %}
-            Есть {{ summary.notes_count }} заметок — соберите черновик.
-            {% else %}
-            Добавьте заметки, затем нажмите «Собрать черновик».
+          <!-- Educational rich empty state -->
+          <div class="v2-draft-empty-rich">
+            <div class="v2-empty-illustration" aria-hidden="true">📝</div>
+            <h3 class="v2-empty-title">
+              {% if summary.notes_count > 0 %}
+              Есть {{ summary.notes_count }} заметок — соберите черновик
+              {% else %}
+              Расскажите боту о вашем дне
+              {% endif %}
+            </h3>
+            <p class="v2-empty-desc">
+              {% if summary.notes_count > 0 %}
+              Нажмите «Собрать черновик», и бот подготовит структурированный отчёт по вашим заметкам — с разделами «что сделано», «план», «риски».
+              {% else %}
+              Отправьте заметки боту в Telegram (текстом или голосом) или добавьте их прямо здесь.
+              Когда наберётся 3-5 апдейтов, нажмите «Собрать черновик» — бот сам структурирует отчёт.
+              {% endif %}
+            </p>
+
+            {% if summary.notes_count == 0 %}
+            <!-- Example notes — illustrative typography only, no fake data, no project names -->
+            <div class="v2-example-notes" aria-label="Примеры заметок">
+              <div class="v2-example-note">
+                <div class="v2-example-tag">Что сделано</div>
+                <div class="v2-example-text">«Закрыли релиз 2.4, прошли demo с заказчиком, ушли на ревью QA»</div>
+              </div>
+              <div class="v2-example-note">
+                <div class="v2-example-tag">План</div>
+                <div class="v2-example-text">«Завтра — финализация ТЗ по интеграции, сессия с командой»</div>
+              </div>
+              <div class="v2-example-note">
+                <div class="v2-example-tag">Риск</div>
+                <div class="v2-example-text">«Поставщик не подтвердил сроки — может уехать дедлайн»</div>
+              </div>
+            </div>
+            <p class="v2-voice-hint v2-voice-hint-center">
+              🎙 Можно надиктовать голосом боту в Telegram — он расшифрует и сохранит сюда.
+            </p>
             {% endif %}
-          </div>
-          <div class="v2-draft-actions">
-            <form method="post" action="/draft/build" style="display:contents;">
-              <button type="submit" class="v2-btn primary"
-                {% if summary.notes_count == 0 %}disabled aria-disabled="true" title="Сначала добавьте заметку"{% endif %}>
-                Собрать черновик <span class="v2-arrow" aria-hidden="true">→</span>
-              </button>
-            </form>
+
+            <div class="v2-draft-actions v2-draft-actions-empty">
+              {% if summary.notes_count > 0 %}
+              <form method="post" action="/draft/build" style="display:contents;">
+                <button type="submit" class="v2-btn primary v2-btn-lg">
+                  Собрать черновик <span class="v2-arrow" aria-hidden="true">→</span>
+                </button>
+              </form>
+              {% else %}
+              <a href="#add-note" class="v2-btn primary v2-btn-lg">
+                Добавить первую заметку <span class="v2-arrow" aria-hidden="true">→</span>
+              </a>
+              <a href="{{ bot_url or ('https://t.me/' ~ bot_username) }}" target="_blank" rel="noopener" class="v2-btn ghost">
+                Открыть бота
+              </a>
+              {% endif %}
+            </div>
           </div>
           {% endif %}
         </div>
 
         <!-- Right: AI rail -->
         <div class="v2-ai-rail" aria-label="AI-действия с черновиком">
-          <div class="v2-ai-rail-title">AI</div>
+          <div class="v2-ai-rail-title">✨ AI</div>
+          <div class="v2-ai-rail-desc">Перепишет черновик одной кнопкой. Оригинал остаётся в истории — ошибиться нельзя.</div>
           {% if draft_plain %}
           <form method="post" action="/draft/revise" style="display:contents;">
             <input type="hidden" name="instruction" value="concise" />
-            <button type="submit" class="v2-btn ghost v2-ai-btn">Сделать короче</button>
+            <button type="submit" class="v2-btn ghost v2-ai-btn" title="Сократить и убрать лишнее">
+              <span class="v2-ai-btn-ico">✂</span> Сделать короче
+            </button>
           </form>
           <form method="post" action="/draft/revise" style="display:contents;">
             <input type="hidden" name="instruction" value="executive" />
-            <button type="submit" class="v2-btn ghost v2-ai-btn">Executive style</button>
+            <button type="submit" class="v2-btn ghost v2-ai-btn" title="Executive style: сухо, по делу, для руководства">
+              <span class="v2-ai-btn-ico">📊</span> Executive style
+            </button>
           </form>
           <form method="post" action="/draft/revise" style="display:contents;">
             <input type="hidden" name="instruction" value="risk_focus" />
-            <button type="submit" class="v2-btn ghost v2-ai-btn">Выделить риски</button>
+            <button type="submit" class="v2-btn ghost v2-ai-btn" title="Подчеркнуть риски и блокеры">
+              <span class="v2-ai-btn-ico">⚠</span> Выделить риски
+            </button>
           </form>
           {% else %}
-          <button type="button" class="v2-btn ghost v2-ai-btn v2-btn-disabled" disabled aria-disabled="true" title="Сначала соберите черновик">Сделать короче</button>
-          <button type="button" class="v2-btn ghost v2-ai-btn v2-btn-disabled" disabled aria-disabled="true" title="Сначала соберите черновик">Executive style</button>
-          <button type="button" class="v2-btn ghost v2-ai-btn v2-btn-disabled" disabled aria-disabled="true" title="Сначала соберите черновик">Выделить риски</button>
+          <button type="button" class="v2-btn ghost v2-ai-btn v2-btn-disabled" disabled aria-disabled="true" title="Сначала соберите черновик">
+            <span class="v2-ai-btn-ico">✂</span> Сделать короче
+          </button>
+          <button type="button" class="v2-btn ghost v2-ai-btn v2-btn-disabled" disabled aria-disabled="true" title="Сначала соберите черновик">
+            <span class="v2-ai-btn-ico">📊</span> Executive style
+          </button>
+          <button type="button" class="v2-btn ghost v2-ai-btn v2-btn-disabled" disabled aria-disabled="true" title="Сначала соберите черновик">
+            <span class="v2-ai-btn-ico">⚠</span> Выделить риски
+          </button>
           {% endif %}
           <!-- Future AI actions — visually quiet -->
           <div class="v2-ai-rail-future" title="Скоро">
-            <span>EN</span><span>Grammar</span>
+            <span>EN</span><span>Grammar</span><span>PDF</span>
           </div>
         </div>
 
@@ -345,12 +438,26 @@
             </select>
           </div>
           {% endif %}
-          <div class="v2-draft-actions">
-            <button type="submit" name="action" value="save" class="v2-btn primary">Сохранить</button>
-            <button type="submit" name="action" value="save_build" class="v2-btn ghost">Сохранить и пересобрать</button>
+          <div class="v2-draft-actions v2-note-actions">
+            <button type="submit" name="action" value="save" class="v2-btn primary v2-action-primary">Сохранить</button>
+            <button type="submit" name="action" value="save_build" class="v2-btn ghost v2-action-secondary">Сохранить и пересобрать</button>
           </div>
         </form>
-        <p class="v2-voice-hint">🎙 Голосовые заметки отправляйте прямо боту — они появятся здесь после распознавания.</p>
+        <div class="v2-voice-callout" role="note">
+          <div class="v2-voice-callout-ico" aria-hidden="true">🎙</div>
+          <div class="v2-voice-callout-body">
+            <div class="v2-voice-callout-title">Удобнее голосом — пишите боту</div>
+            <div class="v2-voice-callout-desc">
+              Надиктуйте заметку в Telegram — бот расшифрует и положит сюда.
+              Так быстрее, чем печатать.
+            </div>
+          </div>
+          <a href="{{ bot_url or ('https://t.me/' ~ bot_username) }}"
+             target="_blank" rel="noopener"
+             class="v2-btn ghost v2-voice-callout-cta">
+            Открыть бота <span class="v2-arrow" aria-hidden="true">→</span>
+          </a>
+        </div>
       </section>
 
       <!-- ── F. Inbox triage ─────────────────────────────────── -->
@@ -359,28 +466,28 @@
         <div class="v2-inbox-triage-header">
           <div class="v2-card-title">
             <span class="v2-card-title-dot chip-warn-dot"></span>
-            Заметки без проекта — нужна ваша помощь
+            Заметки без проекта · {{ inbox_cards | length }}
           </div>
           <p class="v2-inbox-triage-sub">
-            Без проекта заметка может попасть в общий блок, а не в нужный раздел отчёта.
-            Привяжите к проекту или оставьте как есть.
+            Эти заметки <strong>не попадут в нужный блок отчёта</strong>, пока вы не выберете проект.
+            Бот не смог распознать его автоматически — выберите вручную из кандидатов или из формы заметки.
           </p>
         </div>
         {% for card in inbox_cards[:8] %}
         <div class="v2-inbox-card-v2">
-          <div class="v2-inbox-card-text">{{ card.preview_text[:220] if card.preview_text else "—" }}</div>
-          {% if card.candidates %}
+          <div class="v2-inbox-card-text">{{ card.preview_text[:280] if card.preview_text else "—" }}</div>
           <div class="v2-inbox-card-actions">
+            {% if card.candidates %}
             <span class="v2-inbox-label">Привязать к:</span>
             {% for name in card.candidates %}
             <form method="post" action="/inbox/{{ card.note.id }}/resolve" style="display:contents;">
               <button type="submit" name="project_name" value="{{ name }}" class="v2-inbox-candidate" title="Привязать к {{ name }}">{{ name }}</button>
             </form>
             {% endfor %}
+            {% else %}
+            <span class="v2-inbox-no-candidates">Бот не нашёл проект-кандидат — добавьте его через форму заметки ниже.</span>
+            {% endif %}
           </div>
-          {% else %}
-          <p class="v2-inbox-no-candidates">Кандидатов нет — выберите проект в форме заметки или оставьте в общем блоке.</p>
-          {% endif %}
         </div>
         {% endfor %}
       </section>
