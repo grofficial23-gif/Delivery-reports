@@ -94,6 +94,22 @@
 
 ---
 
+## 2026-04-28 — v2.23.2: Prevent failed voice transcription from polluting reports (Step 26)
+
+**Task:** Failed voice transcriptions were saved as technical garbage notes (`voice-note: transcription failed; file_id=...`), polluting the dashboard, inbox, and generated drafts. This step silences that path entirely.
+
+**Files changed:**
+- `src/delivery_reports/services/transcription.py` — introduced `TranscriptionResult(text, ok, reason)` frozen dataclass; `transcribe()` now returns this object instead of a raw `str`; added structured `reason` values: `"ok"`, `"disabled"`, `"no_whisper"`, `"whisper_error"`, `"empty_result"`; all failure branches log internally at appropriate levels (warning/error/info) without exposing file IDs or tokens.
+- `src/delivery_reports/bot_app.py` — `on_voice_message` updated to consume `TranscriptionResult`; on `ok=False` it sends a human-readable message and **returns without storing any note**, preventing technical text from entering the DB; `disabled` reason gets its own copy; added `import logging` and module-level `_log` logger; removed `TranscriptionResult` import guard.
+- `src/delivery_reports/config.py` — bumped `app_version` to `"v2.23.2"` (both dataclass default and `load_settings` fallback).
+- `tests/test_transcription.py` — new file; 9 tests covering disabled/mock/no_whisper/whisper_error/empty_result/success modes, return-type regression guard, and a helper asserting technical strings never appear in `.text`.
+
+**Reason:** Technical fallback text (`voice-note: transcription failed; file_id=...`) was leaking into PM reports, making drafts unreadable. The root cause was treating failed transcription the same as successful text input.
+
+**Rollback notes:** Revert `transcription.py` to return `str` and restore the old `on_voice_message` body. The DB schema is unchanged; no migration needed.
+
+---
+
 ## 2026-04-28 — v2.23.1: Mobile polish + asset cache busting (Step 25)
 
 **Task:** Fix V2 mobile layout issues and introduce automatic cache busting for all V2 static assets.

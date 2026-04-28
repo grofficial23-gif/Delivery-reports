@@ -2,10 +2,13 @@ from __future__ import annotations
 
 from datetime import datetime, time as dtime
 from html import escape
+import logging
 from pathlib import Path
 import re
 import tempfile
 from zoneinfo import ZoneInfo
+
+_log = logging.getLogger(__name__)
 
 from telegram import (
     InlineKeyboardButton,
@@ -58,7 +61,7 @@ from .services.reporting import build_and_store_daily_draft, finalize_daily_repo
 from .services.admin import AdminService
 from .services.smart_input import SmartInputAction, parse_smart_input
 from .services.subscription import Plan, SubscriptionService
-from .services.transcription import TranscriptionService
+from .services.transcription import TranscriptionResult, TranscriptionService
 
 
 BTN_BUILD_DRAFT = "📋 Собрать отчёт"
@@ -864,39 +867,39 @@ async def on_voice_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         temp_path = Path(temp_file.name)
     await voice_file.download_to_drive(custom_path=str(temp_path))
 
-    transcription = _transcription(context).transcribe(temp_path)
+    tr: TranscriptionResult = _transcription(context).transcribe(temp_path)
     temp_path.unlink(missing_ok=True)
-    if not transcription:
-        fallback_text = (
-            f"voice-note: transcription failed; duration={voice.duration}s; "
-            f"file_id={voice.file_unique_id or voice.file_id}"
+
+    if not tr.ok:
+        _log.warning(
+            "voice transcription failed: reason=%s duration=%ss user=%s",
+            tr.reason,
+            voice.duration,
+            getattr(user, "telegram_id", "unknown"),
         )
-        results = _store_notes(
-            fallback_text,
-            source="voice_failed",
-            context=context,
-            user=user,
-            transcript_text="",
-        )
-        await update.message.reply_text(
-            (
-                f"{render_captured_notes_message(results)}\n"
-                "Voice не распознался, но заметку я сохранил. "
-                "Можно прислать текстом уточнение одним сообщением."
-            ),
-            reply_markup=_reply_markup_for_results(results),
-            parse_mode=ParseMode.HTML,
-        )
+        if tr.reason == "disabled":
+            await update.message.reply_text(
+                "🎙 Транскрибация сейчас выключена. Голосовая заметка не добавлена в отчёт.\n"
+                "Напишите текстом — я сохраню.",
+                parse_mode=ParseMode.HTML,
+            )
+        else:
+            await update.message.reply_text(
+                "🎙 Голос не распознался. Я не добавил его в отчёт, чтобы не испортить черновик.\n"
+                "Попробуйте отправить голос короче или написать текстом.",
+                parse_mode=ParseMode.HTML,
+            )
         return
+
     results = _store_notes(
-        transcription,
+        tr.text,
         source="voice",
         context=context,
         user=user,
-        transcript_text=transcription,
+        transcript_text=tr.text,
     )
     await update.message.reply_text(
-        f"{render_captured_notes_message(results)}\n<b>Транскрипт:</b> {escape(transcription)}",
+        f"{render_captured_notes_message(results)}\n<b>Транскрипт:</b> {escape(tr.text)}",
         reply_markup=_reply_markup_for_results(results),
         parse_mode=ParseMode.HTML,
     )
