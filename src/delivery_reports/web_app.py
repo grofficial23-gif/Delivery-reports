@@ -26,6 +26,7 @@ from .services.note_capture import (
     store_notes as capture_notes,
 )
 from .services.draft_revision import parse_revision_instruction
+from .services.intent import infer_intent_kind, label_for_kind
 from .services.parsing import parse_note_text
 from .services.project_resolution import (
     fallback_project_ids,
@@ -840,13 +841,22 @@ def _as_bullets(text: str) -> list[str]:
 def _build_note_card(note, repository: Repository, owner_user_id: int) -> dict[str, Any]:
     project = repository.get_project(note.project_id, owner_user_id=owner_user_id) if note.project_id else None
     project_name = project.name if project is not None else "Без проекта"
+    intent_kind = infer_intent_kind(
+        done_text=note.done_text,
+        plan_text=note.plan_text,
+        risk_text=note.risk_text,
+        needs_review=bool(note.needs_review),
+    )
     return {
         "note": note,
         "preview_text": build_note_preview(note),
         "project_name": project_name,
+        "has_project": project is not None,
         "epic_name": note.epic.strip(),
         "link_count": len(note.jira_links),
         "links": note.jira_links,
+        "intent_kind": intent_kind,
+        "intent_label": label_for_kind(intent_kind),
     }
 
 

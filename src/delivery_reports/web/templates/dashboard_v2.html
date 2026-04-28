@@ -477,6 +477,12 @@
         {% set inbox_rest = inbox_cards[3:8] %}
         {% for card in inbox_visible %}
         <div class="v2-inbox-card-v2">
+          <div class="v2-inbox-card-head">
+            {% if card.intent_label %}
+            <span class="v2-intent-badge intent-{{ card.intent_kind or 'other' }}" title="{{ card.intent_label }}">{{ card.intent_label }}</span>
+            {% endif %}
+            <span class="v2-note-item-project v2-note-item-project--none">Без проекта</span>
+          </div>
           <div class="v2-inbox-card-text">{{ card.preview_text[:240] if card.preview_text else "—" }}</div>
           <div class="v2-inbox-card-actions">
             {% if card.candidates %}
@@ -498,6 +504,12 @@
           <div class="v2-inbox-more-list">
             {% for card in inbox_rest %}
             <div class="v2-inbox-card-v2">
+              <div class="v2-inbox-card-head">
+                {% if card.intent_label %}
+                <span class="v2-intent-badge intent-{{ card.intent_kind or 'other' }}" title="{{ card.intent_label }}">{{ card.intent_label }}</span>
+                {% endif %}
+                <span class="v2-note-item-project v2-note-item-project--none">Без проекта</span>
+              </div>
               <div class="v2-inbox-card-text">{{ card.preview_text[:200] if card.preview_text else "—" }}</div>
               <div class="v2-inbox-card-actions">
                 {% if card.candidates %}
@@ -535,9 +547,16 @@
         <div class="v2-notes-list">
           {% for note in notes[:15] %}
           <div class="v2-note-item">
-            {% if note.project_name %}
-            <div class="v2-note-item-project">{{ note.project_name }}</div>
-            {% endif %}
+            <div class="v2-note-item-head">
+              {% if note.intent_label %}
+              <span class="v2-intent-badge intent-{{ note.intent_kind or 'other' }}" title="{{ note.intent_label }}">{{ note.intent_label }}</span>
+              {% endif %}
+              {% if note.has_project and note.project_name %}
+              <span class="v2-note-item-project">{{ note.project_name }}</span>
+              {% else %}
+              <span class="v2-note-item-project v2-note-item-project--none">Без проекта</span>
+              {% endif %}
+            </div>
             <div class="v2-note-item-text">{{ note.preview_text[:200] if note.preview_text else "" }}</div>
           </div>
           {% endfor %}

@@ -38,6 +38,7 @@ class NoteCaptureRenderingTests(unittest.TestCase):
                 needs_review=False,
                 candidate_names=[],
                 summary_line="аналитика готова",
+                intent_kind="done",
             ),
             StoredNoteResult(
                 note_id=2,
@@ -47,6 +48,7 @@ class NoteCaptureRenderingTests(unittest.TestCase):
                 needs_review=True,
                 candidate_names=["DC701", "НСП"],
                 summary_line="нужна привязка проекта",
+                intent_kind="plan",
             ),
         ]
 
@@ -55,6 +57,26 @@ class NoteCaptureRenderingTests(unittest.TestCase):
         self.assertIn("<b>Сообщение разделил на 2 блока</b>", rendered)
         self.assertIn("<b>Последний неуточненный блок</b>", rendered)
         self.assertIn("<b>Варианты:</b> DC701, НСП", rendered)
+        # Auto-split summary present for >=2 results.
+        self.assertIn("Разобрано: 2 пункта", rendered)
+        self.assertIn("1 сделано", rendered)
+        self.assertIn("1 плана", rendered)
+
+    def test_single_result_does_not_render_auto_split_summary(self) -> None:
+        result = StoredNoteResult(
+            note_id=1,
+            project_name="DC701",
+            manager_name="Анатолий",
+            lead_name="Дмитрий",
+            needs_review=False,
+            candidate_names=[],
+            summary_line="закрыли релиз",
+            intent_kind="done",
+        )
+
+        rendered = render_saved_notes_message([result])
+
+        self.assertNotIn("Разобрано:", rendered)
 
 
 if __name__ == "__main__":

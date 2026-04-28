@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dataclasses
 import hashlib
 import hmac
 import json
@@ -196,6 +197,58 @@ class WebAppTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("Черновик отправлен в Telegram", response.text)
         send_mock.assert_awaited()
+
+    def test_dashboard_v2_renders_intent_badges_for_today_notes(self) -> None:
+        v2_client = self._build_v2_client()
+        self._authenticate(v2_client, user_id=42, username="grafkin", full_name="Анатолий Графкин")
+
+        # 1) Done-only note.
+        v2_client.post(
+            "/notes",
+            data={
+                "project_name": "DC701",
+                "done_text": "закрыли релиз 2.4",
+                "action": "save",
+            },
+            follow_redirects=True,
+        )
+        # 2) Plan-only note.
+        v2_client.post(
+            "/notes",
+            data={
+                "project_name": "DC701",
+                "plan_text": "завтра демо с заказчиком",
+                "action": "save",
+            },
+            follow_redirects=True,
+        )
+
+        dashboard = v2_client.get("/dashboard")
+        self.assertEqual(dashboard.status_code, 200)
+        self.assertIn("intent-done", dashboard.text)
+        self.assertIn("intent-plan", dashboard.text)
+        self.assertIn("✓ Сделано", dashboard.text)
+        self.assertIn("→ План", dashboard.text)
+
+    def test_dashboard_v2_marks_inbox_card_with_intent_and_no_project_chip(self) -> None:
+        v2_client = self._build_v2_client()
+        self._authenticate(v2_client, user_id=42, username="grafkin", full_name="Анатолий Графкин")
+
+        v2_client.post(
+            "/notes",
+            data={"text": "обсуждали релиз без явного проекта", "action": "save"},
+            follow_redirects=True,
+        )
+
+        dashboard = v2_client.get("/dashboard")
+        self.assertEqual(dashboard.status_code, 200)
+        self.assertIn("v2-intent-badge", dashboard.text)
+        self.assertIn("v2-note-item-project--none", dashboard.text)
+
+    def _build_v2_client(self) -> TestClient:
+        v2_settings = dataclasses.replace(self.settings, dashboard_ui_version="v2")
+        return TestClient(build_web_app(v2_settings, self.repository), base_url="https://testserver")
+
 
     def test_second_user_does_not_see_first_user_data(self) -> None:
         self._authenticate(self.client, user_id=42, username="grafkin", full_name="Анатолий Графкин")

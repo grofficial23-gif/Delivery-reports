@@ -5,6 +5,11 @@ from html import escape
 
 from ..config import Settings
 from ..repository import NewNote, Repository, UserProfile
+from .intent import (
+    INTENT_KIND_OTHER,
+    infer_intent_kind,
+    summarize_intents,
+)
 from .parsing import ParsedNote, parse_note_blocks
 from .project_resolution import (
     fallback_project_ids,
@@ -24,6 +29,7 @@ class StoredNoteResult:
     needs_review: bool
     candidate_names: list[str]
     summary_line: str
+    intent_kind: str = INTENT_KIND_OTHER
 
 
 def store_notes(
@@ -76,6 +82,12 @@ def store_notes(
             repository.upsert_epic(project.id, parsed.epic, aliases=[parsed.epic], source="note")
         if needs_review:
             unresolved_note_ids.append(note_id)
+        intent_kind = infer_intent_kind(
+            done_text=parsed.done_text,
+            plan_text=parsed.plan_text,
+            risk_text=parsed.risk_text,
+            needs_review=needs_review,
+        )
         results.append(
             StoredNoteResult(
                 note_id=note_id,
@@ -89,6 +101,7 @@ def store_notes(
                     owner_user_id=user.telegram_user_id,
                 ),
                 summary_line=short_summary_line(parsed),
+                intent_kind=intent_kind,
             )
         )
     return results, unresolved_note_ids
@@ -119,7 +132,11 @@ def render_saved_notes_message(results: list[StoredNoteResult]) -> str:
     if len(results) == 1:
         return render_saved_note_message(results[0])
 
-    lines = [f"<b>Сообщение разделил на {len(results)} блока</b>", ""]
+    lines = [f"<b>Сообщение разделил на {len(results)} блока</b>"]
+    summary = summarize_intents([result.intent_kind for result in results])
+    if summary:
+        lines.append(escape(summary))
+    lines.append("")
     for index, result in enumerate(results, start=1):
         lines.append(f"<b>{index}. {escape(result.project_name)}</b>")
         lines.append(f"- {'Нужно уточнить проект.' if result.needs_review else 'Сохранено.'}")

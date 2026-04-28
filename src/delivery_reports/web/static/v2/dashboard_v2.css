@@ -2236,3 +2236,118 @@ details.v2-inbox-more[open] .v2-inbox-more-summary::before { content: "▾"; }
 }
 
 /* PMD:V2:STEP22_FIXES:end ────────────────────────────── */
+
+
+/* PMD:V2:STEP23_INTENT:start ────────────────────────────
+   Step 23 — Intent badges on note cards.
+   Visible feedback that long updates are split & classified.
+   Reads `intent_kind` exposed by web_app._build_note_card.
+   ────────────────────────────────────────────────────── */
+
+/* ── Note item header (badge + project chip) ──────────── */
+.v2-note-item-head,
+.v2-inbox-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.v2-note-item-project {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 0;
+}
+.v2-note-item-project--none {
+  color: var(--muted);
+  opacity: 0.85;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  font-size: 11px;
+}
+.v2-note-item-project--none::before {
+  content: "📥 ";
+  margin-right: 2px;
+  opacity: 0.85;
+}
+
+/* ── Intent badge — base ──────────────────────────────── */
+.v2-intent-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-2, rgba(255,255,255,0.04));
+  color: var(--text2, var(--muted));
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Intent badge — per kind ──────────────────────────── */
+.v2-intent-badge.intent-done {
+  color: var(--primary);
+  border-color: var(--primary-border);
+  background: var(--primary-bg, rgba(132,204,22,0.10));
+}
+.v2-intent-badge.intent-plan {
+  color: #38bdf8;
+  border-color: rgba(56,189,248,0.42);
+  background: rgba(56,189,248,0.10);
+}
+.v2-intent-badge.intent-risk {
+  color: var(--warn, #f59e0b);
+  border-color: rgba(245,158,11,0.45);
+  background: rgba(245,158,11,0.10);
+}
+.v2-intent-badge.intent-blocker {
+  color: #f87171;
+  border-color: rgba(248,113,113,0.45);
+  background: rgba(248,113,113,0.10);
+  font-weight: 800;
+}
+.v2-intent-badge.intent-decision {
+  color: #c4b5fd;
+  border-color: rgba(196,181,253,0.45);
+  background: rgba(196,181,253,0.10);
+}
+.v2-intent-badge.intent-question {
+  color: #fbbf24;
+  border-color: rgba(251,191,36,0.45);
+  background: rgba(251,191,36,0.10);
+}
+.v2-intent-badge.intent-other {
+  color: var(--muted);
+}
+
+/* ── Notes today: tighten card layout for badges ──────── */
+.v2-note-item {
+  /* override the older single-row look from the dead-CSS section above */
+  background: var(--surface-2, rgba(255,255,255,0.03));
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+.v2-note-item:hover { border-color: var(--primary-border); }
+
+/* ── Mobile: keep badges readable, allow project chip wrap ─ */
+@media (max-width: 480px) {
+  .v2-intent-badge { font-size: 10px; padding: 3px 8px; }
+  .v2-note-item-head,
+  .v2-inbox-card-head { gap: 6px; }
+}
+
+/* PMD:V2:STEP23_INTENT:end ──────────────────────────── */
