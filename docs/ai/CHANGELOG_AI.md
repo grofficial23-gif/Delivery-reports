@@ -245,6 +245,34 @@ The `Project.aliases` column already supports any list of strings; no schema cha
 
 ---
 
+## 2026-04-28 — v2.25.3: Bulk inbox bind (Step 32)
+
+**Task:** Let users bind multiple inbox notes to a project in one action instead of one-by-one.
+
+**Files changed:**
+- `src/delivery_reports/web_app.py`
+  - New `POST /inbox/bulk-resolve` route. Reads raw body with `parse_qs` to collect all repeated `note_ids` fields. Validates ownership per note. Calls existing `resolve_or_create_project` + `repository.update_note_project`. Skips notes not owned by the authenticated user. Returns "Привязано N заметок к проекту X." notice.
+- `src/delivery_reports/web/templates/dashboard_v2.html`
+  - Inbox section wrapped in `<form id="v2-bulk-inbox-form" action="/inbox/bulk-resolve">`.
+  - Sticky `v2-bulk-bar` at top: "Выбрать видимые" master checkbox, project `<select>`, "Привязать выбранные" submit.
+  - Each inbox card (visible + collapsed rest) gets `<input type="checkbox" name="note_ids" value="{{ card.note.id }}">`.
+  - Candidate quick-bind buttons converted to `type="button"` with `data-note-id`/`data-project` — JS selects checkbox + sets bulk select then submits bulk form.
+  - Individual per-card `v2-inbox-bind` forms retained for one-at-a-time use.
+  - Overflow note copy updated: "Можно выбрать видимые заметки и привязать их к проекту. Остальные доступны в раскрытом списке."
+  - Inline `<script>` for: master-checkbox select-all, indeterminate sync, quick-bind click handler.
+- `src/delivery_reports/web/static/v2/dashboard_v2.css`
+  - New `PMD:V2:STEP32_BULK_INBOX` block: `.v2-bulk-bar`, `.v2-bulk-bar-selectall`, `.v2-bulk-checkbox`, `.v2-bulk-select`, `.v2-bulk-bind-btn`, `.v2-bulk-cb-label`. Mobile stacking at 600px.
+- `src/delivery_reports/config.py` — `app_version` v2.25.2 → v2.25.3.
+- `tests/test_web_app.py` — 4 new tests:
+  - `test_v2_inbox_renders_bulk_form_and_checkboxes`
+  - `test_bulk_resolve_binds_multiple_notes` (comma-separated ids)
+  - `test_bulk_resolve_repeated_fields` (one checkbox per repeated POST field)
+  - `test_bulk_resolve_does_not_bind_other_user_notes`
+
+**Tests:** 144 passed (was 140), `compileall` clean.
+
+---
+
 ## 2026-04-28 — v2.25.2: Project setup + report-date clarity (Step 31)
 
 **Task:** Make project creation, inbox routing and the report-date model obvious without slash commands.

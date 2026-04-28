@@ -2638,6 +2638,63 @@ body[data-theme="light-lime"] .v2-draft-paper {
 }
 /* PMD:V2:STEP28_TEMPLATE_HELP:end ─────────────────────── */
 
+/* PMD:V2:STEP32_BULK_INBOX ────────────────────────────── */
+/* Step 32 — bulk bind toolbar + card checkboxes           */
+.v2-bulk-inbox-form { display: contents; }
+
+.v2-bulk-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: var(--surface-strong, var(--surface));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+}
+.v2-bulk-bar-selectall {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 12.5px;
+  color: var(--text2);
+  white-space: nowrap;
+  user-select: none;
+}
+.v2-bulk-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.v2-bulk-select {
+  flex: 1;
+  min-width: 140px;
+  max-width: 260px;
+}
+.v2-bulk-bind-btn { white-space: nowrap; }
+.v2-bulk-cb-label {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.v2-inbox-card-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+@media (max-width: 600px) {
+  .v2-bulk-bar { flex-direction: column; align-items: stretch; }
+  .v2-bulk-select { max-width: none; }
+}
+/* PMD:V2:STEP32_BULK_INBOX:end ─────────────────────────── */
+
 /* PMD:V2:STEP31_PROJECT_SETUP ─────────────────────────── */
 /* Step 31 — first-project setup card + report-date label  */
 .v2-report-date-label {

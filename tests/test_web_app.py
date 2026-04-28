@@ -469,6 +469,97 @@ class WebAppTests(unittest.TestCase):
         self.assertEqual(bound_project.name, "DC701")
 
 
+    # ── Step 32 — bulk inbox bind ───────────────────────────────────────
+    def test_v2_inbox_renders_bulk_form_and_checkboxes(self) -> None:
+        v2_client = self._build_v2_client()
+        self._authenticate(v2_client, user_id=42, username="grafkin", full_name="Анатолий Графкин")
+        # Two notes without a project → two inbox cards.
+        for text in ["первое общее", "второе общее"]:
+            v2_client.post("/notes", data={"text": text, "action": "save"}, follow_redirects=True)
+
+        dashboard = v2_client.get("/dashboard")
+        self.assertEqual(dashboard.status_code, 200)
+        # Bulk form present.
+        self.assertIn('action="/inbox/bulk-resolve"', dashboard.text)
+        self.assertIn('id="v2-bulk-inbox-form"', dashboard.text)
+        # Checkboxes with name="note_ids".
+        self.assertIn('name="note_ids"', dashboard.text)
+        self.assertIn('id="v2-bulk-select-all"', dashboard.text)
+        self.assertIn("Привязать выбранные", dashboard.text)
+        self.assertIn("Выбрать видимые", dashboard.text)
+
+    def test_bulk_resolve_binds_multiple_notes(self) -> None:
+        self._authenticate(self.client, user_id=42, username="grafkin", full_name="Анатолий Графкин")
+        for text in ["первая без проекта", "вторая без проекта", "третья без проекта"]:
+            self.client.post("/notes", data={"text": text, "action": "save"}, follow_redirects=True)
+
+        unresolved = self.repository.list_unresolved_notes_for_user(42)
+        self.assertGreaterEqual(len(unresolved), 2)
+        ids = [str(n.id) for n in unresolved[:2]]
+
+        response = self.client.post(
+            "/inbox/bulk-resolve",
+            data={"note_ids": ",".join(ids), "project_name": "DC701"},
+            follow_redirects=False,
+        )
+        self.assertEqual(response.status_code, 303)
+        self.assertIn("#inbox", response.headers["location"])
+        self.assertIn("notice=", response.headers["location"])
+        # Both notes are now bound.
+        for nid in ids:
+            note = self.repository.get_note(int(nid))
+            assert note is not None
+            self.assertFalse(note.needs_review)
+
+    def test_bulk_resolve_repeated_fields(self) -> None:
+        """note_ids may come as repeated form fields (one per checkbox)."""
+        self._authenticate(self.client, user_id=42, username="grafkin", full_name="Анатолий Графкин")
+        for text in ["апдейт-А", "апдейт-Б"]:
+            self.client.post("/notes", data={"text": text, "action": "save"}, follow_redirects=True)
+
+        unresolved = self.repository.list_unresolved_notes_for_user(42)
+        self.assertGreaterEqual(len(unresolved), 2)
+        n1, n2 = unresolved[0].id, unresolved[1].id
+
+        from urllib.parse import urlencode
+        body = urlencode([("note_ids", str(n1)), ("note_ids", str(n2)), ("project_name", "DC701")])
+        response = self.client.post(
+            "/inbox/bulk-resolve",
+            content=body,
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            follow_redirects=False,
+        )
+        self.assertEqual(response.status_code, 303)
+        self.assertIn("#inbox", response.headers["location"])
+        for nid in (n1, n2):
+            note = self.repository.get_note(nid)
+            assert note is not None
+            self.assertFalse(note.needs_review)
+
+    def test_bulk_resolve_does_not_bind_other_user_notes(self) -> None:
+        # User 42 tries to bulk-bind notes belonging to user 77 — must be ignored.
+        second_client = TestClient(build_web_app(self.settings, self.repository), base_url="https://testserver")
+        self._authenticate(second_client, user_id=77, username="user77", full_name="Другой Юзер")
+        second_client.post("/notes", data={"text": "чужая заметка без проекта", "action": "save"}, follow_redirects=True)
+        other_notes = self.repository.list_unresolved_notes_for_user(77)
+        self.assertGreaterEqual(len(other_notes), 1)
+        other_id = other_notes[0].id
+
+        # Now authenticate as user 42 and try to bind that note.
+        self._authenticate(self.client, user_id=42, username="grafkin", full_name="Анатолий Графкин")
+        response = self.client.post(
+            "/inbox/bulk-resolve",
+            data={"note_ids": str(other_id), "project_name": "DC701"},
+            follow_redirects=False,
+        )
+        # Should redirect with "Не удалось" notice — 0 notes bound.
+        self.assertEqual(response.status_code, 303)
+        self.assertNotIn("#inbox", response.headers.get("location", ""))
+        # Note must still be unresolved.
+        note = self.repository.get_note(other_id)
+        assert note is not None
+        self.assertTrue(note.needs_review)
+
     def test_second_user_does_not_see_first_user_data(self) -> None:
         self._authenticate(self.client, user_id=42, username="grafkin", full_name="Анатолий Графкин")
         self.client.post(

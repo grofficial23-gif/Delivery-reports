@@ -423,6 +423,50 @@ def build_web_app(settings: Settings, repository: Repository) -> FastAPI:
         notice = quote_plus(f"Заметка note#{note_id} привязана к проекту {project.name}.")
         return RedirectResponse(url=f"/dashboard?notice={notice}#inbox", status_code=303)
 
+    @app.post("/inbox/bulk-resolve")
+    async def bulk_resolve_inbox(request: Request) -> RedirectResponse:
+        # Step 32 — bind multiple inbox notes to one project in one action.
+        # Read body once; parse both the multi-value note_ids and project_name.
+        user = _authenticated_user(request, repository, settings)
+        if user is None:
+            return _redirect_with_notice("Откройте приложение из Telegram.")
+        body_bytes = await request.body()
+        body_str = body_bytes.decode("utf-8")
+        multi = parse_qs(body_str, keep_blank_values=False)
+        project_name = (multi.get("project_name", [""])[-1] or "").strip()
+        if not project_name:
+            return _redirect_with_notice("Укажите проект для привязки.")
+        # note_ids may arrive as repeated form fields OR comma/semicolon-separated.
+        all_ids_raw = multi.get("note_ids", [])
+        id_parts: list[str] = []
+        for val in all_ids_raw:
+            id_parts.extend(p.strip() for p in val.replace(";", ",").split(",") if p.strip())
+        note_ids: list[int] = []
+        for part in id_parts:
+            try:
+                note_ids.append(int(part))
+            except ValueError:
+                pass
+        if not note_ids:
+            return _redirect_with_notice("Выберите хотя бы одну заметку.")
+        project, _created = resolve_or_create_project(project_name, repository, user, settings)
+        bound_count = 0
+        for note_id in note_ids:
+            note = repository.get_note(note_id)
+            if note is None or note.user_id != user.telegram_user_id:
+                continue
+            repository.update_note_project(
+                note_id,
+                project,
+                resolve_manager_name(project, user, settings),
+                resolve_lead_name(project, user, settings),
+            )
+            bound_count += 1
+        if bound_count == 0:
+            return _redirect_with_notice("Не удалось привязать выбранные заметки.")
+        notice = quote_plus(f"Привязано {bound_count} заметок к проекту {project.name}.")
+        return RedirectResponse(url=f"/dashboard?notice={notice}#inbox", status_code=303)
+
     @app.post("/projects")
     async def create_project(request: Request) -> RedirectResponse:
         # Step 31 — minimal "create project from dashboard" route.

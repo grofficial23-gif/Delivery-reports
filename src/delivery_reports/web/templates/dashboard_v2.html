@@ -584,105 +584,168 @@
           </div>
           <p class="v2-inbox-triage-sub">
             Эти заметки <strong>не попадут в нужный блок отчёта</strong>, пока вы не выберете проект.
-            Бот не смог распознать его автоматически — выберите вручную из кандидатов или из формы заметки.
+            Бот не смог распознать его автоматически — выберите вручную из кандидатов, из формы ниже или привяжите несколько заметок сразу.
           </p>
         </div>
-        {% set inbox_visible = inbox_cards[:3] %}
-        {% set inbox_rest = inbox_cards[3:8] %}
-        {% for card in inbox_visible %}
-        <div class="v2-inbox-card-v2">
-          <div class="v2-inbox-card-head">
-            {% if card.intent_label %}
-            <span class="v2-intent-badge intent-{{ card.intent_kind or 'other' }}" title="{{ card.intent_label }}">{{ card.intent_label }}</span>
-            {% endif %}
-            <span class="v2-note-item-project v2-note-item-project--none">Без проекта</span>
-          </div>
-          <div class="v2-inbox-card-text">{{ card.preview_text[:240] if card.preview_text else "—" }}</div>
-          <div class="v2-inbox-card-actions">
-            {% if card.candidates %}
-            <span class="v2-inbox-label">Привязать к:</span>
-            {% for name in card.candidates %}
-            <form method="post" action="/inbox/{{ card.note.id }}/resolve" style="display:contents;">
-              <button type="submit" name="project_name" value="{{ name }}" class="v2-inbox-candidate" title="Привязать к {{ name }}">{{ name }}</button>
-            </form>
-            {% endfor %}
-            {% endif %}
-          </div>
-          {% if inbox_projects %}
-          <form method="post" action="/inbox/{{ card.note.id }}/resolve" class="v2-inbox-bind">
-            <label class="v2-inbox-bind-label">
-              Выберите проект — заметка попадёт в нужный блок отчёта.
+
+        {# ── Step 32: Bulk bind form wraps all visible cards ── #}
+        <form
+          method="post"
+          action="/inbox/bulk-resolve"
+          id="v2-bulk-inbox-form"
+          class="v2-bulk-inbox-form"
+          aria-label="Массовая привязка заметок к проекту"
+        >
+          {# Bulk action bar (sticky at top, always visible) #}
+          <div class="v2-bulk-bar" id="v2-bulk-bar">
+            <label class="v2-bulk-bar-selectall">
+              <input
+                type="checkbox"
+                id="v2-bulk-select-all"
+                class="v2-bulk-checkbox"
+                aria-label="Выбрать все видимые заметки"
+              >
+              <span>Выбрать видимые</span>
             </label>
-            <div class="v2-inbox-bind-row">
-              <select name="project_name" class="v2-inbox-bind-select" required aria-label="Проект для привязки">
-                <option value="" disabled selected>— выберите проект —</option>
-                {% for project in inbox_projects %}
-                <option value="{{ project.name }}">{{ project.name }}</option>
-                {% endfor %}
-              </select>
-              <button type="submit" class="v2-btn primary v2-inbox-bind-btn">Привязать</button>
-              <a href="#v2-project-setup" class="v2-inbox-new-project" title="Создать новый проект">+ Новый проект</a>
+            {% if inbox_projects %}
+            <select name="project_name" class="v2-inbox-bind-select v2-bulk-select" required aria-label="Проект для привязки">
+              <option value="" disabled selected>— выберите проект —</option>
+              {% for project in inbox_projects %}
+              <option value="{{ project.name }}">{{ project.name }}</option>
+              {% endfor %}
+            </select>
+            {% else %}
+            <input type="text" name="project_name" class="v2-inbox-bind-select v2-bulk-select" placeholder="Введите название проекта" aria-label="Проект для привязки" required />
+            {% endif %}
+            <button type="submit" class="v2-btn primary v2-bulk-bind-btn">Привязать выбранные</button>
+            <a href="#v2-project-setup" class="v2-inbox-new-project" title="Создать новый проект">+ Новый проект</a>
+          </div>
+
+          {# Cards with checkboxes #}
+          {% set inbox_visible = inbox_cards[:3] %}
+          {% set inbox_rest = inbox_cards[3:8] %}
+          {% for card in inbox_visible %}
+          <div class="v2-inbox-card-v2">
+            <div class="v2-inbox-card-head">
+              <label class="v2-bulk-cb-label" title="Выбрать эту заметку">
+                <input
+                  type="checkbox"
+                  name="note_ids"
+                  value="{{ card.note.id }}"
+                  class="v2-bulk-checkbox v2-bulk-note-cb"
+                  aria-label="Выбрать заметку {{ card.note.id }}"
+                >
+              </label>
+              {% if card.intent_label %}
+              <span class="v2-intent-badge intent-{{ card.intent_kind or 'other' }}" title="{{ card.intent_label }}">{{ card.intent_label }}</span>
+              {% endif %}
+              <span class="v2-note-item-project v2-note-item-project--none">Без проекта</span>
             </div>
-          </form>
-          {% else %}
-          <p class="v2-inbox-no-candidates">
-            Добавьте проект здесь или выберите существующий — после этого заметка попадёт в отчёт.
-          </p>
-          <a href="#v2-project-setup" class="v2-inbox-new-project v2-inbox-new-project--block">+ Новый проект</a>
-          {% endif %}
-        </div>
-        {% endfor %}
-        {% if inbox_rest %}
-        <details class="v2-inbox-more">
-          <summary class="v2-inbox-more-summary">Показать ещё {{ inbox_rest | length }} заметок</summary>
-          <div class="v2-inbox-more-list">
-            {% for card in inbox_rest %}
-            <div class="v2-inbox-card-v2">
-              <div class="v2-inbox-card-head">
-                {% if card.intent_label %}
-                <span class="v2-intent-badge intent-{{ card.intent_kind or 'other' }}" title="{{ card.intent_label }}">{{ card.intent_label }}</span>
-                {% endif %}
-                <span class="v2-note-item-project v2-note-item-project--none">Без проекта</span>
-              </div>
-              <div class="v2-inbox-card-text">{{ card.preview_text[:200] if card.preview_text else "—" }}</div>
-              <div class="v2-inbox-card-actions">
-                {% if card.candidates %}
-                <span class="v2-inbox-label">Привязать к:</span>
-                {% for name in card.candidates %}
-                <form method="post" action="/inbox/{{ card.note.id }}/resolve" style="display:contents;">
-                  <button type="submit" name="project_name" value="{{ name }}" class="v2-inbox-candidate" title="Привязать к {{ name }}">{{ name }}</button>
-                </form>
-                {% endfor %}
-                {% endif %}
-              </div>
-              {% if inbox_projects %}
-              <form method="post" action="/inbox/{{ card.note.id }}/resolve" class="v2-inbox-bind">
-                <label class="v2-inbox-bind-label">
-                  Выберите проект — заметка попадёт в нужный блок отчёта.
-                </label>
-                <div class="v2-inbox-bind-row">
-                  <select name="project_name" class="v2-inbox-bind-select" required aria-label="Проект для привязки">
-                    <option value="" disabled selected>— выберите проект —</option>
-                    {% for project in inbox_projects %}
-                    <option value="{{ project.name }}">{{ project.name }}</option>
-                    {% endfor %}
-                  </select>
-                  <button type="submit" class="v2-btn primary v2-inbox-bind-btn">Привязать</button>
-                  <a href="#v2-project-setup" class="v2-inbox-new-project" title="Создать новый проект">+ Новый проект</a>
-                </div>
-              </form>
-              {% else %}
-              <a href="#v2-project-setup" class="v2-inbox-new-project v2-inbox-new-project--block">+ Новый проект</a>
+            <div class="v2-inbox-card-text">{{ card.preview_text[:240] if card.preview_text else "—" }}</div>
+            <div class="v2-inbox-card-actions">
+              {% if card.candidates %}
+              <span class="v2-inbox-label">Привязать к:</span>
+              {% for name in card.candidates %}
+              <button
+                type="button"
+                class="v2-inbox-candidate v2-bulk-quick-bind"
+                data-note-id="{{ card.note.id }}"
+                data-project="{{ name }}"
+                title="Привязать к {{ name }}"
+              >{{ name }}</button>
+              {% endfor %}
               {% endif %}
             </div>
-            {% endfor %}
+            {% if inbox_projects %}
+            <form method="post" action="/inbox/{{ card.note.id }}/resolve" class="v2-inbox-bind">
+              <label class="v2-inbox-bind-label">
+                Выберите проект — заметка попадёт в нужный блок отчёта.
+              </label>
+              <div class="v2-inbox-bind-row">
+                <select name="project_name" class="v2-inbox-bind-select" required aria-label="Проект для привязки">
+                  <option value="" disabled selected>— выберите проект —</option>
+                  {% for project in inbox_projects %}
+                  <option value="{{ project.name }}">{{ project.name }}</option>
+                  {% endfor %}
+                </select>
+                <button type="submit" class="v2-btn primary v2-inbox-bind-btn">Привязать</button>
+              </div>
+            </form>
+            {% else %}
+            <p class="v2-inbox-no-candidates">
+              Добавьте проект здесь или выберите существующий — после этого заметка попадёт в отчёт.
+            </p>
+            <a href="#v2-project-setup" class="v2-inbox-new-project v2-inbox-new-project--block">+ Новый проект</a>
+            {% endif %}
           </div>
-        </details>
-        {% endif %}
+          {% endfor %}
+
+          {# Collapsed "more" cards also get checkboxes for bulk selection #}
+          {% if inbox_rest %}
+          <details class="v2-inbox-more">
+            <summary class="v2-inbox-more-summary">Показать ещё {{ inbox_rest | length }} заметок</summary>
+            <div class="v2-inbox-more-list">
+              {% for card in inbox_rest %}
+              <div class="v2-inbox-card-v2">
+                <div class="v2-inbox-card-head">
+                  <label class="v2-bulk-cb-label" title="Выбрать эту заметку">
+                    <input
+                      type="checkbox"
+                      name="note_ids"
+                      value="{{ card.note.id }}"
+                      class="v2-bulk-checkbox v2-bulk-note-cb"
+                      aria-label="Выбрать заметку {{ card.note.id }}"
+                    >
+                  </label>
+                  {% if card.intent_label %}
+                  <span class="v2-intent-badge intent-{{ card.intent_kind or 'other' }}" title="{{ card.intent_label }}">{{ card.intent_label }}</span>
+                  {% endif %}
+                  <span class="v2-note-item-project v2-note-item-project--none">Без проекта</span>
+                </div>
+                <div class="v2-inbox-card-text">{{ card.preview_text[:200] if card.preview_text else "—" }}</div>
+                <div class="v2-inbox-card-actions">
+                  {% if card.candidates %}
+                  <span class="v2-inbox-label">Привязать к:</span>
+                  {% for name in card.candidates %}
+                  <button
+                    type="button"
+                    class="v2-inbox-candidate v2-bulk-quick-bind"
+                    data-note-id="{{ card.note.id }}"
+                    data-project="{{ name }}"
+                    title="Привязать к {{ name }}"
+                  >{{ name }}</button>
+                  {% endfor %}
+                  {% endif %}
+                </div>
+                {% if inbox_projects %}
+                <form method="post" action="/inbox/{{ card.note.id }}/resolve" class="v2-inbox-bind">
+                  <label class="v2-inbox-bind-label">
+                    Выберите проект — заметка попадёт в нужный блок отчёта.
+                  </label>
+                  <div class="v2-inbox-bind-row">
+                    <select name="project_name" class="v2-inbox-bind-select" required aria-label="Проект для привязки">
+                      <option value="" disabled selected>— выберите проект —</option>
+                      {% for project in inbox_projects %}
+                      <option value="{{ project.name }}">{{ project.name }}</option>
+                      {% endfor %}
+                    </select>
+                    <button type="submit" class="v2-btn primary v2-inbox-bind-btn">Привязать</button>
+                  </div>
+                </form>
+                {% else %}
+                <a href="#v2-project-setup" class="v2-inbox-new-project v2-inbox-new-project--block">+ Новый проект</a>
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+          </details>
+          {% endif %}
+        </form>{# /v2-bulk-inbox-form #}
+
         {% if inbox_cards | length > 8 %}
         <p class="v2-inbox-overflow-note">
           Показано {{ inbox_visible | length + (inbox_rest | length) }} из {{ inbox_cards | length }}.
-          Остальные привяжутся при следующем заходе или при ручном вводе проекта в форме.
+          Можно выбрать видимые заметки и привязать их к проекту. Остальные доступны в раскрытом списке.
         </p>
         {% endif %}
       </section>
@@ -822,6 +885,54 @@
   </div><!-- /v2-above-canvas -->
 
   <script src="/static/v2/v2_ui.js?v={{ app_version }}" defer></script>
+
+  <!-- Step 32 — Bulk inbox: select-all + quick-bind helpers -->
+  <script>
+  (function () {
+    // "Выбрать видимые" master checkbox
+    var masterCb = document.getElementById("v2-bulk-select-all");
+    if (masterCb) {
+      masterCb.addEventListener("change", function () {
+        var cbs = document.querySelectorAll(".v2-bulk-note-cb");
+        cbs.forEach(function (cb) { cb.checked = masterCb.checked; });
+      });
+      // Keep master in sync when individual checkboxes change
+      document.addEventListener("change", function (e) {
+        if (e.target && e.target.classList.contains("v2-bulk-note-cb")) {
+          var all = document.querySelectorAll(".v2-bulk-note-cb");
+          var checked = document.querySelectorAll(".v2-bulk-note-cb:checked");
+          masterCb.indeterminate = checked.length > 0 && checked.length < all.length;
+          masterCb.checked = checked.length === all.length && all.length > 0;
+        }
+      });
+    }
+
+    // Quick-bind candidate buttons — select the checkbox of their card AND
+    // set the bulk project select to their value, then submit.
+    document.addEventListener("click", function (e) {
+      var btn = e.target && e.target.closest(".v2-bulk-quick-bind");
+      if (!btn) return;
+      var noteId = btn.dataset.noteId;
+      var projName = btn.dataset.project;
+      // Check the matching checkbox
+      var cb = document.querySelector('.v2-bulk-note-cb[value="' + noteId + '"]');
+      if (cb) cb.checked = true;
+      // Set project in bulk select
+      var sel = document.querySelector(".v2-bulk-select");
+      if (sel) {
+        for (var i = 0; i < sel.options.length; i++) {
+          if (sel.options[i].value === projName) {
+            sel.selectedIndex = i;
+            break;
+          }
+        }
+      }
+      // Submit the bulk form
+      var form = document.getElementById("v2-bulk-inbox-form");
+      if (form) form.submit();
+    });
+  })();
+  </script>
 
   <!-- Telegram Mini App auth bootstrap (mirrors V1 pattern) -->
   <script>
