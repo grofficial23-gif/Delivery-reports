@@ -531,7 +531,7 @@
             {% endfor %}
             {% endif %}
           </div>
-          {% if projects %}
+          {% if inbox_projects %}
           <form method="post" action="/inbox/{{ card.note.id }}/resolve" class="v2-inbox-bind">
             <label class="v2-inbox-bind-label">
               Выберите проект — заметка попадёт в нужный блок отчёта.
@@ -539,7 +539,7 @@
             <div class="v2-inbox-bind-row">
               <select name="project_name" class="v2-inbox-bind-select" required aria-label="Проект для привязки">
                 <option value="" disabled selected>— выберите проект —</option>
-                {% for project in projects %}
+                {% for project in inbox_projects %}
                 <option value="{{ project.name }}">{{ project.name }}</option>
                 {% endfor %}
               </select>
@@ -574,7 +574,7 @@
                 {% endfor %}
                 {% endif %}
               </div>
-              {% if projects %}
+              {% if inbox_projects %}
               <form method="post" action="/inbox/{{ card.note.id }}/resolve" class="v2-inbox-bind">
                 <label class="v2-inbox-bind-label">
                   Выберите проект — заметка попадёт в нужный блок отчёта.
@@ -582,7 +582,7 @@
                 <div class="v2-inbox-bind-row">
                   <select name="project_name" class="v2-inbox-bind-select" required aria-label="Проект для привязки">
                     <option value="" disabled selected>— выберите проект —</option>
-                    {% for project in projects %}
+                    {% for project in inbox_projects %}
                     <option value="{{ project.name }}">{{ project.name }}</option>
                     {% endfor %}
                   </select>

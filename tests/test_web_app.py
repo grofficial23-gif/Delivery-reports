@@ -319,6 +319,53 @@ class WebAppTests(unittest.TestCase):
         self.assertIn("Сделает акцент на рисках, решениях и следующих шагах.", dashboard.text)
         self.assertIn("Найдёт риски и блокеры в черновике.", dashboard.text)
 
+    # ── Step 28A HOTFIX — inbox bind dropdown is robust to owner mismatch ───
+    def test_v2_inbox_dropdown_lists_real_projects_and_excludes_pseudo(self) -> None:
+        # Simulate the production bug: projects exist in SQLite under a
+        # different owner_user_id than the authenticated Telegram user.
+        for name, aliases in [
+            ("Delivery Reports", ["Delivery"]),
+            ("Bank Dashboard", ["Bank"]),
+            ("Внедрение категорийного кэшбэка (BONUS-2055)", ["BONUS-2055", "2055"]),
+            ("ТЕСТ", []),
+        ]:
+            self.repository.upsert_project(
+                name=name,
+                manager_name="Анатолий Графкин",
+                lead_name="Дмитрий Кононенко",
+                jira_base_url="",
+                aliases=aliases,
+                is_special_control=False,
+                owner_user_id=999_001,  # legacy / different owner
+            )
+        # Default "Без проекта" pseudo-project must not appear in the dropdown.
+        self.repository.ensure_default_project("Анатолий Графкин", "Дмитрий Кононенко")
+
+        v2_client = self._build_v2_client()
+        # Authenticate a *fresh* user who owns no projects — this reproduces
+        # the production bug where projects existed under a different owner.
+        self._authenticate(v2_client, user_id=777_777, username="newuser", full_name="Новый Юзер")
+        v2_client.post(
+            "/notes",
+            data={"text": "обсуждали что-то общее без явного проекта", "action": "save"},
+            follow_redirects=True,
+        )
+
+        dashboard = v2_client.get("/dashboard")
+        self.assertEqual(dashboard.status_code, 200)
+        self.assertIn('class="v2-inbox-bind"', dashboard.text)
+        self.assertIn('select name="project_name"', dashboard.text)
+        self.assertIn(">Delivery Reports</option>", dashboard.text)
+        self.assertIn(">Bank Dashboard</option>", dashboard.text)
+        self.assertIn(">Внедрение категорийного кэшбэка (BONUS-2055)</option>", dashboard.text)
+        self.assertIn(">ТЕСТ</option>", dashboard.text)
+        # Pseudo-project must be filtered out.
+        self.assertNotIn(">Без проекта</option>", dashboard.text)
+        self.assertNotIn(
+            "Сначала создайте проект в Super Admin",
+            dashboard.text,
+        )
+
     def test_inbox_resolve_post_still_binds_note_to_project(self) -> None:
         self._authenticate(self.client, user_id=42, username="grafkin", full_name="Анатолий Графкин")
         self.client.post(

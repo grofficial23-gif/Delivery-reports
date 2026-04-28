@@ -175,6 +175,27 @@ The `Project.aliases` column already supports any list of strings; no schema cha
 
 ---
 
+## 2026-04-28 — v2.24.3: HOTFIX inbox bind dropdown is invisible (Step 28A)
+
+**Bug:** In v2.24.2 Mini App the inbox section "Заметки без проекта" still rendered the fallback message "Сначала создайте проект в Super Admin или добавьте проект в форме заметки." even though projects (Delivery Reports, Bank Dashboard, Внедрение категорийного кэшбэка (BONUS-2055), ТЕСТ) already existed in SQLite. Root cause: `_build_dashboard_context` filters projects by `user.telegram_user_id`; in production the projects existed under a different `owner_user_id` (legacy data / seeder run with another id), so the user-scoped list was empty and the template's `{% if projects %}` branch fell through.
+
+**Files changed:**
+- `src/delivery_reports/web_app.py` — added a dedicated `inbox_projects` list to the dashboard context (both authed and auth-required branches). It starts as the user-scoped `projects` list and falls back to all non-pseudo projects in DB when the user-scoped list is empty (deduplicated by case-insensitive name, "Без проекта" filtered out). `/inbox/{id}/resolve` already calls `resolve_or_create_project`, which reconciles ownership when binding, so this is safe.
+- `src/delivery_reports/web/templates/dashboard_v2.html` — both inbox-card form branches (visible cards + collapsed `<details>` overflow) switched from `projects` → `inbox_projects` for the `{% if … %}` guard and the `{% for project in … %}` loop.
+- `src/delivery_reports/config.py` — `app_version` v2.24.2 → v2.24.3 (patch: bug fix only).
+- `tests/test_web_app.py` — 1 new regression test: with all four real projects under a different `owner_user_id` (999_001) and a fresh authenticated user (777_777) with no projects, the V2 dashboard still renders `<select name="project_name">` with options for "Delivery Reports", "Bank Dashboard", "Внедрение категорийного кэшбэка (BONUS-2055)", and "ТЕСТ"; the "Без проекта" pseudo-project is excluded; and the fallback message is gone.
+
+**Verification:** `python -m compileall src/delivery_reports` ✓ · `pytest -q` 120 passed.
+
+**What to manually verify in production:**
+- Open the Mini App → "Заметки без проекта" → every card shows the "Выберите проект — заметка попадёт в нужный блок отчёта." form with a populated `<select>`.
+- Pick "Delivery Reports", press "Привязать" — note moves into the Delivery Reports section of the next draft.
+- "Без проекта" never appears in the dropdown options.
+
+**Rollback notes:** Single-purpose hotfix. Revert by removing the `inbox_projects` block in `_build_dashboard_context`, switching the template back to `projects`, and bumping `app_version` to v2.24.2.
+
+---
+
 ## 2026-04-28 — v2.23.2: Prevent failed voice transcription from polluting reports (Step 26)
 
 **Task:** Failed voice transcriptions were saved as technical garbage notes (`voice-note: transcription failed; file_id=...`), polluting the dashboard, inbox, and generated drafts. This step silences that path entirely.

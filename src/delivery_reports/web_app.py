@@ -489,6 +489,7 @@ def _build_dashboard_context(request: Request, repository: Repository, settings:
             "inbox_cards": [],
             "tasks": [],
             "projects": [],
+            "inbox_projects": [],
             "draft": None,
             "draft_plain": "",
             "final_report": None,
@@ -515,6 +516,21 @@ def _build_dashboard_context(request: Request, repository: Repository, settings:
         for project in repository.list_projects(owner_user_id=user.telegram_user_id)
         if project.name.lower() != "без проекта"
     ]
+    # Step 28A — separate, robust list for the inbox-binding dropdown. The
+    # user-scoped list above can be empty if existing projects in SQLite
+    # were created under a different owner_user_id (legacy data, seeder
+    # run with a different Telegram id, etc.). The dropdown should still
+    # let the user pick a known project; /inbox/{id}/resolve will reconcile
+    # ownership via resolve_or_create_project.
+    inbox_projects: list = list(projects)
+    if not inbox_projects:
+        _seen_inbox_names: set[str] = set()
+        for project in repository.list_projects(owner_user_id=None):
+            norm = project.name.strip().lower()
+            if not norm or norm == "без проекта" or norm in _seen_inbox_names:
+                continue
+            _seen_inbox_names.add(norm)
+            inbox_projects.append(project)
     draft = repository.get_latest_draft_for_date(target_date, owner_user_id=user.telegram_user_id)
     final_report = repository.get_latest_final_report_for_date(target_date, author_user_id=user.telegram_user_id)
 
@@ -679,6 +695,7 @@ def _build_dashboard_context(request: Request, repository: Repository, settings:
         "inbox_cards": inbox_cards,
         "tasks": tasks,
         "projects": projects,
+        "inbox_projects": inbox_projects,
         "draft": draft,
         "draft_plain": draft_plain,
         "final_report": final_report,
