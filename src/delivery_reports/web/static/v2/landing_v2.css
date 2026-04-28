@@ -485,6 +485,123 @@ html { scroll-behavior: smooth; }
 }
 .s1-step-card:last-child .s1-step-connector { display: none; }
 
+/* PMD:V2:LANDING_FLOW ───────────────────────────────── */
+/* Step 30B — visual "how it works" flow with mockups     */
+.s1-flow-grid {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
+  gap: 0 12px;
+  align-items: start;
+}
+.s1-flow-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 22px;
+  padding-top: 70px;
+  flex-shrink: 0;
+}
+.s1-flow-step {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.s1-flow-step-num {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--primary);
+  font-family: var(--font-mono);
+}
+.s1-flow-mock {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  min-height: 88px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: var(--shadow);
+}
+.s1-flow-chat-bubble {
+  background: var(--primary-bg);
+  border: 1px solid var(--primary-border);
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.45;
+}
+.s1-flow-label-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.s1-flow-source-tag {
+  font-size: 10px;
+  color: var(--muted);
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 2px 7px;
+}
+.s1-flow-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.s1-flow-chip {
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 5px;
+  padding: 3px 8px;
+  border: 1px solid transparent;
+}
+.chip-proj   { background: var(--primary-bg);              color: var(--primary);  border-color: var(--primary-border); }
+.chip-done   { background: rgba(0,200,120,0.12);            color: #0a7a50; }
+.chip-plan   { background: rgba(60,130,255,0.10);           color: #2060cc; }
+.chip-risk   { background: rgba(240,160,0,0.12);            color: #a06000; }
+.chip-block  { background: rgba(220,50,50,0.10);            color: #cc2020; }
+body[data-theme="dark-lime"] .chip-done  { color: #3de08a; }
+body[data-theme="dark-lime"] .chip-plan  { color: #7ab4ff; }
+body[data-theme="dark-lime"] .chip-risk  { color: #f0c060; }
+body[data-theme="dark-lime"] .chip-block { color: #ff7070; }
+.s1-flow-paper { padding: 12px 14px; gap: 3px; min-height: 110px; }
+.s1-flow-paper-row {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text2);
+}
+.s1-flow-paper-proj { font-weight: 700; color: var(--primary); margin-bottom: 2px; }
+.s1-flow-paper-item { padding-left: 4px; color: var(--muted); }
+.s1-flow-send { gap: 7px; justify-content: center; }
+.s1-flow-send-btn {
+  background: var(--primary);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 8px 12px;
+  text-align: center;
+  line-height: 1.2;
+}
+.s1-flow-send-btn--ghost {
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--text2);
+}
+.s1-flow-title {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1.2;
+}
+.s1-flow-desc { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+@media (max-width: 900px) {
+  .s1-flow-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .s1-flow-arrow { display: none; }
+}
+@media (max-width: 540px) {
+  .s1-flow-grid { grid-template-columns: 1fr; }
+}
 /* PMD:V2:LANDING_FEATURES ───────────────────────────── */
 .s1-feat-grid {
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;

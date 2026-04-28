@@ -108,11 +108,11 @@
       <div>
         <div class="s1-eyebrow">Telegram · Mini App · Reports</div>
         <h1 class="s1-h1">
-          Ежедневные PM-отчёты<br>
-          без <mark>вечернего хаоса</mark>
+          Ваш личный ассистент<br>
+          для <mark>ежедневных отчётов</mark>
         </h1>
         <p class="s1-sub">
-          Пишите апдейты в течение дня — PM Digest сам разложит их по проектам, планам, рискам и блокерам, соберёт черновик и отправит вам на проверку в Telegram.
+          Пишите короткие апдейты в течение дня — PM Digest разложит их по проектам, планам, рискам и блокерам, соберёт черновик и отправит вам на проверку в Telegram.
         </p>
         <p style="margin-top:10px;font-size:12.5px;color:var(--muted);">
           FREE: текстовые заметки. PRO: voice и AI-редактор.
@@ -226,33 +226,67 @@
         <div class="s1-sec-eyebrow">Как это работает</div>
         <h2 class="s1-sec-h2"><mark>4 шага</mark> от заметки до отчёта</h2>
         <p class="s1-sec-sub">Весь процесс происходит внутри Telegram. Никаких лишних приложений.</p>
-        <div class="s1-steps-grid">
-          <div class="s1-step-card">
-            <div class="s1-step-num">01</div>
-            <div class="s1-step-ico">✏️</div>
-            <div class="s1-step-title">Пишите апдейты текстом</div>
-            <div class="s1-step-desc">Текстовые апдейты прямо в Telegram-боте или Mini App. В любое время дня. Voice — в PRO.</div>
-            <div class="s1-step-connector"></div>
+        <div class="s1-flow-grid">
+          <!-- Step 1 -->
+          <div class="s1-flow-step">
+            <div class="s1-flow-step-num">01</div>
+            <div class="s1-flow-mock">
+              <div class="s1-flow-chat-bubble">
+                Закрыли задачу по DC701, завтра демо. Риск: нет ответа от заказчика.
+              </div>
+              <div class="s1-flow-label-row">
+                <span class="s1-flow-source-tag">💬 Telegram</span>
+                <span class="s1-flow-source-tag">📱 Mini App</span>
+              </div>
+            </div>
+            <div class="s1-flow-title">Пишите апдейт</div>
+            <div class="s1-flow-desc">Текстом в Telegram-боте или Mini App. В любое время дня. Voice — в PRO.</div>
           </div>
-          <div class="s1-step-card">
-            <div class="s1-step-num">02</div>
-            <div class="s1-step-ico">🧠</div>
-            <div class="s1-step-title">PM Digest распознаёт проект, план и риски</div>
-            <div class="s1-step-desc">Автоматически определяет: что сделано, что планируется, какие риски и блокеры.</div>
-            <div class="s1-step-connector"></div>
+          <!-- Arrow -->
+          <div class="s1-flow-arrow" aria-hidden="true">→</div>
+          <!-- Step 2 -->
+          <div class="s1-flow-step">
+            <div class="s1-flow-step-num">02</div>
+            <div class="s1-flow-mock">
+              <div class="s1-flow-chips">
+                <span class="s1-flow-chip chip-proj">📌 DC701</span>
+                <span class="s1-flow-chip chip-done">✅ Сделано</span>
+                <span class="s1-flow-chip chip-plan">🧭 План</span>
+                <span class="s1-flow-chip chip-risk">⚠️ Риск</span>
+                <span class="s1-flow-chip chip-block">⛔ Блокер</span>
+              </div>
+            </div>
+            <div class="s1-flow-title">Бот раскладывает</div>
+            <div class="s1-flow-desc">Определяет проект, что сделано, план, риски и блокеры автоматически.</div>
           </div>
-          <div class="s1-step-card">
-            <div class="s1-step-num">03</div>
-            <div class="s1-step-ico">📋</div>
-            <div class="s1-step-title">Получаете готовый черновик</div>
-            <div class="s1-step-desc">Структурированный delivery report прямо в чат. Можно открыть в Report Studio для правки.</div>
-            <div class="s1-step-connector"></div>
+          <!-- Arrow -->
+          <div class="s1-flow-arrow" aria-hidden="true">→</div>
+          <!-- Step 3 -->
+          <div class="s1-flow-step">
+            <div class="s1-flow-step-num">03</div>
+            <div class="s1-flow-mock s1-flow-paper">
+              <div class="s1-flow-paper-row s1-flow-paper-proj">📌 DC701</div>
+              <div class="s1-flow-paper-row">✅ <b>Что сделано</b></div>
+              <div class="s1-flow-paper-row s1-flow-paper-item">• Закрыли задачу по интеграции</div>
+              <div class="s1-flow-paper-row">🧭 <b>План</b></div>
+              <div class="s1-flow-paper-row s1-flow-paper-item">• Завтра демо с заказчиком</div>
+              <div class="s1-flow-paper-row">⚠️ <b>Риски</b></div>
+              <div class="s1-flow-paper-row s1-flow-paper-item">• Нет ответа от заказчика</div>
+            </div>
+            <div class="s1-flow-title">Проверяете черновик</div>
+            <div class="s1-flow-desc">Черновик структурирован по проектам. Откройте Mini App для правки.</div>
           </div>
-          <div class="s1-step-card">
-            <div class="s1-step-num">04</div>
-            <div class="s1-step-ico">✉️</div>
-            <div class="s1-step-title">Копируете, редактируете или отправляете себе</div>
-            <div class="s1-step-desc">Одна кнопка — и отчёт у вас в личке. Никакого авто-постинга в рабочие чаты без вашего ведома.</div>
+          <!-- Arrow -->
+          <div class="s1-flow-arrow" aria-hidden="true">→</div>
+          <!-- Step 4 -->
+          <div class="s1-flow-step">
+            <div class="s1-flow-step-num">04</div>
+            <div class="s1-flow-mock s1-flow-send">
+              <div class="s1-flow-send-btn">📤 Отправить себе</div>
+              <div class="s1-flow-send-btn s1-flow-send-btn--ghost">Зафиксировать финал</div>
+            </div>
+            <div class="s1-flow-title">Отправляете</div>
+            <div class="s1-flow-desc">Одна кнопка — и отчёт у вас в Telegram. Без авто-постинга в рабочие чаты.</div>
           </div>
         </div>
       </div>
@@ -302,9 +336,21 @@
             <span class="s1-feat-tag pro">PRO</span>
           </div>
           <div class="s1-feat-card">
+            <div class="s1-feat-ico">📐</div>
+            <div class="s1-feat-title">Шаблоны отчётов</div>
+            <div class="s1-feat-desc">Баланс, только главное, для руководителя, для команды — одна кнопка меняет формат.</div>
+            <span class="s1-feat-tag free">FREE</span>
+          </div>
+          <div class="s1-feat-card">
+            <div class="s1-feat-ico">📚</div>
+            <div class="s1-feat-title">История и финалы</div>
+            <div class="s1-feat-desc">Черновики и финальные отчёты сохраняются по дням. Легко найти и переотправить.</div>
+            <span class="s1-feat-tag free">FREE</span>
+          </div>
+          <div class="s1-feat-card">
             <div class="s1-feat-ico">👥</div>
             <div class="s1-feat-title">Team dashboard</div>
-            <div class="s1-feat-desc">Роли Owner / Admin / Member, shared templates, Executive Pulse и пульс по всем проектам.</div>
+            <div class="s1-feat-desc">Роли Owner / Admin / Member, общие шаблоны и командный пульс по всем проектам.</div>
             <span class="s1-feat-tag team">TEAM</span>
           </div>
         </div>
@@ -420,12 +466,11 @@
     <!-- ── Why not ChatGPT ───────────────────────────────────────── -->
     <div class="s1-content">
       <div class="s1-section" id="s1-why-not-gpt">
-        <div class="s1-sec-eyebrow">Часто задают</div>
-        <h2 class="s1-sec-h2">Почему не просто <mark>ChatGPT / Gemini?</mark></h2>
+        <div class="s1-sec-eyebrow">Часто спрашивают</div>
+        <h2 class="s1-sec-h2">А можно просто <mark>ChatGPT / Gemini?</mark></h2>
         <div class="s1-sec-note" style="max-width:700px;font-size:14.5px;line-height:1.7;">
-          В ChatGPT каждый раз нужно объяснять контекст: проекты, руководителя, формат отчёта и что считать риском.
-          PM Digest хранит этот контекст постоянно: проекты, алиасы, шаблоны, историю заметок и финальные отчёты.
-          Вы не пишете промпт каждый вечер — вы просто добавляете апдейты.
+          Можно — и ChatGPT отлично справится с разовым отчётом. Но каждый раз придётся заново объяснять: какие проекты, кому руководитель, какой формат и что считать риском.<br><br>
+          PM Digest уже настроен под ежедневные отчёты: проекты, шаблоны, история и формат черновика на месте. Вы просто добавляете апдейты, проверяете результат и отправляете.
         </div>
       </div>
     </div>

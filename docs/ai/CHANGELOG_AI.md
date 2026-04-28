@@ -245,6 +245,25 @@ The `Project.aliases` column already supports any list of strings; no schema cha
 
 ---
 
+## 2026-04-28 — v2.25.1: Landing sales polish (Step 30B)
+
+**Task:** Improve landing page sales quality after text-first repositioning.
+
+**Files changed:**
+- `src/delivery_reports/web/templates/landing_v2.html`
+  - Hero h1 changed to "Ваш личный ассистент для ежедневных отчётов"; subcopy uses "короткие апдейты".
+  - ChatGPT/Gemini section reframed positively: "Можно — и ChatGPT справится…" + "PM Digest уже настроен"; title changed from argumentative to "А можно просто ChatGPT / Gemini?".
+  - Feature grid: added two new FREE cards ("Шаблоны отчётов", "История и финалы") to eliminate lonely last-row card; Team dashboard copy tightened.
+  - "How it works" section replaced with a visual `s1-flow-grid` containing four flow steps with inline HTML mockups (chat bubble, intent chips, mini report paper, send buttons).
+- `src/delivery_reports/web/static/v2/landing_v2.css`
+  - Added `PMD:V2:LANDING_FLOW` block: `s1-flow-grid` (4-col → 2-col → 1-col responsive), `s1-flow-step`, `s1-flow-mock`, `s1-flow-chat-bubble`, `s1-flow-chips`, chip colour variants per theme, `s1-flow-paper`, `s1-flow-send`, `s1-flow-arrow`.
+- `src/delivery_reports/config.py` — `app_version` v2.25.0 → v2.25.1.
+- `tests/test_copy_positioning.py` — 3 new assertions: hero "Ваш личный ассистент", ChatGPT section soft framing ("уже настроен", no "Почему не просто"), no "парсинг", flow grid rendered.
+
+**Tests:** 134 passed (0 failures), `compileall` clean.
+
+---
+
 ## 2026-04-28 — v2.25.0: Text-first / FREE–PRO copy positioning (Step 30A)
 
 **Task:** Landing and bot copy over-emphasized voice as a default FREE feature, creating wrong expectations. Repositioned to: FREE = text notes + project recognition + draft report; PRO = voice + AI editor; TEAM = shared projects + team workflow.

@@ -67,11 +67,17 @@ class TestLandingCopyPositioning:
         assert "FREE: текстовые заметки" in resp.text
         assert "PRO" in resp.text
 
+    def test_landing_hero_h1_is_personal_assistant(self, tmp_settings, repository):
+        client = self._landing_client(tmp_settings, repository)
+        resp = client.get("/")
+        assert resp.status_code == 200
+        assert "Ваш личный ассистент" in resp.text
+
     def test_landing_hero_subtext_is_text_first(self, tmp_settings, repository):
         client = self._landing_client(tmp_settings, repository)
         resp = client.get("/")
         assert resp.status_code == 200
-        assert "Пишите апдейты в течение дня" in resp.text
+        assert "Пишите короткие апдейты" in resp.text
 
     def test_landing_voice_positioned_as_pro(self, tmp_settings, repository):
         client = self._landing_client(tmp_settings, repository)
@@ -102,12 +108,28 @@ class TestLandingCopyPositioning:
         assert "диктую голосовые заметки" not in resp.text
         assert "добавляю короткие апдейты" in resp.text
 
-    def test_landing_why_not_chatgpt_section_present(self, tmp_settings, repository):
+    def test_landing_chatgpt_section_uses_soft_framing(self, tmp_settings, repository):
         client = self._landing_client(tmp_settings, repository)
         resp = client.get("/")
         assert resp.status_code == 200
         assert "ChatGPT" in resp.text
-        assert "контекст" in resp.text.lower()
+        # New soft framing — acknowledges ChatGPT can help.
+        assert "уже настроен" in resp.text
+        # No longer argumentative title.
+        assert "Почему не просто" not in resp.text
+
+    def test_landing_no_pars_technical_word(self, tmp_settings, repository):
+        client = self._landing_client(tmp_settings, repository)
+        resp = client.get("/")
+        assert resp.status_code == 200
+        assert "парсинг" not in resp.text.lower()
+
+    def test_landing_flow_grid_contains_mockup(self, tmp_settings, repository):
+        client = self._landing_client(tmp_settings, repository)
+        resp = client.get("/")
+        assert resp.status_code == 200
+        assert "s1-flow-grid" in resp.text
+        assert "s1-flow-chip" in resp.text
 
 
 # ── Bot /start copy ──────────────────────────────────────────────────────────
