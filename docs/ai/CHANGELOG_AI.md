@@ -196,6 +196,26 @@ The `Project.aliases` column already supports any list of strings; no schema cha
 
 ---
 
+## 2026-04-28 — v2.24.4: Friendly /inbox copy in Telegram bot (Step 28C)
+
+**Problem:** Bot `/inbox` ended its list with a technical hint ("Resolve: `разобрать 15 DC701` или `/inbox resolve 15 DC701`") that confused non-technical PMs. The Mini App already has a one-click bind form; the bot should point users there instead.
+
+**Files changed:**
+- `src/delivery_reports/bot_app.py` — `cmd_inbox` final hint replaced with: 📲 "Проще: откройте Mini App → блок «Заметки без проекта» → выберите проект → Привязать.", followed by an italic "Для ручной команды:" line that preserves the working `/inbox resolve 15 DC701` example. After the main message, an inline `WebAppInfo` Mini App button ("📥 Разобрать в Mini App") is sent so users can open the dashboard with one tap. Skipped silently when `public_web_app_url` is empty (e.g., local dev / non-HTTPS), keeping the command working in every environment. The `/inbox resolve <note_id> <code>` command path is **untouched**.
+- `src/delivery_reports/config.py` — `app_version` v2.24.3 → v2.24.4 (patch: copy + UX hint, no schema/routes/auth touched).
+- `tests/test_bot_inbox.py` — new file with 3 focused tests: friendly copy + advanced-fallback labeling, Mini App inline button is appended with a `web_app=…` URL pointing at `public_web_app_url`, and the button is skipped when `public_web_app_url` is empty.
+
+**Verification:** `python -m compileall src/delivery_reports` ✓ · `pytest -q` 123 passed.
+
+**What to manually verify:**
+- Send `/inbox` in the bot — list ends with the new 📲 line and an italic "Для ручной команды:" example, and a follow-up message offers a "📥 Разобрать в Mini App" button.
+- Tapping the Mini App button opens the dashboard.
+- `/inbox resolve <id> <project>` still binds the note to the project.
+
+**Rollback notes:** Restore the previous single hint line in `cmd_inbox` and remove the follow-up Mini App message; bump `app_version` back to v2.24.3.
+
+---
+
 ## 2026-04-28 — v2.23.2: Prevent failed voice transcription from polluting reports (Step 26)
 
 **Task:** Failed voice transcriptions were saved as technical garbage notes (`voice-note: transcription failed; file_id=...`), polluting the dashboard, inbox, and generated drafts. This step silences that path entirely.

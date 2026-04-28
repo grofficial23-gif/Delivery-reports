@@ -63,7 +63,7 @@ class Settings:
     #   minor (+0.1.0) — new user-visible product feature
     #   major (+1.0.0) — incompatible change or release milestone
     # Override at deploy time via APP_VERSION env var.
-    app_version: str = "v2.24.3"
+    app_version: str = "v2.24.4"
 
 
 def load_settings() -> Settings:
@@ -93,5 +93,5 @@ def load_settings() -> Settings:
             for u in os.getenv("SUPER_ADMIN_USERNAMES", "PM_vibe").split(",")
             if u.strip()
         ),
-        app_version=(os.getenv("APP_VERSION", "v2.24.3").strip() or "v2.24.3"),
+        app_version=(os.getenv("APP_VERSION", "v2.24.4").strip() or "v2.24.4"),
     )

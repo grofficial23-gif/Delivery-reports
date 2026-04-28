@@ -755,8 +755,19 @@ async def cmd_inbox(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         if candidates:
             lines.append(f"  <b>Варианты:</b> {escape(', '.join(candidates))}")
     lines.append("")
-    lines.append("Resolve: <code>разобрать 15 DC701</code> или <code>/inbox resolve 15 DC701</code>")
+    lines.append("📲 <b>Проще:</b> откройте Mini App → блок «Заметки без проекта» → выберите проект → Привязать.")
+    lines.append("<i>Для ручной команды:</i> <code>/inbox resolve 15 DC701</code>")
     await _reply_html(update.message, "\n".join(lines), reply_markup=_base_keyboard())
+    # Step 28C — surface a one-tap Mini App button next to the inbox list so
+    # users don't have to remember the resolve command.
+    mini_url = _mini_app_url(_settings(context))
+    if mini_url:
+        await update.message.reply_text(
+            "Открыть Mini App для привязки заметок:",
+            reply_markup=InlineKeyboardMarkup(
+                [[InlineKeyboardButton("📥 Разобрать в Mini App", web_app=WebAppInfo(url=mini_url))]]
+            ),
+        )
 
 
 async def cmd_projects(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
