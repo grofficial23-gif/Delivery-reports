@@ -172,6 +172,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if team_joined:
         await update.message.reply_text(f"✅ Вы успешно вступили в команду <b>{escape(joined_team_name)}</b>!", parse_mode=ParseMode.HTML)
 
+    _app_version = _settings(context).app_version
     text = (
         "🚀 <b>PM Digest Bot</b>\n\n"
         "Умные отчёты для проектных менеджеров. Превратите хаос из задач и созвонов в идеальный вечерний отчет за один клик.\n\n"
@@ -182,7 +183,8 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "2. Пишите апдейты по проектам в течение дня.\n"
         "3. В 17:30 бот сам соберет готовый digest.\n\n"
         "Посмотреть тарифы и Premium: <code>/pro</code>\n"
-        "Инструкция и помощь: <code>/help</code>"
+        "Инструкция и помощь: <code>/help</code>\n\n"
+        f"<i>PM Digest · {escape(_app_version)}</i>"
     )
     url = _mini_app_url(_settings(context))
     markup = InlineKeyboardMarkup([[InlineKeyboardButton("⚡️ Открыть Mini App", web_app=WebAppInfo(url=url))]])
@@ -1620,11 +1622,13 @@ async def _maybe_send_mini_app_entry(
     launch_markup = InlineKeyboardMarkup(
         [[InlineKeyboardButton("Открыть Mini App", web_app=WebAppInfo(url=url))]]
     )
+    _app_ver = _settings(context).app_version
     await update.message.reply_text(
         (
             "<b>Mini App готов</b>\n"
             f"Автор подтянется как <b>{escape(user.display_name or user.telegram_full_name)}</b>, "
-            "а ваши проекты, апдейты и отчеты будут изолированы от других пользователей."
+            "а ваши проекты, апдейты и отчеты будут изолированы от других пользователей.\n\n"
+            f"<i>PM Digest · {escape(_app_ver)}</i>"
         ),
         reply_markup=launch_markup,
         parse_mode=ParseMode.HTML,

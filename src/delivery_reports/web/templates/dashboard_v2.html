@@ -56,6 +56,9 @@
     <!-- ── Top navigation ─────────────────────────────────────── -->
     <nav class="v2-topnav" role="navigation" aria-label="Основная навигация">
       <div class="v2-topnav-brand">PM<mark>·</mark>DIGEST</div>
+      {% if app_version %}
+      <span class="v2-version-chip" title="Версия приложения — {{ app_version }}">{{ app_version }}</span>
+      {% endif %}
       <div class="v2-topnav-sep" aria-hidden="true"></div>
 
       <div class="v2-topnav-links" role="list">

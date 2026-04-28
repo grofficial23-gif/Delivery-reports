@@ -77,6 +77,7 @@ def build_web_app(settings: Settings, repository: Repository) -> FastAPI:
                 "bot_username": settings.bot_username,
                 "bot_url": f"https://t.me/{settings.bot_username}",
                 "public_web_app_url": settings.public_web_app_url,
+                "app_version": settings.app_version,
             },
         )
 
@@ -167,6 +168,7 @@ def build_web_app(settings: Settings, repository: Repository) -> FastAPI:
             "user": user,
             "bot_username": settings.bot_username,
             "bot_url": f"https://t.me/{settings.bot_username}",
+            "app_version": settings.app_version,
         })
 
     @app.post("/admin/users/{target_user_id}/plan")
@@ -456,6 +458,7 @@ def _build_dashboard_context(request: Request, repository: Repository, settings:
         "bot_username": settings.bot_username,
         "bot_url": f"https://t.me/{settings.bot_username}",
         "status_label": task_status_label,
+        "app_version": settings.app_version,
     }
     if user is None:
         return {

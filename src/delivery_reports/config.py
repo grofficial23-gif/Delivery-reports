@@ -58,6 +58,7 @@ class Settings:
     web_session_secret: str = ""
     dashboard_ui_version: str = "v1"
     super_admin_usernames: frozenset[str] = frozenset({"pm_vibe"})  # e.g. {'PM_vibe'}
+    app_version: str = "v2.23.0"
 
 
 def load_settings() -> Settings:
@@ -87,4 +88,5 @@ def load_settings() -> Settings:
             for u in os.getenv("SUPER_ADMIN_USERNAMES", "PM_vibe").split(",")
             if u.strip()
         ),
+        app_version=(os.getenv("APP_VERSION", "v2.23.0").strip() or "v2.23.0"),
     )

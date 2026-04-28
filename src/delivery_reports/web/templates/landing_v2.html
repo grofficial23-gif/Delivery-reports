@@ -467,7 +467,9 @@
           💬 Нашли проблему или есть идея? Напишите: <b>@PM_vibe</b>
         </a>
       </div>
-      <div style="color:var(--muted);font-size:11px;">© 2026 PM Digest</div>
+      <div style="color:var(--muted);font-size:11px;">
+        © 2026 PM Digest{% if app_version %} · <span id="s1-app-version">{{ app_version }}</span>{% endif %}
+      </div>
     </footer>
 
   </div><!-- /v2-above-canvas -->

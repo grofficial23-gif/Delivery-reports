@@ -132,6 +132,9 @@
     <div class="sa-above-canvas">
       <nav class="sa-topnav" role="navigation" aria-label="Super Admin nav">
         <div class="sa-brand">PM<mark>·</mark>DIGEST</div>
+        {% if app_version %}
+        <span class="v2-version-chip" style="font-size:10px;opacity:0.65;color:var(--muted,#888);background:transparent;border:none;padding:0 2px;" title="Версия {{ app_version }}">{{ app_version }}</span>
+        {% endif %}
         <div class="sa-sep" aria-hidden="true"></div>
         <div class="sa-nav-links">
           <a href="/admin" class="active">Super Admin</a>
