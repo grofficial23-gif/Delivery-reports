@@ -177,16 +177,13 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     _app_version = _settings(context).app_version
     text = (
-        "🚀 <b>PM Digest Bot</b>\n\n"
-        "Умные отчёты для проектных менеджеров. Превратите хаос из задач и созвонов в идеальный вечерний отчет за один клик.\n\n"
-        "<b>Ваш профиль:</b>\n"
-        f"👤 {escape(user.display_name or user.telegram_full_name or '-')}\n\n"
-        "<b>Как начать:</b>\n"
-        "1. Откройте <b>Mini App</b> по кнопке ниже.\n"
-        "2. Пишите апдейты по проектам в течение дня.\n"
-        "3. В 17:30 бот сам соберет готовый digest.\n\n"
-        "Посмотреть тарифы и Premium: <code>/pro</code>\n"
-        "Инструкция и помощь: <code>/help</code>\n\n"
+        "🚀 <b>PM Digest</b> — ежедневные PM-отчёты за 5 минут.\n\n"
+        "<b>Как работает:</b>\n"
+        "1. Пишите апдейты текстом в Telegram или Mini App.\n"
+        "2. Бот раскладывает их по проектам, планам, рискам и блокерам.\n"
+        "3. Вы проверяете черновик и отправляете себе или руководителю.\n\n"
+        "🎙 <i>Голосовые заметки и AI-редактор доступны в PRO.</i>\n\n"
+        "Откройте Mini App, чтобы добавить заметки и собрать отчёт.\n\n"
         f"<i>PM Digest · {escape(_app_version)}</i>"
     )
     url = _mini_app_url(_settings(context))
@@ -205,8 +202,6 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             )
     else:
         await _reply_html(update.message, text, reply_markup=markup)
-        
-    await _maybe_send_mini_app_entry(update, context, user)
 
 async def cmd_buy(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not update.effective_chat or not update.effective_user or not update.message:

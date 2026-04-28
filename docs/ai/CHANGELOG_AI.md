@@ -245,6 +245,33 @@ The `Project.aliases` column already supports any list of strings; no schema cha
 
 ---
 
+## 2026-04-28 — v2.25.0: Text-first / FREE–PRO copy positioning (Step 30A)
+
+**Task:** Landing and bot copy over-emphasized voice as a default FREE feature, creating wrong expectations. Repositioned to: FREE = text notes + project recognition + draft report; PRO = voice + AI editor; TEAM = shared projects + team workflow.
+
+**Files changed:**
+- `src/delivery_reports/web/templates/landing_v2.html`:
+  - `<meta description>` — updated to "FREE: текстовые заметки. PRO: voice и AI-редактор."
+  - **Hero**: h1 → "Ежедневные PM-отчёты без вечернего хаоса"; sub → "Пишите апдейты в течение дня — PM Digest сам разложит их по проектам…"; added `<p>FREE: текстовые заметки. PRO: voice и AI-редактор.</p>`.
+  - **Phone mockup chat**: bot greeting → "Пришлите апдейт текстом — я разложу его по проектам"; voice waveform mock replaced with a text user message.
+  - **Testimonial**: "диктую голосовые заметки" → "добавляю короткие апдейты в течение дня — вечером получаю готовый черновик."
+  - **Step 01**: icon 🎙️ → ✏️; title "Пишите или диктуете заметки" → "Пишите апдейты текстом"; desc — notes Voice is PRO.
+  - **Features section** sub: removed "Голос" from the opener; added "Voice — в PRO."
+  - **Feature card "Voice → text"** — was FREE → is now **PRO** card with title "Voice → текст". New FREE card "Текст → отчёт" (✏️) introduced in its place.
+  - **New section "Почему не просто ChatGPT/Gemini?"** inserted before Security section explaining persistent context (projects, aliases, templates, history).
+  - **Demo modal** initial step title "Заметка или голос" → "Апдейт текстом"; desc notes Voice is PRO.
+- `src/delivery_reports/web/static/v2/v2_ui.js` — `DEMO_STEPS[0]`: ico ✏️, title "Апдейт текстом", desc includes "Voice — в PRO." `DEMO_STEPS[1]`: title "Разложит по проектам" (was "Парсинг и структура").
+- `src/delivery_reports/bot_app.py` — `/start` message rewritten: concise text-first welcome ("Пишите апдейты текстом…"), explicit "🎙 Голосовые заметки и AI-редактор доступны в PRO." line. Removed redundant `_maybe_send_mini_app_entry` follow-up call (the inline Mini App button already covers it).
+- `src/delivery_reports/web/templates/dashboard_v2.html` — onboarding step 1: "текстом здесь или voice в Telegram" → "текстом здесь или в Telegram. Voice доступен в PRO."; empty-state copy updated to remove voice-as-default; voice callout title/desc updated to label voice as PRO.
+- `src/delivery_reports/config.py` — `app_version` v2.24.5 → v2.25.0 (minor: user-visible copy/positioning change).
+- `tests/test_copy_positioning.py` — **new** file with 8 tests covering: landing no longer contains "заметку или голосовое"; landing contains "FREE: текстовые заметки" and PRO; hero sub is text-first; Voice card tagged PRO not FREE; step 01 updated; testimonial updated; ChatGPT section present; /start is text-first with PRO voice note.
+
+**Verification:** `python -m compileall src/delivery_reports` ✓ · `pytest -q` 131 passed.
+
+**Rollback notes:** Template + JS + config copy changes only. No routes, DB, auth, or payments touched. Revert by restoring the previous landing/dashboard HTML, `v2_ui.js` DEMO_STEPS, bot_app `/start` text, and bumping `app_version` back to v2.24.5.
+
+---
+
 ## 2026-04-28 — v2.23.2: Prevent failed voice transcription from polluting reports (Step 26)
 
 **Task:** Failed voice transcriptions were saved as technical garbage notes (`voice-note: transcription failed; file_id=...`), polluting the dashboard, inbox, and generated drafts. This step silences that path entirely.
