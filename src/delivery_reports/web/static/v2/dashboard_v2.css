@@ -2529,3 +2529,110 @@ details.v2-inbox-more[open] .v2-inbox-more-summary::before { content: "▾"; }
   .v2-inbox-bind-btn { width: 100%; justify-content: center; }
 }
 /* PMD:V2:INBOX_BIND:end ─────────────────────────────── */
+
+
+/* PMD:V2:DRAFT_READABILITY:start ─────────────────────────
+   Step 28 — Make draft text high-contrast and readable across
+   all themes (dark-lime, light-lime, wave-blue). The paper
+   used translucent var(--surface) which let the animated
+   canvas bleed through. We promote it to --surface-strong
+   and remove the gradient overlay that was washing out text.
+   ──────────────────────────────────────────────────────── */
+.v2-draft-paper,
+.v2-draft-paper.v2-draft-paper {
+  background: var(--surface-strong) !important;
+  color: var(--text) !important;
+  font-weight: 450;
+  letter-spacing: 0.005em;
+  text-shadow: none;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05),
+              0 6px 24px rgba(0,0,0,0.10);
+}
+body[data-theme="dark-lime"] .v2-draft-paper {
+  color: #f5f7f1 !important;
+}
+body[data-theme="wave-blue"] .v2-draft-paper {
+  color: #0e1a2e !important;
+}
+body[data-theme="light-lime"] .v2-draft-paper {
+  color: #0c1410 !important;
+}
+/* PMD:V2:DRAFT_READABILITY:end ───────────────────────── */
+
+
+/* PMD:V2:STEP28_TEMPLATE_HELP:start ──────────────────────
+   Step 28 — Template helper text + onboarding box.
+   ──────────────────────────────────────────────────────── */
+.v2-template-help {
+  display: block;
+  margin: 4px 0 0 0;
+  padding: 8px 12px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text2);
+  background: var(--surface);
+  border: 1px dashed var(--border2);
+  border-radius: 8px;
+}
+.v2-template-help b { color: var(--text); font-weight: 600; }
+
+.v2-onboarding {
+  margin: 0 0 14px;
+  padding: 14px 18px;
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  border-radius: 12px;
+}
+.v2-onboarding[hidden] { display: none !important; }
+.v2-onboarding-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.v2-onboarding-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+.v2-onboarding-close {
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--muted);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.v2-onboarding-close:hover { color: var(--text); border-color: var(--text2); }
+.v2-onboarding-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.v2-onboarding-list li {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--text2);
+  border: 1px solid var(--border);
+}
+.v2-onboarding-list b {
+  display: block;
+  color: var(--text);
+  font-weight: 700;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+@media (max-width: 760px) {
+  .v2-onboarding-list { grid-template-columns: 1fr; }
+}
+/* PMD:V2:STEP28_TEMPLATE_HELP:end ─────────────────────── */

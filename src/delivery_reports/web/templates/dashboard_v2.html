@@ -171,6 +171,34 @@
         </div>
       </div>
 
+      <!-- ── A2. Onboarding 3-step guide (localStorage-hideable) ─ -->
+      <section class="v2-onboarding" id="v2-onboarding" aria-label="Как собрать отчёт">
+        <div class="v2-onboarding-head">
+          <div class="v2-onboarding-title">📘 Как собрать отчёт за 3 шага</div>
+          <button type="button" class="v2-onboarding-close" id="v2-onboarding-close" aria-controls="v2-onboarding">
+            Скрыть подсказку
+          </button>
+        </div>
+        <ol class="v2-onboarding-list">
+          <li><b>1. Заметки</b>Добавьте заметки — текстом здесь или voice в Telegram.</li>
+          <li><b>2. Проекты</b>Если бот не понял проект, привяжите заметку в inbox.</li>
+          <li><b>3. Черновик</b>Выберите шаблон, пересоберите, отправьте себе и зафиксируйте финал.</li>
+        </ol>
+      </section>
+      <script>
+        (function(){
+          var key = "pmd:onboarding-hidden:v1";
+          var box = document.getElementById("v2-onboarding");
+          var btn = document.getElementById("v2-onboarding-close");
+          if (!box || !btn) return;
+          try { if (localStorage.getItem(key) === "1") box.hidden = true; } catch(e){}
+          btn.addEventListener("click", function(){
+            box.hidden = true;
+            try { localStorage.setItem(key, "1"); } catch(e){}
+          });
+        })();
+      </script>
+
       <!-- ── B. Status strip ─────────────────────────────────── -->
       <div class="v2-status-strip" aria-label="Статус сегодня">
         <span class="v2-status-chip {% if summary.notes_count > 0 %}chip-ok{% else %}chip-neutral{% endif %}">
@@ -281,6 +309,12 @@
                 <button type="submit" class="v2-btn ghost v2-btn-xs">Применить</button>
               </form>
             </div>
+            <div class="v2-template-help" aria-live="polite">
+              <b>Баланс</b> — полный отчёт: сделано, планы, риски, вопросы.<br/>
+              <b>Только главное</b> — короткая версия для быстрого чтения.<br/>
+              <b>Для руководителя</b> — сначала риски, блокеры, решения.<br/>
+              <b>Для команды</b> — рабочий порядок: сделано → план → что мешает.
+            </div>
           </div>
 
           {% if draft_plain %}
@@ -383,19 +417,19 @@
           {% if draft_plain %}
           <form method="post" action="/draft/revise" style="display:contents;">
             <input type="hidden" name="instruction" value="concise" />
-            <button type="submit" class="v2-btn ghost v2-ai-btn" title="Сократить и убрать лишнее">
+            <button type="submit" class="v2-btn ghost v2-ai-btn" title="Уберёт лишние детали, оставит главное.">
               <span class="v2-ai-btn-ico">✂</span> Сделать короче
             </button>
           </form>
           <form method="post" action="/draft/revise" style="display:contents;">
             <input type="hidden" name="instruction" value="executive" />
-            <button type="submit" class="v2-btn ghost v2-ai-btn" title="Executive style: сухо, по делу, для руководства">
-              <span class="v2-ai-btn-ico">📊</span> Executive style
+            <button type="submit" class="v2-btn ghost v2-ai-btn" title="Сделает акцент на рисках, решениях и следующих шагах.">
+              <span class="v2-ai-btn-ico">📊</span> Для руководителя
             </button>
           </form>
           <form method="post" action="/draft/revise" style="display:contents;">
             <input type="hidden" name="instruction" value="risk_focus" />
-            <button type="submit" class="v2-btn ghost v2-ai-btn" title="Подчеркнуть риски и блокеры">
+            <button type="submit" class="v2-btn ghost v2-ai-btn" title="Найдёт риски и блокеры в черновике.">
               <span class="v2-ai-btn-ico">⚠</span> Выделить риски
             </button>
           </form>
@@ -404,7 +438,7 @@
             <span class="v2-ai-btn-ico">✂</span> Сделать короче
           </button>
           <button type="button" class="v2-btn ghost v2-ai-btn v2-btn-disabled" disabled aria-disabled="true" title="Сначала соберите черновик">
-            <span class="v2-ai-btn-ico">📊</span> Executive style
+            <span class="v2-ai-btn-ico">📊</span> Для руководителя
           </button>
           <button type="button" class="v2-btn ghost v2-ai-btn v2-btn-disabled" disabled aria-disabled="true" title="Сначала соберите черновик">
             <span class="v2-ai-btn-ico">⚠</span> Выделить риски
@@ -513,7 +547,7 @@
             </div>
           </form>
           {% else %}
-          <p class="v2-inbox-no-candidates">Сначала добавьте проект через форму заметки ниже.</p>
+          <p class="v2-inbox-no-candidates">Сначала создайте проект в Super Admin или добавьте проект в форме заметки.</p>
           {% endif %}
         </div>
         {% endfor %}

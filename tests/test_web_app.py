@@ -281,6 +281,44 @@ class WebAppTests(unittest.TestCase):
             dashboard.text,
         )
 
+    # ── Step 28 — guided MVP polish (onboarding + helper text + AI rail labels) ─
+    def test_v2_dashboard_renders_onboarding_and_template_help(self) -> None:
+        v2_client = self._build_v2_client()
+        self._authenticate(v2_client, user_id=42, username="grafkin", full_name="Анатолий Графкин")
+
+        dashboard = v2_client.get("/dashboard")
+        self.assertEqual(dashboard.status_code, 200)
+        # Onboarding 3-step block.
+        self.assertIn('id="v2-onboarding"', dashboard.text)
+        self.assertIn("Как собрать отчёт за 3 шага", dashboard.text)
+        self.assertIn("Скрыть подсказку", dashboard.text)
+        self.assertIn("pmd:onboarding-hidden:v1", dashboard.text)
+        # Template helper text — short explanations under the select.
+        self.assertIn("v2-template-help", dashboard.text)
+        self.assertIn("Баланс", dashboard.text)
+        self.assertIn("Только главное", dashboard.text)
+        self.assertIn("Для руководителя", dashboard.text)
+        self.assertIn("Для команды", dashboard.text)
+
+    def test_v2_dashboard_ai_rail_uses_russian_executive_label(self) -> None:
+        v2_client = self._build_v2_client()
+        self._authenticate(v2_client, user_id=42, username="grafkin", full_name="Анатолий Графкин")
+        # Build a draft so live AI buttons render (they're hidden in empty state).
+        v2_client.post(
+            "/notes",
+            data={"project_name": "DC701", "done_text": "релиз готов", "action": "save_build"},
+            follow_redirects=True,
+        )
+
+        dashboard = v2_client.get("/dashboard")
+        self.assertEqual(dashboard.status_code, 200)
+        # English label gone; Russian label and explanatory tooltips in place.
+        self.assertNotIn("Executive style", dashboard.text)
+        self.assertIn("Для руководителя", dashboard.text)
+        self.assertIn("Уберёт лишние детали, оставит главное.", dashboard.text)
+        self.assertIn("Сделает акцент на рисках, решениях и следующих шагах.", dashboard.text)
+        self.assertIn("Найдёт риски и блокеры в черновике.", dashboard.text)
+
     def test_inbox_resolve_post_still_binds_note_to_project(self) -> None:
         self._authenticate(self.client, user_id=42, username="grafkin", full_name="Анатолий Графкин")
         self.client.post(

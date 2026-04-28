@@ -152,6 +152,29 @@ The `Project.aliases` column already supports any list of strings; no schema cha
 
 ---
 
+## 2026-04-28 — v2.24.2: Guided MVP polish (Step 28)
+
+**Task:** New users found the workflow hard to follow: dark/wave themes washed out the draft, the inbox bind form wasn't obvious, template names had no meaning, "Executive style" was English-only, and there was no quick "how to" guide.
+
+**Files changed:**
+- `src/delivery_reports/web/static/v2/dashboard_v2.css` — added `PMD:V2:DRAFT_READABILITY` block: draft paper now uses `--surface-strong` (opaque), drops the gradient overlay, adds `backdrop-filter: blur(6px)` and per-theme high-contrast text colors (`#f5f7f1` dark-lime, `#0e1a2e` wave-blue, `#0c1410` light-lime). Added `PMD:V2:STEP28_TEMPLATE_HELP` styles for `.v2-template-help` (helper card under the template select) and the `.v2-onboarding` 3-step block (responsive grid that collapses on mobile).
+- `src/delivery_reports/web/templates/dashboard_v2.html` — added the onboarding `<section id="v2-onboarding">` with title "Как собрать отчёт за 3 шага", three numbered steps, and a "Скрыть подсказку" button wired to localStorage key `pmd:onboarding-hidden:v1` via inline IIFE (no backend). Added `.v2-template-help` block under the template select with one-line explanations for each of the 4 templates. Renamed AI rail button **"Executive style" → "Для руководителя"**; tooltips updated to the requested copy ("Уберёт лишние детали, оставит главное.", "Сделает акцент на рисках, решениях и следующих шагах.", "Найдёт риски и блокеры в черновике."). Inbox empty-state copy clarified: "Сначала создайте проект в Super Admin или добавьте проект в форме заметки."
+- `src/delivery_reports/config.py` — `app_version` v2.24.1 → v2.24.2 (patch: UX/copy polish, no schema or routes touched).
+- `tests/test_web_app.py` — 2 new tests: dashboard renders the onboarding block + template help with all 4 template names; AI rail uses the Russian "Для руководителя" label and the new tooltip copy (English "Executive style" gone).
+
+**Reason:** Reduce time-to-first-report for new users; make the dark/wave themes usable; explain template behavior in-context.
+
+**What to manually verify:**
+- Switch theme to **wave-blue** and **dark-lime** — draft paper text must be high-contrast, not faded.
+- Click **"Скрыть подсказку"** on the onboarding block — it disappears and stays hidden after reload (clear `localStorage` key `pmd:onboarding-hidden:v1` to bring it back).
+- In the draft header, confirm the helper card lists all four templates with explanations.
+- AI rail shows **"Для руководителя"** instead of "Executive style" in both the live (with draft) and disabled (empty) states.
+- Open an inbox card with no candidates: copy reads "Сначала создайте проект в Super Admin или добавьте проект в форме заметки."
+
+**Rollback notes:** All changes are template/CSS/copy + a single config line. No routes, payments, DB, or auth touched. Revert by undoing the template + CSS additions and bumping `app_version` back to v2.24.1.
+
+---
+
 ## 2026-04-28 — v2.23.2: Prevent failed voice transcription from polluting reports (Step 26)
 
 **Task:** Failed voice transcriptions were saved as technical garbage notes (`voice-note: transcription failed; file_id=...`), polluting the dashboard, inbox, and generated drafts. This step silences that path entirely.
