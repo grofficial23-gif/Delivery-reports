@@ -109,9 +109,9 @@ body[data-theme="light-lime"] {
   --status-critical-bg: rgba(204, 26, 26, 0.08);
   --status-critical-border: rgba(204, 26, 26, 0.28);
   /* Canvas background (v2_ui.js) */
-  --c-dot: rgba(0, 200, 120, 0.28);
-  --c-line: rgba(0, 200, 120, 0.1);
-  --c-ambient: rgba(124, 255, 0, 0.16);
+  --c-dot: rgba(0, 200, 120, 0.52);
+  --c-line: rgba(0, 200, 120, 0.20);
+  --c-ambient: rgba(124, 255, 0, 0.30);
 }
 
 body[data-theme="wave-blue"] {
@@ -148,7 +148,7 @@ body[data-theme="wave-blue"] {
   --status-critical-bg: rgba(204, 26, 26, 0.08);
   --status-critical-border: rgba(204, 26, 26, 0.26);
   /* Canvas background (v2_ui.js) */
-  --c-dot: rgba(47, 125, 255, 0.3);
-  --c-line: rgba(47, 125, 255, 0.1);
-  --c-ambient: rgba(0, 200, 232, 0.16);
+  --c-dot: rgba(47, 125, 255, 0.52);
+  --c-line: rgba(47, 125, 255, 0.22);
+  --c-ambient: rgba(0, 200, 232, 0.28);
 }

@@ -71,29 +71,48 @@
 
   // ---------------------------------------------------------------------------
   // Background canvas — dots + proximity lines
-  // Identical logic to prototype; reads --c-dot / --c-line / --c-ambient.
+  // Reads --c-dot / --c-line / --c-ambient from CSS; falls back to hardcoded
+  // values so animation is visible even when CSS custom properties are
+  // unavailable (Windows Chromium, Edge Legacy).
   // ---------------------------------------------------------------------------
   var canvas, ctx, W, H, rafId = 0, dots = [];
   var cDot = '', cLine = '', cAmb = '';
-  var REDUCE = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Wrap in try-catch: window.matchMedia can throw on some Windows browsers.
+  var REDUCE = false;
+  try { REDUCE = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) {}
 
   function cssv(name) {
-    return getComputedStyle(document.body).getPropertyValue(name).trim();
+    try {
+      return getComputedStyle(document.body).getPropertyValue(name).trim();
+    } catch (_) { return ''; }
   }
 
+  // Per-theme hardcoded fallbacks used when CSS custom properties return ''
+  // (e.g. older Chromium on Windows that doesn't support CSS vars in canvas).
+  var THEME_FALLBACKS = {
+    'dark-lime':  { dot: 'rgba(163,230,53,0.58)',  line: 'rgba(163,230,53,0.16)',  amb: 'rgba(163,230,53,0.22)' },
+    'light-lime': { dot: 'rgba(0,200,120,0.52)',   line: 'rgba(0,200,120,0.20)',   amb: 'rgba(124,255,0,0.30)'  },
+    'wave-blue':  { dot: 'rgba(47,125,255,0.52)',  line: 'rgba(47,125,255,0.22)',  amb: 'rgba(0,200,232,0.28)'  },
+  };
+
   function updateCanvasColors() {
-    cDot  = cssv('--c-dot');
-    cLine = cssv('--c-line');
-    cAmb  = cssv('--c-ambient');
+    var theme = (document.body && document.body.dataset.theme) || 'dark-lime';
+    var fb = THEME_FALLBACKS[theme] || THEME_FALLBACKS['dark-lime'];
+    cDot  = cssv('--c-dot')     || fb.dot;
+    cLine = cssv('--c-line')    || fb.line;
+    cAmb  = cssv('--c-ambient') || fb.amb;
     buildDots();
   }
 
   function buildDots() {
-    var theme   = document.body.dataset.theme;
+    if (!W || !H) return;
+    var theme   = (document.body && document.body.dataset.theme) || 'dark-lime';
     var dark    = theme === 'dark-lime';
     var ltLime  = theme === 'light-lime';
-    var density = dark ? 10000 : (ltLime ? 12000 : 18000);
-    var minN    = dark ? 58 : (ltLime ? 52 : 36);
+    // Light themes use higher density (smaller area per dot) so more are visible.
+    var density = dark ? 10000 : (ltLime ? 9000 : 11000);
+    var minN    = dark ? 58 : (ltLime ? 60 : 52);
     var n = Math.max(minN, Math.floor((W * H) / density));
     dots = [];
     for (var i = 0; i < n; i++) {
@@ -102,16 +121,19 @@
         y:  Math.random() * H,
         vx: (Math.random() - 0.5) * 0.30,
         vy: (Math.random() - 0.5) * 0.20,
-        r:  dark ? (1.1 + Math.random() * 1.7) : (0.8 + Math.random() * 1.3),
-        accent: Math.random() < (dark ? 0.30 : (ltLime ? 0.28 : 0.18)),
-        alpha:  dark   ? (0.32 + Math.random() * 0.46)
-              : ltLime ? (0.26 + Math.random() * 0.36)
-              :           (0.14 + Math.random() * 0.22),
+        r:  dark ? (1.1 + Math.random() * 1.7) : (0.9 + Math.random() * 1.5),
+        accent: Math.random() < (dark ? 0.30 : (ltLime ? 0.32 : 0.24)),
+        // Light themes need significantly higher alpha to be visible on Windows
+        // displays (gamma/contrast difference vs macOS Retina).
+        alpha: dark   ? (0.32 + Math.random() * 0.46)
+             : ltLime ? (0.42 + Math.random() * 0.42)
+             :           (0.32 + Math.random() * 0.38),
       });
     }
   }
 
   function resizeCanvas() {
+    if (!canvas || !ctx) return;
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
     W = window.innerWidth;
     H = window.innerHeight;
@@ -121,41 +143,45 @@
     updateCanvasColors();
   }
 
-  var LINE_D = 170;
+  var LINE_D = 180;
 
   function drawFrame() {
+    if (!canvas || !ctx || !W || !H) return;
     ctx.clearRect(0, 0, W, H);
 
-    // Light-lime: subtle grid
-    if (document.body.dataset.theme === 'light-lime') {
+    var th     = (document.body && document.body.dataset.theme) || 'dark-lime';
+    var isDark = th === 'dark-lime';
+    var isLtLm = th === 'light-lime';
+
+    // Light-lime: subtle grid (also drawn in reduced-motion static state).
+    if (isLtLm) {
       ctx.globalAlpha = 1;
-      ctx.strokeStyle = 'rgba(72, 108, 42, 0.092)';
-      ctx.lineWidth = 0.5;
+      ctx.strokeStyle = 'rgba(72, 108, 42, 0.11)';
+      ctx.lineWidth   = 0.6;
       var gs = 44;
-      for (var x = gs; x < W; x += gs) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+      for (var gx = gs; gx < W; gx += gs) {
+        ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke();
       }
-      for (var y = gs; y < H; y += gs) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+      for (var gy = gs; gy < H; gy += gs) {
+        ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke();
       }
     }
 
-    // Move dots
-    for (var i = 0; i < dots.length; i++) {
-      var d = dots[i];
-      d.x += d.vx; d.y += d.vy;
-      if (d.x < -4)    d.x = W + 4;
-      if (d.x > W + 4) d.x = -4;
-      if (d.y < -4)    d.y = H + 4;
-      if (d.y > H + 4) d.y = -4;
+    // Move dots (skipped when REDUCE = true, so static frame stays).
+    if (!REDUCE) {
+      for (var i = 0; i < dots.length; i++) {
+        var d = dots[i];
+        d.x += d.vx; d.y += d.vy;
+        if (d.x < -4)    d.x = W + 4;
+        if (d.x > W + 4) d.x = -4;
+        if (d.y < -4)    d.y = H + 4;
+        if (d.y > H + 4) d.y = -4;
+      }
     }
 
-    // Lines
-    var th = document.body.dataset.theme;
-    var darkLine  = th === 'dark-lime';
-    var ltLimeLine = th === 'light-lime';
-    ctx.lineWidth = darkLine ? 0.7 : (ltLimeLine ? 0.55 : 0.5);
-    var lineAlphaMult = darkLine ? 0.30 : (ltLimeLine ? 0.22 : 0.14);
+    // Lines — higher alpha multiplier for light themes so they're visible.
+    ctx.lineWidth = isDark ? 0.7 : (isLtLm ? 0.65 : 0.60);
+    var lineAlphaMult = isDark ? 0.30 : (isLtLm ? 0.32 : 0.24);
     for (var ii = 0; ii < dots.length; ii++) {
       for (var jj = ii + 1; jj < dots.length; jj++) {
         var dx = dots[ii].x - dots[jj].x;
@@ -174,12 +200,10 @@
     ctx.globalAlpha = 1;
 
     // Dots
-    var isDark = document.body.dataset.theme === 'dark-lime';
-    var isLtLm = document.body.dataset.theme === 'light-lime';
     for (var k = 0; k < dots.length; k++) {
       var dot = dots[k];
       if (dot.accent) {
-        ctx.shadowBlur  = isDark ? 14 : (isLtLm ? 8 : 5);
+        ctx.shadowBlur  = isDark ? 14 : (isLtLm ? 10 : 7);
         ctx.shadowColor = cDot;
       }
       ctx.beginPath();
@@ -191,16 +215,24 @@
     }
     ctx.globalAlpha = 1;
 
+    // REDUCE: draw once (static frame) and stop. Otherwise loop via rAF.
     if (!REDUCE && !document.hidden) rafId = requestAnimationFrame(drawFrame);
   }
 
-  function startCanvas() { if (REDUCE) { drawFrame(); return; } if (!rafId) rafId = requestAnimationFrame(drawFrame); }
-  function stopCanvas()  { if (rafId) { cancelAnimationFrame(rafId); rafId = 0; } }
+  function startCanvas() {
+    if (!canvas || !ctx) return;
+    // Reduced motion: draw one static frame with dots/grid, no animation.
+    if (REDUCE) { drawFrame(); return; }
+    if (!rafId) rafId = requestAnimationFrame(drawFrame);
+  }
+  function stopCanvas() { if (rafId) { cancelAnimationFrame(rafId); rafId = 0; } }
 
   function initCanvas() {
     canvas = document.getElementById('v2-bg-canvas');
     if (!canvas) return;
-    ctx = canvas.getContext('2d');
+    // Guard: getContext can return null in sandboxed iframes.
+    try { ctx = canvas.getContext('2d'); } catch (_) {}
+    if (!ctx) return;
 
     document.addEventListener('visibilitychange', function () {
       document.hidden ? stopCanvas() : startCanvas();

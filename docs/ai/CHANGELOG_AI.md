@@ -216,6 +216,35 @@ The `Project.aliases` column already supports any list of strings; no schema cha
 
 ---
 
+## 2026-04-28 — v2.24.5: Canvas animation visible on Windows (Step 29)
+
+**Problem:** On Windows the constellation background was invisible or very faint, especially in light/wave themes. Root causes: `inset: 0` unsupported in Edge Legacy; `--c-dot/--c-line/--c-ambient` opacities too low for Windows gamma; `window.matchMedia` call unguarded; `getContext('2d')` unguarded; CSS custom property reads could return empty string.
+
+**Files changed:**
+- `src/delivery_reports/web/static/v2/themes.css` — bumped `light-lime` canvas colors: dot `0.28→0.52`, line `0.10→0.20`, ambient `0.16→0.30`. Bumped `wave-blue`: dot `0.30→0.52`, line `0.10→0.22`, ambient `0.16→0.28`.
+- `src/delivery_reports/web/static/v2/dashboard_v2.css` and `landing_v2.css` — added explicit `top:0; right:0; bottom:0; left:0` before `inset: 0` as fallback for browsers that don't support `inset`.
+- `src/delivery_reports/web/static/v2/v2_ui.js` — Step 29 hardening:
+  - `REDUCE` initialization wrapped in `try/catch`.
+  - `cssv()` wrapped in `try/catch`.
+  - Added `THEME_FALLBACKS` map — when CSS custom props return '' (older Chromium), `updateCanvasColors()` fills `cDot/cLine/cAmb` from hardcoded values that match the updated `themes.css` values.
+  - `buildDots()`: dot density increased for light themes (`9000/11000` vs `12000/18000`), alpha raised (`0.42–0.84` light-lime, `0.32–0.70` wave-blue, was `0.26–0.62` / `0.14–0.36`).
+  - `drawFrame()`: `lineAlphaMult` raised for light themes (`0.32` light-lime, `0.24` wave-blue, was `0.22`/`0.14`); grid opacity raised `0.092→0.11`; dot shadow radius bumped (`10/7` vs `8/5`).
+  - `resizeCanvas()` and `drawFrame()` guard early-exit when `!canvas || !ctx || !W || !H`.
+  - `initCanvas()`: `getContext('2d')` wrapped in `try/catch` and null-guarded.
+  - `REDUCE=true` path: dot movement skipped (static frame), ensuring a visible non-animated state with dots+grid on Windows accessibility settings.
+- `src/delivery_reports/config.py` — `app_version` v2.24.4 → v2.24.5 (patch: JS/CSS visual fix, no backend changes).
+
+**Verification:** `python -m compileall src/delivery_reports` ✓ · `pytest -q` 123 passed.
+
+**What to manually verify:**
+- Windows Chrome/Edge: open landing page and dashboard in **light-lime** and **wave-blue** themes — dots and subtle proximity lines should be clearly visible but not overpowering.
+- Windows with "Reduce motion" enabled: static dots + light-lime grid visible (no animation).
+- macOS/mobile: dark-lime unchanged visually; light themes slightly brighter dots.
+
+**Rollback notes:** Static files only + `app_version`. Revert by restoring previous `themes.css` opacity values and the previous `v2_ui.js`; bump `app_version` back to v2.24.4.
+
+---
+
 ## 2026-04-28 — v2.23.2: Prevent failed voice transcription from polluting reports (Step 26)
 
 **Task:** Failed voice transcriptions were saved as technical garbage notes (`voice-note: transcription failed; file_id=...`), polluting the dashboard, inbox, and generated drafts. This step silences that path entirely.
