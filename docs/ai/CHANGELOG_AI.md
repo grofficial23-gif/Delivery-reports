@@ -245,6 +245,24 @@ The `Project.aliases` column already supports any list of strings; no schema cha
 
 ---
 
+## 2026-04-28 — v2.25.4: Bulk inbox HTML5 validation hotfix (Step 32B)
+
+**Task:** Fix native browser validation blocking bulk submit ("Выберите один из пунктов списка") caused by invalid nested forms: per-card `v2-inbox-bind` forms lived inside the bulk form, so the browser treated empty `required` per-card selects as part of the bulk submit.
+
+**Files changed:**
+- `src/delivery_reports/web/templates/dashboard_v2.html`
+  - Bulk form (`id="v2-bulk-inbox-form"`) now contains only the toolbar (project select + submit + master checkbox).
+  - Inbox card checkboxes use `form="v2-bulk-inbox-form"` so they still POST with bulk-resolve.
+  - Per-card `action="/inbox/{id}/resolve"` forms are siblings (never nested inside the bulk form).
+- `src/delivery_reports/web/static/v2/dashboard_v2.css`
+  - `.v2-bulk-inbox-form`: `display: contents` → `display: block; margin-bottom: 10px;` (form is a real wrapper again).
+- `src/delivery_reports/config.py` — `app_version` v2.25.3 → v2.25.4.
+- `tests/test_web_app.py` — `test_v2_bulk_form_not_nested_per_card_required_selects` (regex slice of bulk form: exactly one `required`, no `class="v2-inbox-bind"`, checkboxes have `form="v2-bulk-inbox-form"`).
+
+**Tests:** 145 passed (was 144), `compileall` clean.
+
+---
+
 ## 2026-04-28 — v2.25.3: Bulk inbox bind (Step 32)
 
 **Task:** Let users bind multiple inbox notes to a project in one action instead of one-by-one.

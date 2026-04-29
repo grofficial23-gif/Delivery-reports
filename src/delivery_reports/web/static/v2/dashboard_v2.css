@@ -2640,7 +2640,8 @@ body[data-theme="light-lime"] .v2-draft-paper {
 
 /* PMD:V2:STEP32_BULK_INBOX ────────────────────────────── */
 /* Step 32 — bulk bind toolbar + card checkboxes           */
-.v2-bulk-inbox-form { display: contents; }
+/* Bulk form wraps only the toolbar bar — checkboxes use form="v2-bulk-inbox-form". */
+.v2-bulk-inbox-form { display: block; margin-bottom: 10px; }
 
 .v2-bulk-bar {
   display: flex;

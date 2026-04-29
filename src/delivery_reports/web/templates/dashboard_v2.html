@@ -588,7 +588,10 @@
           </p>
         </div>
 
-        {# ── Step 32: Bulk bind form wraps all visible cards ── #}
+        {# ── Step 32 / 32B: Bulk form is ONLY the toolbar (no nested per-card forms). #}
+        {# Checkboxes use form="v2-bulk-inbox-form" so they submit with the bulk POST. #}
+        {% set inbox_visible = inbox_cards[:3] %}
+        {% set inbox_rest = inbox_cards[3:8] %}
         <form
           method="post"
           action="/inbox/bulk-resolve"
@@ -596,7 +599,6 @@
           class="v2-bulk-inbox-form"
           aria-label="Массовая привязка заметок к проекту"
         >
-          {# Bulk action bar (sticky at top, always visible) #}
           <div class="v2-bulk-bar" id="v2-bulk-bar">
             <label class="v2-bulk-bar-selectall">
               <input
@@ -608,22 +610,20 @@
               <span>Выбрать видимые</span>
             </label>
             {% if inbox_projects %}
-            <select name="project_name" class="v2-inbox-bind-select v2-bulk-select" required aria-label="Проект для привязки">
+            <select name="project_name" class="v2-inbox-bind-select v2-bulk-select" required aria-label="Проект для массовой привязки">
               <option value="" disabled selected>— выберите проект —</option>
               {% for project in inbox_projects %}
               <option value="{{ project.name }}">{{ project.name }}</option>
               {% endfor %}
             </select>
             {% else %}
-            <input type="text" name="project_name" class="v2-inbox-bind-select v2-bulk-select" placeholder="Введите название проекта" aria-label="Проект для привязки" required />
+            <input type="text" name="project_name" class="v2-inbox-bind-select v2-bulk-select" placeholder="Введите название проекта" aria-label="Проект для массовой привязки" required />
             {% endif %}
             <button type="submit" class="v2-btn primary v2-bulk-bind-btn">Привязать выбранные</button>
             <a href="#v2-project-setup" class="v2-inbox-new-project" title="Создать новый проект">+ Новый проект</a>
           </div>
+        </form>
 
-          {# Cards with checkboxes #}
-          {% set inbox_visible = inbox_cards[:3] %}
-          {% set inbox_rest = inbox_cards[3:8] %}
           {% for card in inbox_visible %}
           <div class="v2-inbox-card-v2">
             <div class="v2-inbox-card-head">
@@ -632,6 +632,7 @@
                   type="checkbox"
                   name="note_ids"
                   value="{{ card.note.id }}"
+                  form="v2-bulk-inbox-form"
                   class="v2-bulk-checkbox v2-bulk-note-cb"
                   aria-label="Выбрать заметку {{ card.note.id }}"
                 >
@@ -680,7 +681,6 @@
           </div>
           {% endfor %}
 
-          {# Collapsed "more" cards also get checkboxes for bulk selection #}
           {% if inbox_rest %}
           <details class="v2-inbox-more">
             <summary class="v2-inbox-more-summary">Показать ещё {{ inbox_rest | length }} заметок</summary>
@@ -693,6 +693,7 @@
                       type="checkbox"
                       name="note_ids"
                       value="{{ card.note.id }}"
+                      form="v2-bulk-inbox-form"
                       class="v2-bulk-checkbox v2-bulk-note-cb"
                       aria-label="Выбрать заметку {{ card.note.id }}"
                     >
@@ -740,7 +741,6 @@
             </div>
           </details>
           {% endif %}
-        </form>{# /v2-bulk-inbox-form #}
 
         {% if inbox_cards | length > 8 %}
         <p class="v2-inbox-overflow-note">

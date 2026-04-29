@@ -4,6 +4,7 @@ import dataclasses
 import hashlib
 import hmac
 import json
+import re
 import tempfile
 import time
 import unittest
@@ -487,6 +488,32 @@ class WebAppTests(unittest.TestCase):
         self.assertIn('id="v2-bulk-select-all"', dashboard.text)
         self.assertIn("Привязать выбранные", dashboard.text)
         self.assertIn("Выбрать видимые", dashboard.text)
+
+    def test_v2_bulk_form_not_nested_per_card_required_selects(self) -> None:
+        """Step 32B — bulk submit must not validate empty per-card selects (HTML5)."""
+        v2_client = self._build_v2_client()
+        self._authenticate(v2_client, user_id=42, username="grafkin", full_name="Анатолий Графкин")
+        for text in ["инбокс А", "инбокс Б"]:
+            v2_client.post("/notes", data={"text": text, "action": "save"}, follow_redirects=True)
+
+        dashboard = v2_client.get("/dashboard")
+        self.assertEqual(dashboard.status_code, 200)
+        html = dashboard.text
+        m = re.search(
+            r'<form[^>]*id=["\']v2-bulk-inbox-form["\'][^>]*>(.*?)</form>',
+            html,
+            re.DOTALL | re.IGNORECASE,
+        )
+        self.assertIsNotNone(m, "bulk inbox form block not found")
+        bulk_inner = m.group(1)
+        # Toolbar only: one required project field (select or text input).
+        self.assertEqual(bulk_inner.lower().count("required"), 1)
+        self.assertNotIn('class="v2-inbox-bind"', bulk_inner)
+        # Checkboxes associate with bulk form via form attribute (outside DOM subtree).
+        self.assertIn('form="v2-bulk-inbox-form"', html)
+        # Per-card bind controls still present with their own required selects.
+        self.assertGreaterEqual(html.count('class="v2-inbox-bind"'), 1)
+        self.assertRegex(html, r'<form[^>]*class="[^"]*v2-inbox-bind[^"]*"')
 
     def test_bulk_resolve_binds_multiple_notes(self) -> None:
         self._authenticate(self.client, user_id=42, username="grafkin", full_name="Анатолий Графкин")
