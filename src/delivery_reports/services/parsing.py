@@ -10,7 +10,7 @@ from .long_update_split import (
     looks_long_unstructured,
     split_long_update,
 )
-from .report_text_cleaner import clean_report_item_text
+from .report_text_cleaner import clean_report_item_text, pre_clean_incoming_report_text
 
 
 JIRA_LINK_RE = re.compile(r"https?://\S+/browse/[A-Z][A-Z0-9]+-\d+", re.IGNORECASE)
@@ -36,6 +36,7 @@ class ParsedNoteBlock:
 
 
 def parse_note_text(raw_text: str, projects: list[Project]) -> ParsedNote:
+    raw_text = pre_clean_incoming_report_text(raw_text)
     jira_links = _extract_jira_links(raw_text, projects)
     project_id, candidate_project_ids, needs_review = _detect_project(raw_text, projects)
     epic = _extract_epic(raw_text)
@@ -54,6 +55,7 @@ def parse_note_text(raw_text: str, projects: list[Project]) -> ParsedNote:
 
 
 def parse_note_blocks(raw_text: str, projects: list[Project]) -> list[ParsedNoteBlock]:
+    raw_text = pre_clean_incoming_report_text(raw_text)
     blocks = _split_into_blocks(raw_text, projects)
     if (
         len(blocks) == 1
@@ -327,7 +329,10 @@ def _split_by_intent(raw_text: str) -> tuple[str, str, str, str]:
             plan_lines.append(value)
             continue
         # Do not treat "проблема" alone as risk (explanatory "проблема в SDK…").
-        if any(token in lowered for token in ("риск", "блокер", "завис", "пауз")):
+        if any(token in lowered for token in ("блокер", "завис", "пауз")):
+            risk_lines.append(value)
+            continue
+        if _line_heuristic_suggests_risk(lowered):
             risk_lines.append(value)
             continue
         done_lines.append(value)
@@ -416,6 +421,17 @@ def _match_section_heading(value: str) -> tuple[str, str] | None:
 def _is_metadata_line(value: str) -> bool:
     lowered = value.strip().lower()
     return lowered.startswith(("дата:", "менеджер:", "руководитель:", "проект:", "эпик:"))
+
+
+def _line_heuristic_suggests_risk(lowered: str) -> bool:
+    """Whether a non-heading line should be bucketed into risk by fuzzy match.
+
+    Substring ``«риск»`` inside ``«риски»`` used to falsely fire on phrases like
+    «риски оценены» (meta-summary, not a project risk).
+    """
+    if re.search(r"\bриски?\s+оценен\w*\b", lowered):
+        return False
+    return bool(re.search(r"\bриск[иа]?\b", lowered))
 
 
 def _contains_only_metadata(lines: list[str]) -> bool:

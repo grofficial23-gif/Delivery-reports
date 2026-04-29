@@ -97,6 +97,7 @@ _STRONG_PLAN_PATTERNS: tuple["re.Pattern[str]", ...] = (
     re.compile(r"\bна\s+след\w+\b", re.IGNORECASE),
     re.compile(r"\bдоделать\b", re.IGNORECASE),
     re.compile(r"\bnext\s+(?:week|sprint)\b", re.IGNORECASE),
+    re.compile(r"\b(?:запросим|завед[ёе]м|заводим)\b", re.IGNORECASE),
 )
 
 _STRONG_DECISION_PATTERNS: tuple["re.Pattern[str]", ...] = (

@@ -5,11 +5,15 @@ Strips internal/synthetic prefixes that the parser injects ("вопрос —",
 Bank Dashboard:", "Блокер по X:", "Проект: …") so that the user-facing
 bullet contains only meaningful content.
 
+Also provides *pre-clean* for whole messages pasted from assistants
+(blockquote markdown, intro/meta lines, simple "Имя, привет." greetings).
+
 This module is *pure*: no DB, no IO, no external services.  It is the
 single source of truth for cleaning bullet text used by:
   • note_capture.render_saved_notes_message  (per-block bot reply)
   • draft_builder._render_bullets            (final daily draft)
   • report_presenter.build_note_preview      (dashboard previews)
+  • parsing.parse_note_blocks / parse_note_text  (incoming raw text)
 """
 from __future__ import annotations
 
@@ -68,6 +72,54 @@ _PROJECT_ONLY_LINE_RE = re.compile(
 
 # Bullet leaders: -, •, *, "1.", "1)"
 _BULLET_LEADER_RE = re.compile(r"^\s*(?:[-•*]|\d{1,2}[.)])\s+")
+
+# Assistant/chat-meta lines (substring match, case-insensitive).
+_ASSISTANT_META_SUBSTRINGS: tuple[str, ...] = (
+    "вот готовый",
+    "рабочий вариант сообщения",
+    "можно отправить",
+    "использовать как тезисы",
+    "такой текст сразу показывает",
+)
+
+_GREETING_PREFIX_RE = re.compile(
+    r"^\s*(?:[А-ЯЁ][а-яё\-]{1,40}|[A-Z][a-z\-]{1,40})\s*,\s*привет[.!]?\s*",
+    re.UNICODE | re.IGNORECASE,
+)
+
+
+def pre_clean_incoming_report_text(text: str) -> str:
+    """Remove assistant wrapper lines, markdown blockquotes/bold, and short greetings.
+
+    Applied to full raw messages before block splitting / intent parsing so
+    quoted Slack/Telegram markdown and ChatGPT intros do not land in drafts.
+    Idempotent for typical inputs.
+    """
+    if not text or not text.strip():
+        return text.strip() if text else ""
+    out_lines: list[str] = []
+    for raw in text.splitlines():
+        work = raw.strip("\r")
+        if not work.strip():
+            continue
+        # Peel Markdown blockquote and nested list markers (repeat).
+        for _ in range(6):
+            before = work
+            work = re.sub(r"^\s*>\s?", "", work, count=1)
+            work = re.sub(r"^\s*[*•\-]+\s+", "", work, count=1)
+            if work == before:
+                break
+        work = work.replace("**", "").strip()
+        if not work:
+            continue
+        row = work.lower()
+        if any(sub in row for sub in _ASSISTANT_META_SUBSTRINGS):
+            continue
+        work = _GREETING_PREFIX_RE.sub("", work, count=1).strip()
+        if not work:
+            continue
+        out_lines.append(work)
+    return "\n".join(out_lines)
 
 
 def clean_report_item_text(

@@ -39,6 +39,7 @@ def _projects() -> list[Project]:
         Project(7, 100, "Caller ID", "M", "L", _JIRA, ["Caller ID", "CallerID"], False),
         Project(8, 100, "DC701", "M", "L", _JIRA, ["DC701", "DEVOPS", "OM", "CREDITCOND"], False),
         Project(9, 100, "MRZ Reader", "M", "L", _JIRA, ["MRZ Reader", "MRZ"], False),
+        Project(10, 100, "MyID", "M", "L", _JIRA, ["MyID", "SDK MyID"], False),
     ]
 
 
@@ -189,6 +190,25 @@ class RealReportExamplesRegressionTests(unittest.TestCase):
         r_risk = risk_f.index("⚠️ Риски")
         r_done = risk_f.index("✅ Что сделано")
         self.assertLess(r_risk, r_done)
+
+    def test_assistant_markdown_meta_stripped(self) -> None:
+        body = self.examples["assistant_myid_markdown"]
+        notes = notes_from_example(body, self.projects)
+        draft = build_daily_draft(_TARGET, notes, self.projects, "M", "L")
+        lower = draft.lower()
+        self.assertNotIn("Вот готовый", draft)
+        self.assertNotIn("> *", draft)
+        self.assertNotIn("**", draft)
+        self.assertNotIn("Дмитрий", draft)
+        self.assertNotIn("Такой текст сразу", draft)
+        self.assertNotIn("⚠️ Риски", draft)
+        self.assertIn("MyID", draft)
+        self.assertIn("720", draft)
+        self.assertIn("не будем", lower)
+        self.assertIn("запросим", lower)
+        self.assertIn("вендор", lower)
+        self.assertIn("◆ Решение", draft)
+        self.assertIn("🧭 План", draft)
 
 
 if __name__ == "__main__":

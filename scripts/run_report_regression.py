@@ -49,6 +49,7 @@ def _projects() -> list[Project]:
         Project(7, 100, "Caller ID", "M", "L", _JIRA, ["Caller ID", "CallerID"], False),
         Project(8, 100, "DC701", "M", "L", _JIRA, ["DC701", "DEVOPS", "OM", "CREDITCOND"], False),
         Project(9, 100, "MRZ Reader", "M", "L", _JIRA, ["MRZ Reader", "MRZ"], False),
+        Project(10, 100, "MyID", "M", "L", _JIRA, ["MyID", "SDK MyID"], False),
     ]
 
 

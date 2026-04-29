@@ -261,6 +261,26 @@ The `Project.aliases` column already supports any list of strings; no schema cha
 
 ---
 
+## 2026-04-29 — v2.25.7: Strip assistant markdown/meta from report input (Step 36)
+
+**Task:** Remove ChatGPT-style intros, blockquote/list markdown (`>`, `*`, `**`) and simple “Имя, привет.” greetings before parsing so drafts keep only real PM content; stop treating neutral «риски оценены» as a fuzzy risk trigger; bias future «запросим / заводим» clauses toward plan in long-update classification.
+
+**Files changed:**
+- `src/delivery_reports/services/report_text_cleaner.py` — **new** `pre_clean_incoming_report_text()` (assistant/meta substring drop, repeated `>` + list-marker peel, bold removal, greeting prefix).
+- `src/delivery_reports/services/parsing.py` — run pre-clean at start of `parse_note_blocks` and `parse_note_text`; replace naive «риск» substring heuristic with `_line_heuristic_suggests_risk()` (word-boundary + exception for `риски? оценен…`).
+- `src/delivery_reports/services/long_update_split.py` — `_STRONG_PLAN_PATTERNS`: `запросим`, `заведём`/`заведем`, `заводим`.
+- `tests/fixtures/report_examples.txt` — **new** `assistant_myid_markdown` block.
+- `tests/test_real_report_examples.py` — MyID project + `test_assistant_markdown_meta_stripped`; project list extended.
+- `scripts/run_report_regression.py` — mirror MyID in `_projects()`.
+- `scripts/__init__.py` — **new** so `python -m scripts.run_report_regression` works from repo root.
+- `src/delivery_reports/config.py` — `app_version` v2.25.6 → v2.25.7.
+
+**Tests:** `python -m compileall src/delivery_reports scripts` · `pytest -q` · `python -m scripts.run_report_regression`.
+
+**Rollback notes:** Remove `pre_clean_incoming_report_text` calls and restore previous risk heuristic; set `app_version` back to v2.25.6.
+
+---
+
 ## 2026-04-29 — v2.25.6: Real-world report regression tests (Step 35)
 
 **Task:** Automate regression coverage for the parse → split → daily draft pipeline using representative «template»-style examples (no full megafixture), plus optional CLI smoke over the same file.
