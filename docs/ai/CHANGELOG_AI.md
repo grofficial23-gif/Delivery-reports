@@ -245,6 +245,22 @@ The `Project.aliases` column already supports any list of strings; no schema cha
 
 ---
 
+## 2026-04-29 — Step 34: Local SQLite backup/restore scripts (dev tooling)
+
+**Task:** Simple backup/restore for MVP testing when SQLite on Render Free / local can be wiped on deploy.
+
+**Files changed:**
+- `scripts/backup_db.py` — loads `load_settings()`, resolves `DB_PATH` (relative paths from repo root). If DB exists: `shutil.copy2` to `backups/delivery_reports_YYYYMMDD_HHMMSS.db` and `backups/delivery_reports_latest.db`. Optional `DELIVERY_REPORTS_BACKUP_DIR` overrides backup folder. Exit `0`; if DB missing, prints skip message and exits `0`.
+- `scripts/restore_db.py` — copies `delivery_reports_latest.db` to configured `DB_PATH`, creates parent dirs. Exit `1` if backup missing.
+- `.gitignore` — `data/*.db`, `data/*.db-*`, `backups/` (existing `data/` retained).
+- `tests/test_backup_restore_scripts.py` — subprocess tests: backup creates latest + timestamped; restore creates parent path; missing backup exits 1.
+
+**Product `APP_VERSION`:** unchanged (tooling only).
+
+**Tests:** 154 passed, `compileall` on `src/delivery_reports` + `scripts` clean.
+
+---
+
 ## 2026-04-28 — v2.25.5: False risk classification + cross-section dedup (Step 33)
 
 **Task:** Stop routing explanatory “проблема…” text into risks; tighten long-update decision vs risk; dedupe identical bullets across draft sections for one project.

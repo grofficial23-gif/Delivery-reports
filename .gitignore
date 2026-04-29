@@ -3,6 +3,11 @@
 
 # Local datasets and generated data
 data/
+data/*.db
+data/*.db-*
+
+# Local SQLite backups (scripts/backup_db.py)
+backups/
 
 # Python
 .venv/
