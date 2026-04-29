@@ -68,22 +68,24 @@
         <a href="#s1-features">Возможности</a>
         <a href="#s1-pricing">Тарифы</a>
         <a href="#s1-security">Безопасность</a>
+        <a href="#s1-faq-chatgpt">FAQ</a>
       </div>
 
       <div class="s1-nav-right">
         <!-- FREE themes: D/L. Wave blue (W) is locked: PRO-only, shown as a non-interactive pill INSIDE the switcher so it can never crowd the CTA. -->
         <div class="s1-theme-row">
           <div class="s1-theme-sw" aria-label="Темы оформления: тёмная, светлая, премиум-волна (PRO)">
-            <button class="s1-theme-btn" type="button" data-v2-theme-btn="dark-lime" title="Dark Lime — FREE">D</button>
-            <button class="s1-theme-btn" type="button" data-v2-theme-btn="light-lime" title="Light Lime — FREE">L</button>
+            <button class="s1-theme-btn s1-theme-btn--tip" type="button" data-v2-theme-btn="dark-lime" data-s1-tip="Тёмная тема Dark Lime — бесплатно" aria-label="Тёмная тема Dark Lime, бесплатно" title="Тёмная (D) · бесплатно"><span class="s1-theme-btn-letter">D</span><span class="s1-theme-btn-label">Тёмная</span></button>
+            <button class="s1-theme-btn s1-theme-btn--tip" type="button" data-v2-theme-btn="light-lime" data-s1-tip="Светлая тема Light Lime — бесплатно" aria-label="Светлая тема Light Lime, бесплатно" title="Светлая (L) · бесплатно"><span class="s1-theme-btn-letter">L</span><span class="s1-theme-btn-label">Светлая</span></button>
             <button
-              class="s1-theme-locked"
+              class="s1-theme-locked s1-theme-btn--tip"
               type="button"
               disabled
               aria-disabled="true"
-              title="Wave Blue — премиум-тема. Доступна на тарифе PRO."
+              data-s1-tip="Wave Blue — премиум-тема, доступна в тарифе PRO"
+              title="Wave Blue (W) только в PRO"
               aria-label="Премиум-тема Wave Blue, доступна в PRO"
-            >W<span class="s1-theme-locked-ico" aria-hidden="true">🔒</span></button>
+            ><span class="s1-theme-locked-top"><span class="s1-theme-btn-letter">W</span><span class="s1-theme-locked-ico" aria-hidden="true"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span></span><span class="s1-theme-btn-label s1-theme-btn-label--locked">PRO</span></button>
           </div>
         </div>
         {% if bot_url %}
@@ -114,9 +116,10 @@
         <p class="s1-sub">
           Пишите короткие апдейты в течение дня — PM Digest разложит их по проектам, планам, рискам и блокерам, соберёт черновик и отправит вам на проверку в Telegram.
         </p>
-        <p style="margin-top:10px;font-size:12.5px;color:var(--muted);">
-          FREE: текстовые заметки. PRO: voice и AI-редактор.
-        </p>
+        <div class="s1-hero-badges" aria-label="Тарифы в двух словах">
+          <span class="s1-hero-badge s1-hero-badge--free">FREE: текстовые заметки</span>
+          <span class="s1-hero-badge s1-hero-badge--pro">PRO: voice и AI-редактор</span>
+        </div>
 
         <div class="s1-actions">
           {% if bot_url %}
@@ -463,14 +466,20 @@
       </div>
     </div>
 
-    <!-- ── Why not ChatGPT ───────────────────────────────────────── -->
+    <!-- ── FAQ (ChatGPT) ─────────────────────────────────────────── -->
     <div class="s1-content">
-      <div class="s1-section" id="s1-why-not-gpt">
+      <div class="s1-section s1-section--faq" id="s1-faq-chatgpt">
         <div class="s1-sec-eyebrow">Часто спрашивают</div>
-        <h2 class="s1-sec-h2">А можно просто <mark>ChatGPT / Gemini?</mark></h2>
-        <div class="s1-sec-note" style="max-width:700px;font-size:14.5px;line-height:1.7;">
-          Можно — и ChatGPT отлично справится с разовым отчётом. Но каждый раз придётся заново объяснять: какие проекты, кому руководитель, какой формат и что считать риском.<br><br>
-          PM Digest уже настроен под ежедневные отчёты: проекты, шаблоны, история и формат черновика на месте. Вы просто добавляете апдейты, проверяете результат и отправляете.
+        <h2 class="s1-sec-h2 s1-faq-section-title">Ответы <mark>без воды</mark></h2>
+        <p class="s1-sec-sub s1-faq-intro">Сверните или разверните вопрос — всё на одной странице.</p>
+        <div class="s1-faq">
+          <details class="s1-faq-item s1-animate-in" open>
+            <summary class="s1-faq-summary">А можно просто ChatGPT / Gemini?</summary>
+            <div class="s1-faq-panel">
+              <p>Можно — и ChatGPT отлично справится с разовым отчётом. Но каждый раз придётся заново объяснять: какие проекты, кому руководитель, какой формат и что считать риском.</p>
+              <p>PM Digest уже настроен под ежедневные отчёты: проекты, шаблоны, история и формат черновика на месте. Вы просто добавляете апдейты, проверяете результат и отправляете.</p>
+            </div>
+          </details>
         </div>
       </div>
     </div>
@@ -481,24 +490,24 @@
         <div class="s1-sec-eyebrow">Безопасность</div>
         <h2 class="s1-sec-h2">Ваши данные <mark>под контролем</mark></h2>
         <div class="s1-security-grid">
-          <div class="s1-sec-trust">
-            <div class="s1-sec-trust-ico">🔒</div>
+          <div class="s1-sec-trust s1-animate-in">
+            <div class="s1-sec-trust-ico" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
             <div class="s1-sec-trust-label">Local-first ready</div>
           </div>
-          <div class="s1-sec-trust">
-            <div class="s1-sec-trust-ico">👤</div>
+          <div class="s1-sec-trust s1-animate-in">
+            <div class="s1-sec-trust-ico" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
             <div class="s1-sec-trust-label">User-scoped data</div>
           </div>
-          <div class="s1-sec-trust">
-            <div class="s1-sec-trust-ico">🚫</div>
+          <div class="s1-sec-trust s1-animate-in">
+            <div class="s1-sec-trust-ico" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></div>
             <div class="s1-sec-trust-label">Нет авто-постинга в рабочие чаты</div>
           </div>
-          <div class="s1-sec-trust">
-            <div class="s1-sec-trust-ico">✈️</div>
+          <div class="s1-sec-trust s1-animate-in">
+            <div class="s1-sec-trust-ico" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4 20-9z"/></svg></div>
             <div class="s1-sec-trust-label">Telegram auth</div>
           </div>
-          <div class="s1-sec-trust">
-            <div class="s1-sec-trust-ico">👁️</div>
+          <div class="s1-sec-trust s1-animate-in">
+            <div class="s1-sec-trust-ico" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></div>
             <div class="s1-sec-trust-label">Ручная проверка перед отправкой</div>
           </div>
         </div>
@@ -510,19 +519,38 @@
 
     <!-- ── Footer ────────────────────────────────────────────────── -->
     <footer class="s1-footer">
-      <div class="s1-footer-brand">PM<mark>·</mark>DIGEST</div>
-      <div>
-        <a
-          href="https://t.me/PM_vibe"
-          target="_blank"
-          rel="noopener"
-          class="s1-support-link"
-        >
-          💬 Нашли проблему или есть идея? Напишите: <b>@PM_vibe</b>
-        </a>
+      <div class="s1-footer-grid">
+        <div class="s1-footer-col s1-footer-col--brand">
+          <div class="s1-footer-brand">PM<mark>·</mark>DIGEST</div>
+          <p class="s1-footer-lead">Ежедневные отчёты в Telegram — без вечернего хаоса.</p>
+        </div>
+        <div class="s1-footer-col">
+          <h3 class="s1-footer-heading">Продукт</h3>
+          <ul class="s1-footer-links">
+            <li><a href="#s1-how">Как работает</a></li>
+            <li><a href="#s1-features">Возможности</a></li>
+            <li><a href="#s1-pricing">Тарифы</a></li>
+            <li><a href="#s1-security">Безопасность</a></li>
+          </ul>
+        </div>
+        <div class="s1-footer-col">
+          <h3 class="s1-footer-heading">Поддержка</h3>
+          <ul class="s1-footer-links">
+            <li><a href="https://t.me/PM_vibe" target="_blank" rel="noopener">Написать @PM_vibe</a></li>
+            <li><a href="#top">Наверх</a></li>
+            <li><a href="#s1-faq-chatgpt">FAQ</a></li>
+          </ul>
+        </div>
+        <div class="s1-footer-col">
+          <h3 class="s1-footer-heading">Правовое</h3>
+          <ul class="s1-footer-links">
+            <li><span class="s1-footer-soon">Условия использования — скоро</span></li>
+            <li><span class="s1-footer-soon">Конфиденциальность — скоро</span></li>
+          </ul>
+        </div>
       </div>
-      <div style="color:var(--muted);font-size:11px;">
-        © 2026 PM Digest{% if app_version %} · <span id="s1-app-version">{{ app_version }}</span>{% endif %}
+      <div class="s1-footer-bottom">
+        <span class="s1-footer-copy">© 2026 PM Digest{% if app_version %} · <span id="s1-app-version">{{ app_version }}</span>{% endif %}</span>
       </div>
     </footer>
 

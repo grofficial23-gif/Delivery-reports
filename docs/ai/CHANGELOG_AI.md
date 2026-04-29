@@ -261,6 +261,19 @@ The `Project.aliases` column already supports any list of strings; no schema cha
 
 ---
 
+## 2026-04-29 — v2.25.8: Landing V2 UI polish (hero mockup, FAQ accordion, footer)
+
+**Task:** CSS/HTML-only polish for `landing_v2.html`: hero plan badges, enhanced phone mockup shell, section spacing, theme labels + tooltips, FREE CTA styling, security stroke icons, multi-column footer, FAQ as `details`/`summary` accordion, card hover glow + fade-in.
+
+**Files changed:**
+- `src/delivery_reports/web/templates/landing_v2.html` — structure updates (badges, FAQ, footer columns, nav FAQ link, SVG security icons, theme control markup).
+- `src/delivery_reports/web/static/v2/landing_v2.css` — animations, spacing, phone pseudo-layers, accordion, footer grid, plan/tooltip/card styles; tablet hero keeps mockup until 900px.
+- `src/delivery_reports/config.py` — `app_version` v2.25.7 → v2.25.8.
+
+**Rollback notes:** Revert the two files above and `app_version` to v2.25.7.
+
+---
+
 ## 2026-04-29 — v2.25.7: Strip assistant markdown/meta from report input (Step 36)
 
 **Task:** Remove ChatGPT-style intros, blockquote/list markdown (`>`, `*`, `**`) and simple “Имя, привет.” greetings before parsing so drafts keep only real PM content; stop treating neutral «риски оценены» as a fuzzy risk trigger; bias future «запросим / заводим» clauses toward plan in long-update classification.
