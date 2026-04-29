@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- DESIGN_VERSION: V2_LANDING_ROLLBACK_SAFE -->
+<!-- DESIGN_VERSION: V2_LANDING_HYBRID_NEON -->
 <!--
   PM Digest — V2 Landing Page
   Enabled by: LANDING_UI_VERSION=v2 in .env
@@ -66,6 +66,7 @@
       <div class="s1-nav-links">
         <a href="#s1-how">Как работает</a>
         <a href="#s1-features">Возможности</a>
+        <a href="#s1-comparison">Сравнение</a>
         <a href="#s1-pricing">Тарифы</a>
         <a href="#s1-security">Безопасность</a>
         <a href="#s1-faq-chatgpt">FAQ</a>
@@ -134,7 +135,7 @@
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
             </svg>
-            Открыть в Telegram
+            Попробовать бесплатно
             <span class="s1-btn-arrow s1-hero-cta-fwd" aria-hidden="true">→</span>
           </a>
           {% endif %}
@@ -223,6 +224,41 @@
       </div>
     </div>
 
+    <!-- ── Comparison ────────────────────────────────────────────── -->
+    <div class="s1-content">
+      <div class="s1-section s1-section--compare" id="s1-comparison">
+        <div class="s1-sec-eyebrow">Сравнение</div>
+        <h2 class="s1-sec-h2">Без PM Digest / <mark>С PM Digest</mark></h2>
+        <p class="s1-sec-sub">Главная разница — вы больше не собираете отчёт вечером с нуля. Апдейты уже лежат в структуре.</p>
+        <div class="s1-compare-grid">
+          <div class="s1-compare-card s1-compare-card--plain">
+            <h3>Без PM Digest</h3>
+            <ul>
+              <li><span class="s1-compare-x">✗</span>40 минут на сбор апдейтов вечером</li>
+              <li><span class="s1-compare-x">✗</span>Забываешь что делал с утра</li>
+              <li><span class="s1-compare-x">✗</span>Копипаст из чатов вручную</li>
+              <li><span class="s1-compare-x">✗</span>Формат отчёта каждый раз разный</li>
+            </ul>
+          </div>
+          <div class="s1-compare-card s1-compare-card--digest">
+            <div class="s1-compare-badge">~5 минут</div>
+            <h3>С PM Digest</h3>
+            <ul>
+              <li><span class="s1-compare-check">✓</span>Пишешь апдейты в течение дня</li>
+              <li><span class="s1-compare-check">✓</span>Бот раскладывает по структуре</li>
+              <li><span class="s1-compare-check">✓</span>Проверяешь черновик — отправляешь</li>
+              <li><span class="s1-compare-check">✓</span>Готовый отчёт одной кнопкой</li>
+            </ul>
+            {% if bot_url %}
+            <a href="{{ bot_url }}" target="_blank" rel="noopener" class="s1-compare-cta" aria-label="Попробовать PM Digest бесплатно в боте @{{ bot_username }}">Попробовать бесплатно →</a>
+            {% else %}
+            <span class="s1-compare-cta" style="opacity:.6;">Попробовать бесплатно →</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ── How It Works ──────────────────────────────────────────── -->
     <div class="s1-content">
       <div class="s1-section" id="s1-how">
@@ -242,7 +278,7 @@
                 <span class="s1-flow-source-tag">📱 Mini App</span>
               </div>
             </div>
-            <div class="s1-flow-title">Пишите апдейт</div>
+            <div class="s1-flow-title">Пишите апдейты текстом</div>
             <div class="s1-flow-desc">Текстом в Telegram-боте или Mini App. В любое время дня. Voice — в PRO.</div>
           </div>
           <!-- Arrow -->
@@ -379,7 +415,7 @@
               <li>3 проекта</li>
               <li>10 заметок / день</li>
               <li>7 дней истории</li>
-              <li>Тёмная / светлая темы</li>
+              <li>Текстовые апдейты</li>
             </ul>
             {% if bot_url %}
             <a
@@ -398,7 +434,7 @@
 
           <!-- PRO (highlighted) -->
           <div class="s1-plan-card popular">
-            <div class="s1-plan-popular-badge">★ Популярный</div>
+            <div class="s1-plan-popular-badge">★ ПОПУЛЯРНЫЙ</div>
             <div class="s1-plan-name">PRO</div>
             <div class="s1-plan-price">
               <span>250</span>
@@ -529,6 +565,7 @@
           <ul class="s1-footer-links">
             <li><a href="#s1-how">Как работает</a></li>
             <li><a href="#s1-features">Возможности</a></li>
+            <li><a href="#s1-comparison">Сравнение</a></li>
             <li><a href="#s1-pricing">Тарифы</a></li>
             <li><a href="#s1-security">Безопасность</a></li>
           </ul>

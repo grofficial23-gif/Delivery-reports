@@ -261,118 +261,49 @@ The `Project.aliases` column already supports any list of strings; no schema cha
 
 ---
 
-## 2026-04-29 — v2.25.8: Landing V2 UI polish (hero mockup, FAQ accordion, footer)
+## 2026-04-28 — v2.25.0: Text-first / FREE–PRO copy positioning (Step 30A)
 
-**Task:** CSS/HTML-only polish for `landing_v2.html`: hero plan badges, enhanced phone mockup shell, section spacing, theme labels + tooltips, FREE CTA styling, security stroke icons, multi-column footer, FAQ as `details`/`summary` accordion, card hover glow + fade-in.
+**Task:** Landing and bot copy over-emphasized voice as a default FREE feature, creating wrong expectations. Repositioned to: FREE = text notes + project recognition + draft report; PRO = voice + AI editor; TEAM = shared projects + team workflow.
 
 **Files changed:**
-- `src/delivery_reports/web/templates/landing_v2.html` — structure updates (badges, FAQ, footer columns, nav FAQ link, SVG security icons, theme control markup).
-- `src/delivery_reports/web/static/v2/landing_v2.css` — animations, spacing, phone pseudo-layers, accordion, footer grid, plan/tooltip/card styles; tablet hero keeps mockup until 900px.
-- `src/delivery_reports/config.py` — `app_version` v2.25.7 → v2.25.8.
+- `src/delivery_reports/web/templates/landing_v2.html`:
+  - `<meta description>` — updated to "FREE: текстовые заметки. PRO: voice и AI-редактор."
+  - **Hero**: h1 → "Ежедневные PM-отчёты без вечернего хаоса"; sub → "Пишите апдейты в течение дня — PM Digest сам разложит их по проектам…"; added `<p>FREE: текстовые заметки. PRO: voice и AI-редактор.</p>`.
+  - **Phone mockup chat**: bot greeting → "Пришлите апдейт текстом — я разложу его по проектам"; voice waveform mock replaced with a text user message.
+  - **Testimonial**: "диктую голосовые заметки" → "добавляю короткие апдейты в течение дня — вечером получаю готовый черновик."
+  - **Step 01**: icon 🎙️ → ✏️; title "Пишите или диктуете заметки" → "Пишите апдейты текстом"; desc — notes Voice is PRO.
+  - **Features section** sub: removed "Голос" from the opener; added "Voice — в PRO."
+  - **Feature card "Voice → text"** — was FREE → is now **PRO** card with title "Voice → текст". New FREE card "Текст → отчёт" (✏️) introduced in its place.
+  - **New section "Почему не просто ChatGPT/Gemini?"** inserted before Security section explaining persistent context (projects, aliases, templates, history).
+  - **Demo modal** initial step title "Заметка или голос" → "Апдейт текстом"; desc notes Voice is PRO.
+- `src/delivery_reports/web/static/v2/v2_ui.js` — `DEMO_STEPS[0]`: ico ✏️, title "Апдейт текстом", desc includes "Voice — в PRO." `DEMO_STEPS[1]`: title "Разложит по проектам" (was "Парсинг и структура").
+- `src/delivery_reports/bot_app.py` — `/start` message rewritten: concise text-first welcome ("Пишите апдейты текстом…"), explicit "🎙 Голосовые заметки и AI-редактор доступны в PRO." line. Removed redundant `_maybe_send_mini_app_entry` follow-up call (the inline Mini App button already covers it).
+- `src/delivery_reports/web/templates/dashboard_v2.html` — onboarding step 1: "текстом здесь или voice в Telegram" → "текстом здесь или в Telegram. Voice доступен в PRO."; empty-state copy updated to remove voice-as-default; voice callout title/desc updated to label voice as PRO.
+- `src/delivery_reports/config.py` — `app_version` v2.24.5 → v2.25.0 (minor: user-visible copy/positioning change).
+- `tests/test_copy_positioning.py` — **new** file with 8 tests covering: landing no longer contains "заметку или голосовое"; landing contains "FREE: текстовые заметки" and PRO; hero sub is text-first; Voice card tagged PRO not FREE; step 01 updated; testimonial updated; ChatGPT section present; /start is text-first with PRO voice note.
 
-**Rollback notes:** Revert the two files above and `app_version` to v2.25.7.
+**Verification:** `python -m compileall src/delivery_reports` ✓ · `pytest -q` 131 passed.
+
+**Rollback notes:** Template + JS + config copy changes only. No routes, DB, auth, or payments touched. Revert by restoring the previous landing/dashboard HTML, `v2_ui.js` DEMO_STEPS, bot_app `/start` text, and bumping `app_version` back to v2.24.5.
 
 ---
 
-## 2026-04-29 — v2.25.7: Strip assistant markdown/meta from report input (Step 36)
+## 2026-04-28 — v2.25.1: Landing sales polish (Step 30B)
 
-**Task:** Remove ChatGPT-style intros, blockquote/list markdown (`>`, `*`, `**`) and simple “Имя, привет.” greetings before parsing so drafts keep only real PM content; stop treating neutral «риски оценены» as a fuzzy risk trigger; bias future «запросим / заводим» clauses toward plan in long-update classification.
-
-**Files changed:**
-- `src/delivery_reports/services/report_text_cleaner.py` — **new** `pre_clean_incoming_report_text()` (assistant/meta substring drop, repeated `>` + list-marker peel, bold removal, greeting prefix).
-- `src/delivery_reports/services/parsing.py` — run pre-clean at start of `parse_note_blocks` and `parse_note_text`; replace naive «риск» substring heuristic with `_line_heuristic_suggests_risk()` (word-boundary + exception for `риски? оценен…`).
-- `src/delivery_reports/services/long_update_split.py` — `_STRONG_PLAN_PATTERNS`: `запросим`, `заведём`/`заведем`, `заводим`.
-- `tests/fixtures/report_examples.txt` — **new** `assistant_myid_markdown` block.
-- `tests/test_real_report_examples.py` — MyID project + `test_assistant_markdown_meta_stripped`; project list extended.
-- `scripts/run_report_regression.py` — mirror MyID in `_projects()`.
-- `scripts/__init__.py` — **new** so `python -m scripts.run_report_regression` works from repo root.
-- `src/delivery_reports/config.py` — `app_version` v2.25.6 → v2.25.7.
-
-**Tests:** `python -m compileall src/delivery_reports scripts` · `pytest -q` · `python -m scripts.run_report_regression`.
-
-**Rollback notes:** Remove `pre_clean_incoming_report_text` calls and restore previous risk heuristic; set `app_version` back to v2.25.6.
-
----
-
-## 2026-04-29 — v2.25.6: Real-world report regression tests (Step 35)
-
-**Task:** Automate regression coverage for the parse → split → daily draft pipeline using representative «template»-style examples (no full megafixture), plus optional CLI smoke over the same file.
+**Task:** Improve landing page sales quality after text-first repositioning.
 
 **Files changed:**
-- `tests/fixtures/report_examples.txt` — **new**; 11 `---BEGIN key---` … `---END---` blocks (Visa «Риск: нет», PAMS «Риски: Отсутствуют», О!Афиша backend risk, BONUS-2055/MCC multi-project, Тен Арина «Проблема:» + «Блокер:» / выявлен блокер, Caller ID risks, DC701 migration blockers, MRZ без рисков, Мээрим-style multi-project + Jira, chat noise/FYI/YouTube).
-- `tests/test_real_report_examples.py` — **new**; 9 tests: no crash; no `⚠️ Риски` when risk explicitly absent/none; explicit risk phrases preserved; «Проблема:» not auto-risk; blockers + Android design line; multi-project section separation; Jira keys preserved in output; cross-section bullet dedup; standard vs concise vs `risk_focus` differ with risks before done in `risk_focus`.
-- `scripts/run_report_regression.py` — **new**; stdlib-only: reads fixture, prints example count, summed section headers, risk/blocker presence, warnings (`needs_review`, empty draft).
-- `src/delivery_reports/services/draft_builder.py` — `_route_done_lines` / `_route_risk_lines`: route lines matching **«Блокер:»** / **«Выявлен блокер»** from done text into `aggregate.blocker_items` so structured daily reports do not mis-file blockers as plain done items.
-- `src/delivery_reports/config.py` — `app_version` v2.25.5 → v2.25.6 (patch: draft routing behaviour).
+- `src/delivery_reports/web/templates/landing_v2.html`
+  - Hero h1 changed to "Ваш личный ассистент для ежедневных отчётов"; subcopy uses "короткие апдейты".
+  - ChatGPT/Gemini section reframed positively: "Можно — и ChatGPT справится…" + "PM Digest уже настроен"; title changed from argumentative to "А можно просто ChatGPT / Gemini?".
+  - Feature grid: added two new FREE cards ("Шаблоны отчётов", "История и финалы") to eliminate lonely last-row card; Team dashboard copy tightened.
+  - "How it works" section replaced with a visual `s1-flow-grid` containing four flow steps with inline HTML mockups (chat bubble, intent chips, mini report paper, send buttons).
+- `src/delivery_reports/web/static/v2/landing_v2.css`
+  - Added `PMD:V2:LANDING_FLOW` block: `s1-flow-grid` (4-col → 2-col → 1-col responsive), `s1-flow-step`, `s1-flow-mock`, `s1-flow-chat-bubble`, `s1-flow-chips`, chip colour variants per theme, `s1-flow-paper`, `s1-flow-send`, `s1-flow-arrow`.
+- `src/delivery_reports/config.py` — `app_version` v2.25.0 → v2.25.1.
+- `tests/test_copy_positioning.py` — 3 new assertions: hero "Ваш личный ассистент", ChatGPT section soft framing ("уже настроен", no "Почему не просто"), no "парсинг", flow grid rendered.
 
-**Reason:** Catch report-quality regressions without manual runs across every scenario; small draft fix aligns output with expected blocker sections on real messages.
-
-**Tests:** `python -m compileall src/delivery_reports scripts` clean; `pytest -q` **163 passed** (includes 9 in `test_real_report_examples.py`).
-
-**Rollback notes:** Revert fixture/tests/script if needed; revert `draft_builder` blocker routing and set `app_version` back to v2.25.5 if the routing change is undesirable.
-
----
-
-## 2026-04-28 — v2.25.5: False risk classification + cross-section dedup (Step 33)
-
-**Task:** Stop routing explanatory “проблема…” text into risks; tighten long-update decision vs risk; dedupe identical bullets across draft sections for one project.
-
-**Root cause:** `_split_by_intent` sent any line containing substring `«проблем»` to `risk_lines`, including atomic lines prefixed with `Что сделано: … статус по проблеме …`, so the same content could appear under both done and risks after prefix stripping.
-
-**Files changed:**
-- `src/delivery_reports/services/parsing.py` — `_split_by_intent`: after metadata skip, honor explicit prefixes first (`что сделано:`, `план:`, `риск:`, `блокер:`). Removed naive `«проблем»` token from the risk heuristic (keep `риск` / `блокер` / `завис` / `пауз`).
-- `src/delivery_reports/services/long_update_split.py` — expanded `_STRONG_DECISION_PATTERNS` (`не будем`, `решили не`, `чтобы не сломать`, `можем сломать`); expanded `_STRONG_RISK_PATTERNS` (`есть риск`, `может задержаться`, `можем не успеть`); done verbs: `закрыли`, `проверили`, `выяснили`.
-- `src/delivery_reports/services/draft_builder.py` — `_cross_section_norm_key`, `_dedupe_sections_in_priority_order` (blocker > risk > decision > done > plan > question) applied in `_render_project_block` after limit/compact/clean. Added `import re`.
-- `src/delivery_reports/config.py` — `app_version` v2.25.4 → v2.25.5.
-- `tests/test_step33_intent_dedup.py` — 6 tests (classification + MyID-style draft + cross-section dedup).
-
-**Tests:** 151 passed (was 145), `compileall` clean.
-
----
-
-## 2026-04-28 — v2.25.4: Bulk inbox HTML5 validation hotfix (Step 32B)
-
-**Task:** Fix native browser validation blocking bulk submit ("Выберите один из пунктов списка") caused by invalid nested forms: per-card `v2-inbox-bind` forms lived inside the bulk form, so the browser treated empty `required` per-card selects as part of the bulk submit.
-
-**Files changed:**
-- `src/delivery_reports/web/templates/dashboard_v2.html`
-  - Bulk form (`id="v2-bulk-inbox-form"`) now contains only the toolbar (project select + submit + master checkbox).
-  - Inbox card checkboxes use `form="v2-bulk-inbox-form"` so they still POST with bulk-resolve.
-  - Per-card `action="/inbox/{id}/resolve"` forms are siblings (never nested inside the bulk form).
-- `src/delivery_reports/web/static/v2/dashboard_v2.css`
-  - `.v2-bulk-inbox-form`: `display: contents` → `display: block; margin-bottom: 10px;` (form is a real wrapper again).
-- `src/delivery_reports/config.py` — `app_version` v2.25.3 → v2.25.4.
-- `tests/test_web_app.py` — `test_v2_bulk_form_not_nested_per_card_required_selects` (regex slice of bulk form: exactly one `required`, no `class="v2-inbox-bind"`, checkboxes have `form="v2-bulk-inbox-form"`).
-
-**Tests:** 145 passed (was 144), `compileall` clean.
-
----
-
-## 2026-04-28 — v2.25.3: Bulk inbox bind (Step 32)
-
-**Task:** Let users bind multiple inbox notes to a project in one action instead of one-by-one.
-
-**Files changed:**
-- `src/delivery_reports/web_app.py`
-  - New `POST /inbox/bulk-resolve` route. Reads raw body with `parse_qs` to collect all repeated `note_ids` fields. Validates ownership per note. Calls existing `resolve_or_create_project` + `repository.update_note_project`. Skips notes not owned by the authenticated user. Returns "Привязано N заметок к проекту X." notice.
-- `src/delivery_reports/web/templates/dashboard_v2.html`
-  - Inbox section wrapped in `<form id="v2-bulk-inbox-form" action="/inbox/bulk-resolve">`.
-  - Sticky `v2-bulk-bar` at top: "Выбрать видимые" master checkbox, project `<select>`, "Привязать выбранные" submit.
-  - Each inbox card (visible + collapsed rest) gets `<input type="checkbox" name="note_ids" value="{{ card.note.id }}">`.
-  - Candidate quick-bind buttons converted to `type="button"` with `data-note-id`/`data-project` — JS selects checkbox + sets bulk select then submits bulk form.
-  - Individual per-card `v2-inbox-bind` forms retained for one-at-a-time use.
-  - Overflow note copy updated: "Можно выбрать видимые заметки и привязать их к проекту. Остальные доступны в раскрытом списке."
-  - Inline `<script>` for: master-checkbox select-all, indeterminate sync, quick-bind click handler.
-- `src/delivery_reports/web/static/v2/dashboard_v2.css`
-  - New `PMD:V2:STEP32_BULK_INBOX` block: `.v2-bulk-bar`, `.v2-bulk-bar-selectall`, `.v2-bulk-checkbox`, `.v2-bulk-select`, `.v2-bulk-bind-btn`, `.v2-bulk-cb-label`. Mobile stacking at 600px.
-- `src/delivery_reports/config.py` — `app_version` v2.25.2 → v2.25.3.
-- `tests/test_web_app.py` — 4 new tests:
-  - `test_v2_inbox_renders_bulk_form_and_checkboxes`
-  - `test_bulk_resolve_binds_multiple_notes` (comma-separated ids)
-  - `test_bulk_resolve_repeated_fields` (one checkbox per repeated POST field)
-  - `test_bulk_resolve_does_not_bind_other_user_notes`
-
-**Tests:** 144 passed (was 140), `compileall` clean.
+**Tests:** 134 passed (0 failures), `compileall` clean.
 
 ---
 
@@ -406,51 +337,153 @@ The `Project.aliases` column already supports any list of strings; no schema cha
 
 ---
 
-## 2026-04-28 — v2.25.1: Landing sales polish (Step 30B)
+## 2026-04-28 — v2.25.3: Bulk inbox bind (Step 32)
 
-**Task:** Improve landing page sales quality after text-first repositioning.
+**Task:** Let users bind multiple inbox notes to a project in one action instead of one-by-one.
 
 **Files changed:**
-- `src/delivery_reports/web/templates/landing_v2.html`
-  - Hero h1 changed to "Ваш личный ассистент для ежедневных отчётов"; subcopy uses "короткие апдейты".
-  - ChatGPT/Gemini section reframed positively: "Можно — и ChatGPT справится…" + "PM Digest уже настроен"; title changed from argumentative to "А можно просто ChatGPT / Gemini?".
-  - Feature grid: added two new FREE cards ("Шаблоны отчётов", "История и финалы") to eliminate lonely last-row card; Team dashboard copy tightened.
-  - "How it works" section replaced with a visual `s1-flow-grid` containing four flow steps with inline HTML mockups (chat bubble, intent chips, mini report paper, send buttons).
-- `src/delivery_reports/web/static/v2/landing_v2.css`
-  - Added `PMD:V2:LANDING_FLOW` block: `s1-flow-grid` (4-col → 2-col → 1-col responsive), `s1-flow-step`, `s1-flow-mock`, `s1-flow-chat-bubble`, `s1-flow-chips`, chip colour variants per theme, `s1-flow-paper`, `s1-flow-send`, `s1-flow-arrow`.
-- `src/delivery_reports/config.py` — `app_version` v2.25.0 → v2.25.1.
-- `tests/test_copy_positioning.py` — 3 new assertions: hero "Ваш личный ассистент", ChatGPT section soft framing ("уже настроен", no "Почему не просто"), no "парсинг", flow grid rendered.
+- `src/delivery_reports/web_app.py`
+  - New `POST /inbox/bulk-resolve` route. Reads raw body with `parse_qs` to collect all repeated `note_ids` fields. Validates ownership per note. Calls existing `resolve_or_create_project` + `repository.update_note_project`. Skips notes not owned by the authenticated user. Returns "Привязано N заметок к проекту X." notice.
+- `src/delivery_reports/web/templates/dashboard_v2.html`
+  - Inbox section wrapped in `<form id="v2-bulk-inbox-form" action="/inbox/bulk-resolve">`.
+  - Sticky `v2-bulk-bar` at top: "Выбрать видимые" master checkbox, project `<select>`, "Привязать выбранные" submit.
+  - Each inbox card (visible + collapsed rest) gets `<input type="checkbox" name="note_ids" value="{{ card.note.id }}">`.
+  - Candidate quick-bind buttons converted to `type="button"` with `data-note-id`/`data-project` — JS selects checkbox + sets bulk select then submits bulk form.
+  - Individual per-card `v2-inbox-bind` forms retained for one-at-a-time use.
+  - Overflow note copy updated: "Можно выбрать видимые заметки и привязать их к проекту. Остальные доступны в раскрытом списке."
+  - Inline `<script>` for: master-checkbox select-all, indeterminate sync, quick-bind click handler.
+- `src/delivery_reports/web/static/v2/dashboard_v2.css`
+  - New `PMD:V2:STEP32_BULK_INBOX` block: `.v2-bulk-bar`, `.v2-bulk-bar-selectall`, `.v2-bulk-checkbox`, `.v2-bulk-select`, `.v2-bulk-bind-btn`, `.v2-bulk-cb-label`. Mobile stacking at 600px.
+- `src/delivery_reports/config.py` — `app_version` v2.25.2 → v2.25.3.
+- `tests/test_web_app.py` — 4 new tests:
+  - `test_v2_inbox_renders_bulk_form_and_checkboxes`
+  - `test_bulk_resolve_binds_multiple_notes` (comma-separated ids)
+  - `test_bulk_resolve_repeated_fields` (one checkbox per repeated POST field)
+  - `test_bulk_resolve_does_not_bind_other_user_notes`
 
-**Tests:** 134 passed (0 failures), `compileall` clean.
+**Tests:** 144 passed (was 140), `compileall` clean.
 
 ---
 
-## 2026-04-28 — v2.25.0: Text-first / FREE–PRO copy positioning (Step 30A)
+## 2026-04-28 — v2.25.4: Bulk inbox HTML5 validation hotfix (Step 32B)
 
-**Task:** Landing and bot copy over-emphasized voice as a default FREE feature, creating wrong expectations. Repositioned to: FREE = text notes + project recognition + draft report; PRO = voice + AI editor; TEAM = shared projects + team workflow.
+**Task:** Fix native browser validation blocking bulk submit ("Выберите один из пунктов списка") caused by invalid nested forms: per-card `v2-inbox-bind` forms lived inside the bulk form, so the browser treated empty `required` per-card selects as part of the bulk submit.
 
 **Files changed:**
-- `src/delivery_reports/web/templates/landing_v2.html`:
-  - `<meta description>` — updated to "FREE: текстовые заметки. PRO: voice и AI-редактор."
-  - **Hero**: h1 → "Ежедневные PM-отчёты без вечернего хаоса"; sub → "Пишите апдейты в течение дня — PM Digest сам разложит их по проектам…"; added `<p>FREE: текстовые заметки. PRO: voice и AI-редактор.</p>`.
-  - **Phone mockup chat**: bot greeting → "Пришлите апдейт текстом — я разложу его по проектам"; voice waveform mock replaced with a text user message.
-  - **Testimonial**: "диктую голосовые заметки" → "добавляю короткие апдейты в течение дня — вечером получаю готовый черновик."
-  - **Step 01**: icon 🎙️ → ✏️; title "Пишите или диктуете заметки" → "Пишите апдейты текстом"; desc — notes Voice is PRO.
-  - **Features section** sub: removed "Голос" from the opener; added "Voice — в PRO."
-  - **Feature card "Voice → text"** — was FREE → is now **PRO** card with title "Voice → текст". New FREE card "Текст → отчёт" (✏️) introduced in its place.
-  - **New section "Почему не просто ChatGPT/Gemini?"** inserted before Security section explaining persistent context (projects, aliases, templates, history).
-  - **Demo modal** initial step title "Заметка или голос" → "Апдейт текстом"; desc notes Voice is PRO.
-- `src/delivery_reports/web/static/v2/v2_ui.js` — `DEMO_STEPS[0]`: ico ✏️, title "Апдейт текстом", desc includes "Voice — в PRO." `DEMO_STEPS[1]`: title "Разложит по проектам" (was "Парсинг и структура").
-- `src/delivery_reports/bot_app.py` — `/start` message rewritten: concise text-first welcome ("Пишите апдейты текстом…"), explicit "🎙 Голосовые заметки и AI-редактор доступны в PRO." line. Removed redundant `_maybe_send_mini_app_entry` follow-up call (the inline Mini App button already covers it).
-- `src/delivery_reports/web/templates/dashboard_v2.html` — onboarding step 1: "текстом здесь или voice в Telegram" → "текстом здесь или в Telegram. Voice доступен в PRO."; empty-state copy updated to remove voice-as-default; voice callout title/desc updated to label voice as PRO.
-- `src/delivery_reports/config.py` — `app_version` v2.24.5 → v2.25.0 (minor: user-visible copy/positioning change).
-- `tests/test_copy_positioning.py` — **new** file with 8 tests covering: landing no longer contains "заметку или голосовое"; landing contains "FREE: текстовые заметки" and PRO; hero sub is text-first; Voice card tagged PRO not FREE; step 01 updated; testimonial updated; ChatGPT section present; /start is text-first with PRO voice note.
+- `src/delivery_reports/web/templates/dashboard_v2.html`
+  - Bulk form (`id="v2-bulk-inbox-form"`) now contains only the toolbar (project select + submit + master checkbox).
+  - Inbox card checkboxes use `form="v2-bulk-inbox-form"` so they still POST with bulk-resolve.
+  - Per-card `action="/inbox/{id}/resolve"` forms are siblings (never nested inside the bulk form).
+- `src/delivery_reports/web/static/v2/dashboard_v2.css`
+  - `.v2-bulk-inbox-form`: `display: contents` → `display: block; margin-bottom: 10px;` (form is a real wrapper again).
+- `src/delivery_reports/config.py` — `app_version` v2.25.3 → v2.25.4.
+- `tests/test_web_app.py` — `test_v2_bulk_form_not_nested_per_card_required_selects` (regex slice of bulk form: exactly one `required`, no `class="v2-inbox-bind"`, checkboxes have `form="v2-bulk-inbox-form"`).
 
-**Verification:** `python -m compileall src/delivery_reports` ✓ · `pytest -q` 131 passed.
-
-**Rollback notes:** Template + JS + config copy changes only. No routes, DB, auth, or payments touched. Revert by restoring the previous landing/dashboard HTML, `v2_ui.js` DEMO_STEPS, bot_app `/start` text, and bumping `app_version` back to v2.24.5.
+**Tests:** 145 passed (was 144), `compileall` clean.
 
 ---
+
+## 2026-04-28 — v2.25.5: False risk classification + cross-section dedup (Step 33)
+
+**Task:** Stop routing explanatory “проблема…” text into risks; tighten long-update decision vs risk; dedupe identical bullets across draft sections for one project.
+
+**Root cause:** `_split_by_intent` sent any line containing substring `«проблем»` to `risk_lines`, including atomic lines prefixed with `Что сделано: … статус по проблеме …`, so the same content could appear under both done and risks after prefix stripping.
+
+**Files changed:**
+- `src/delivery_reports/services/parsing.py` — `_split_by_intent`: after metadata skip, honor explicit prefixes first (`что сделано:`, `план:`, `риск:`, `блокер:`). Removed naive `«проблем»` token from the risk heuristic (keep `риск` / `блокер` / `завис` / `пауз`).
+- `src/delivery_reports/services/long_update_split.py` — expanded `_STRONG_DECISION_PATTERNS` (`не будем`, `решили не`, `чтобы не сломать`, `можем сломать`); expanded `_STRONG_RISK_PATTERNS` (`есть риск`, `может задержаться`, `можем не успеть`); done verbs: `закрыли`, `проверили`, `выяснили`.
+- `src/delivery_reports/services/draft_builder.py` — `_cross_section_norm_key`, `_dedupe_sections_in_priority_order` (blocker > risk > decision > done > plan > question) applied in `_render_project_block` after limit/compact/clean. Added `import re`.
+- `src/delivery_reports/config.py` — `app_version` v2.25.4 → v2.25.5.
+- `tests/test_step33_intent_dedup.py` — 6 tests (classification + MyID-style draft + cross-section dedup).
+
+**Tests:** 151 passed (was 145), `compileall` clean.
+
+---
+
+## 2026-04-29 — v2.25.6: Real-world report regression tests (Step 35)
+
+**Task:** Automate regression coverage for the parse → split → daily draft pipeline using representative «template»-style examples (no full megafixture), plus optional CLI smoke over the same file.
+
+**Files changed:**
+- `tests/fixtures/report_examples.txt` — **new**; 11 `---BEGIN key---` … `---END---` blocks (Visa «Риск: нет», PAMS «Риски: Отсутствуют», О!Афиша backend risk, BONUS-2055/MCC multi-project, Тен Арина «Проблема:» + «Блокер:» / выявлен блокер, Caller ID risks, DC701 migration blockers, MRZ без рисков, Мээрим-style multi-project + Jira, chat noise/FYI/YouTube).
+- `tests/test_real_report_examples.py` — **new**; 9 tests: no crash; no `⚠️ Риски` when risk explicitly absent/none; explicit risk phrases preserved; «Проблема:» not auto-risk; blockers + Android design line; multi-project section separation; Jira keys preserved in output; cross-section bullet dedup; standard vs concise vs `risk_focus` differ with risks before done in `risk_focus`.
+- `scripts/run_report_regression.py` — **new**; stdlib-only: reads fixture, prints example count, summed section headers, risk/blocker presence, warnings (`needs_review`, empty draft).
+- `src/delivery_reports/services/draft_builder.py` — `_route_done_lines` / `_route_risk_lines`: route lines matching **«Блокер:»** / **«Выявлен блокер»** from done text into `aggregate.blocker_items` so structured daily reports do not mis-file blockers as plain done items.
+- `src/delivery_reports/config.py` — `app_version` v2.25.5 → v2.25.6 (patch: draft routing behaviour).
+
+**Reason:** Catch report-quality regressions without manual runs across every scenario; small draft fix aligns output with expected blocker sections on real messages.
+
+**Tests:** `python -m compileall src/delivery_reports scripts` clean; `pytest -q` **163 passed** (includes 9 in `test_real_report_examples.py`).
+
+**Rollback notes:** Revert fixture/tests/script if needed; revert `draft_builder` blocker routing and set `app_version` back to v2.25.5 if the routing change is undesirable.
+
+---
+
+## 2026-04-29 — v2.25.7: Strip assistant markdown/meta from report input (Step 36)
+
+**Task:** Remove ChatGPT-style intros, blockquote/list markdown (`>`, `*`, `**`) and simple “Имя, привет.” greetings before parsing so drafts keep only real PM content; stop treating neutral «риски оценены» as a fuzzy risk trigger; bias future «запросим / заводим» clauses toward plan in long-update classification.
+
+**Files changed:**
+- `src/delivery_reports/services/report_text_cleaner.py` — **new** `pre_clean_incoming_report_text()` (assistant/meta substring drop, repeated `>` + list-marker peel, bold removal, greeting prefix).
+- `src/delivery_reports/services/parsing.py` — run pre-clean at start of `parse_note_blocks` and `parse_note_text`; replace naive «риск» substring heuristic with `_line_heuristic_suggests_risk()` (word-boundary + exception for `риски? оценен…`).
+- `src/delivery_reports/services/long_update_split.py` — `_STRONG_PLAN_PATTERNS`: `запросим`, `заведём`/`заведем`, `заводим`.
+- `tests/fixtures/report_examples.txt` — **new** `assistant_myid_markdown` block.
+- `tests/test_real_report_examples.py` — MyID project + `test_assistant_markdown_meta_stripped`; project list extended.
+- `scripts/run_report_regression.py` — mirror MyID in `_projects()`.
+- `scripts/__init__.py` — **new** so `python -m scripts.run_report_regression` works from repo root.
+- `src/delivery_reports/config.py` — `app_version` v2.25.6 → v2.25.7.
+
+**Tests:** `python -m compileall src/delivery_reports scripts` · `pytest -q` · `python -m scripts.run_report_regression`.
+
+**Rollback notes:** Remove `pre_clean_incoming_report_text` calls and restore previous risk heuristic; set `app_version` back to v2.25.6.
+
+---
+
+## 2026-04-29 — v2.25.8: Landing V2 UI polish (hero mockup, FAQ accordion, footer)
+
+**Task:** CSS/HTML-only polish for `landing_v2.html`: hero plan badges, enhanced phone mockup shell, section spacing, theme labels + tooltips, FREE CTA styling, security stroke icons, multi-column footer, FAQ as `details`/`summary` accordion, card hover glow + fade-in.
+
+**Files changed:**
+- `src/delivery_reports/web/templates/landing_v2.html` — structure updates (badges, FAQ, footer columns, nav FAQ link, SVG security icons, theme control markup).
+- `src/delivery_reports/web/static/v2/landing_v2.css` — animations, spacing, phone pseudo-layers, accordion, footer grid, plan/tooltip/card styles; tablet hero keeps mockup until 900px.
+- `src/delivery_reports/config.py` — `app_version` v2.25.7 → v2.25.8.
+
+**Rollback notes:** Revert the two files above and `app_version` to v2.25.7.
+
+---
+
+## 2026-04-29 — v2.25.9: Landing V2 aidentika-style light redesign (Step 38)
+
+**Task:** Redesign the PM Digest V2 landing page as a clean white aidentika-style page with huge centered italic typography, lime CTAs, dark pricing/footer blocks, and no canvas/neon/particle background.
+
+**Files changed:**
+- `src/delivery_reports/web/templates/landing_v2.html` — rebuilt the landing markup around the requested centered hero, marquee, feature cards, comparison section, how-it-works flow, dark pricing, FAQ/security, and footer columns; removed theme switcher, canvas, demo modal, and external landing JS dependency.
+- `src/delivery_reports/web/static/v2/landing_v2.css` — replaced the dark/glow V2 landing styles with a full light theme, aidentika-style typography, lime CTA/badge treatments, responsive one-column mobile layout, dark pricing/footer, and 20s marquee animation.
+- `src/delivery_reports/config.py` — `app_version` v2.25.8 → v2.25.9.
+
+Tests: python -m compileall src/delivery_reports scripts clean; pytest -q 164 passed.
+
+**Reason:** Align the public landing page with the requested clean white visual direction while keeping PM Digest’s real Telegram bot + Mini App positioning.
+
+**Rollback notes:** Revert `landing_v2.html`, `landing_v2.css`, and set `app_version` back to v2.25.8.
+
+---
+
+
+---
+
+## 2026-04-29 — v2.25.10: Hybrid neon landing restoration (Step 38C)
+
+**Task:** Keep the Step 38 content improvements while restoring the previous committed landing visual identity: animated canvas background, theme switcher, neon/glass cards, glowing CTAs, and hero phone mockup.
+
+**Files changed:**
+- `src/delivery_reports/web/templates/landing_v2.html` — restored the committed V2 landing shell (theme bootstrap, canvas layer, theme buttons, hero phone mockup, demo modal, V2 UI script) and inserted the Step 38 comparison section in the old section layout; kept text-first FREE/PRO positioning and clearer CTA copy.
+- `src/delivery_reports/web/static/v2/landing_v2.css` — restored the committed neon/glass landing styles and added `PMD:V2:LANDING_COMPARE` styles for the comparison cards using theme tokens, glow, blur, and responsive stacking.
+- `src/delivery_reports/config.py` — `app_version` v2.25.9 → v2.25.10.
+
+**Reason:** The plain white Step 38 landing lost too much of PM Digest’s Telegram/Mini App visual identity. This hybrid keeps the better content while returning to the richer V2 look.
+
+**Rollback notes:** Revert `landing_v2.html`, `landing_v2.css`, and set `app_version` back to v2.25.9.
 
 ## 2026-04-28 — v2.23.2: Prevent failed voice transcription from polluting reports (Step 26)
 
