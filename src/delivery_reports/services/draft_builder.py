@@ -97,6 +97,7 @@ def build_daily_draft(
             aggregate.decision_items,
             aggregate.question_items,
             note.done_text,
+            aggregate.blocker_items,
         )
         _append_lines(aggregate.plan_items, note.plan_text)
         _route_risk_lines(aggregate.risk_items, aggregate.blocker_items, note.risk_text)
@@ -185,6 +186,7 @@ def build_weekly_summary(
             aggregate.decision_items,
             aggregate.question_items,
             note.done_text,
+            aggregate.blocker_items,
         )
         _append_lines(aggregate.plan_items, note.plan_text)
         _route_risk_lines(aggregate.risk_items, aggregate.blocker_items, note.risk_text)
@@ -259,19 +261,25 @@ def _route_done_lines(
     decision_buffer: list[str],
     question_buffer: list[str],
     block_text: str | None,
+    blocker_buffer: list[str] | None = None,
 ) -> None:
     """Split note.done_text lines into done / decision / question buckets.
 
-    The parser injects synthetic prefixes ("решение —", "вопрос —") on
-    atomic items.  Honor those here so the draft can render dedicated
-    "◆ Решение" and "❓ Вопросы" sections.
+    Lines that clearly describe a discovered blocker (e.g. «Выявлен блокер: …»)
+    or start with «Блокер:» are appended to *blocker_buffer* when provided —
+    structured reports often put those under «Проблема:» / loose lines in
+    *done_text* rather than in *risk_text*.
     """
     if not block_text:
         return
+    _blocker_in_done_line = re.compile(r"(?:^\s*блокер\s*[:\-—]|\bвыявлен\s+блокер\b)", re.IGNORECASE)
     for line in (part.strip("-• \t") for part in block_text.splitlines()):
         if not line:
             continue
         lowered = line.lower()
+        if blocker_buffer is not None and _blocker_in_done_line.search(line):
+            blocker_buffer.append(line)
+            continue
         if lowered.startswith(("решение —", "решение -")):
             decision_buffer.append(line)
         elif lowered.startswith(("вопрос —", "вопрос -")):
@@ -292,7 +300,11 @@ def _route_risk_lines(
         if not line:
             continue
         lowered = line.lower()
-        if lowered.startswith(("блокер —", "блокер -")) or lowered.startswith("блокер:"):
+        if (
+            lowered.startswith(("блокер —", "блокер -"))
+            or lowered.startswith("блокер:")
+            or re.search(r"\bвыявлен\s+блокер\b", lowered)
+        ):
             blocker_buffer.append(line)
         else:
             risk_buffer.append(line)

@@ -261,6 +261,25 @@ The `Project.aliases` column already supports any list of strings; no schema cha
 
 ---
 
+## 2026-04-29 — v2.25.6: Real-world report regression tests (Step 35)
+
+**Task:** Automate regression coverage for the parse → split → daily draft pipeline using representative «template»-style examples (no full megafixture), plus optional CLI smoke over the same file.
+
+**Files changed:**
+- `tests/fixtures/report_examples.txt` — **new**; 11 `---BEGIN key---` … `---END---` blocks (Visa «Риск: нет», PAMS «Риски: Отсутствуют», О!Афиша backend risk, BONUS-2055/MCC multi-project, Тен Арина «Проблема:» + «Блокер:» / выявлен блокер, Caller ID risks, DC701 migration blockers, MRZ без рисков, Мээрим-style multi-project + Jira, chat noise/FYI/YouTube).
+- `tests/test_real_report_examples.py` — **new**; 9 tests: no crash; no `⚠️ Риски` when risk explicitly absent/none; explicit risk phrases preserved; «Проблема:» not auto-risk; blockers + Android design line; multi-project section separation; Jira keys preserved in output; cross-section bullet dedup; standard vs concise vs `risk_focus` differ with risks before done in `risk_focus`.
+- `scripts/run_report_regression.py` — **new**; stdlib-only: reads fixture, prints example count, summed section headers, risk/blocker presence, warnings (`needs_review`, empty draft).
+- `src/delivery_reports/services/draft_builder.py` — `_route_done_lines` / `_route_risk_lines`: route lines matching **«Блокер:»** / **«Выявлен блокер»** from done text into `aggregate.blocker_items` so structured daily reports do not mis-file blockers as plain done items.
+- `src/delivery_reports/config.py` — `app_version` v2.25.5 → v2.25.6 (patch: draft routing behaviour).
+
+**Reason:** Catch report-quality regressions without manual runs across every scenario; small draft fix aligns output with expected blocker sections on real messages.
+
+**Tests:** `python -m compileall src/delivery_reports scripts` clean; `pytest -q` **163 passed** (includes 9 in `test_real_report_examples.py`).
+
+**Rollback notes:** Revert fixture/tests/script if needed; revert `draft_builder` blocker routing and set `app_version` back to v2.25.5 if the routing change is undesirable.
+
+---
+
 ## 2026-04-28 — v2.25.5: False risk classification + cross-section dedup (Step 33)
 
 **Task:** Stop routing explanatory “проблема…” text into risks; tighten long-update decision vs risk; dedupe identical bullets across draft sections for one project.
