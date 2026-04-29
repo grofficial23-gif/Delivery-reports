@@ -77,11 +77,13 @@ _STRONG_BLOCKER_PATTERNS: tuple["re.Pattern[str]", ...] = (
 )
 
 _STRONG_RISK_PATTERNS: tuple["re.Pattern[str]", ...] = (
+    re.compile(r"\bесть\s+риск\b", re.IGNORECASE),
     re.compile(r"\bпод\s+вопросом\b", re.IGNORECASE),
     re.compile(r"\bопасн(?:о|ость)\b", re.IGNORECASE),
-    re.compile(r"\bможет\s+(?:слететь|уехать|сорваться)\b", re.IGNORECASE),
+    re.compile(r"\bможет\s+(?:слететь|уехать|сорваться|задержаться)\b", re.IGNORECASE),
     re.compile(r"\bне\s+уверен\s+в\s+сроках\b", re.IGNORECASE),
     re.compile(r"\bможет\s+закэшировать\b", re.IGNORECASE),
+    re.compile(r"\bможем\s+не\s+успеть\b", re.IGNORECASE),
 )
 
 _STRONG_PLAN_PATTERNS: tuple["re.Pattern[str]", ...] = (
@@ -102,6 +104,10 @@ _STRONG_DECISION_PATTERNS: tuple["re.Pattern[str]", ...] = (
     re.compile(r"\bдоговорились\b", re.IGNORECASE),
     re.compile(r"\bутвердили\b", re.IGNORECASE),
     re.compile(r"^\s*решили\b", re.IGNORECASE),
+    re.compile(r"\bрешили\s+не\b", re.IGNORECASE),
+    re.compile(r"\bне\s+будем\b", re.IGNORECASE),
+    re.compile(r"\bчтобы\s+не\s+сломать\b", re.IGNORECASE),
+    re.compile(r"\bможем\s+сломать\b", re.IGNORECASE),
 )
 
 # Done verbs — word-boundary, anywhere. These are unambiguous past-tense
@@ -112,7 +118,8 @@ _STRONG_DONE_PATTERNS: tuple["re.Pattern[str]", ...] = (
         r"сделал[аи]?|сделано"
         r"|закрыл[аи]?|выкатил[аи]?|выпустил[аи]?|запустил[аи]?"
         r"|релизнул[аи]?|внедрил[аи]?|доделал[аи]?|оформил[аи]?"
-        r"|завершил[аи]?|подписал[аи]?|обсудил[аи]?|согласовал[аи]?"
+        r"|завершил[аи]?|закрыли|проверил[аи]?|выяснили"
+        r"|подписал[аи]?|обсудил[аи]?|согласовал[аи]?"
         r"|поправил[аи]?|добавил[аи]?|починил[аи]?|настроил[аи]?"
         r"|протестировал[аи]?|провел[аи]?|провёл"
         r"|deployed|merged|shipped|ready"

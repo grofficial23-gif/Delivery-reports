@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from collections import Counter
 from dataclasses import dataclass, field
 from datetime import date
@@ -311,6 +312,53 @@ def _clean_items(items: list[str]) -> list[str]:
     return cleaned
 
 
+def _cross_section_norm_key(text: str) -> str:
+    """Normalize bullet text for duplicate detection across sections."""
+    base = clean_report_item_text(text) or (text or "").strip()
+    t = base.strip().lower()
+    t = re.sub(r"\s+", " ", t)
+    t = t.replace("×", "x")
+    return t.rstrip(".!?…")
+
+
+def _dedupe_sections_in_priority_order(
+    *,
+    blocker_items: list[str],
+    risk_items: list[str],
+    decision_items: list[str],
+    done_items: list[str],
+    plan_items: list[str],
+    question_items: list[str],
+) -> tuple[list[str], list[str], list[str], list[str], list[str], list[str]]:
+    """If the same bullet appears in multiple sections, keep the highest-priority copy.
+
+    Priority: blocker > risk > decision > done > plan > question
+    """
+    seen: set[str] = set()
+
+    def _take(items: list[str]) -> list[str]:
+        out: list[str] = []
+        for item in items:
+            key = _cross_section_norm_key(item)
+            if not key:
+                out.append(item)
+                continue
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append(item)
+        return out
+
+    return (
+        _take(blocker_items),
+        _take(risk_items),
+        _take(decision_items),
+        _take(done_items),
+        _take(plan_items),
+        _take(question_items),
+    )
+
+
 def _render_modern_bullets(items: list[str]) -> list[str]:
     """Render bullets in the demo-ready format (• prefix, normalized end)."""
     return [f"• {escape(_normalize_sentence(item))}" for item in items]
@@ -338,6 +386,18 @@ def _render_project_block(index: int, aggregate: ProjectAggregate, style: str) -
     blocker_items = _limit_items(_compact_items(_clean_items(aggregate.blocker_items), "blocker"), style, "blocker")
     decision_items = _limit_items(_compact_items(_clean_items(aggregate.decision_items), "decision"), style, "decision")
     question_items = _limit_items(_compact_items(_clean_items(aggregate.question_items), "question"), style, "question")
+
+    blocker_items, risk_items, decision_items, done_items, plan_items, question_items = (
+        _dedupe_sections_in_priority_order(
+            blocker_items=blocker_items,
+            risk_items=risk_items,
+            decision_items=decision_items,
+            done_items=done_items,
+            plan_items=plan_items,
+            question_items=question_items,
+        )
+    )
+
     if _risk_items_are_empty(risk_items):
         risk_items = []
     if _risk_items_are_empty(blocker_items):

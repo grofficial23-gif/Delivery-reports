@@ -300,10 +300,34 @@ def _split_by_intent(raw_text: str) -> tuple[str, str, str, str]:
         if _is_metadata_line(value):
             continue
         lowered = value.lower()
+        # Honor explicit section prefixes from structured notes / atomic split
+        # FIRST so words like "проблеме" inside "Что сделано: … статус по проблеме …"
+        # are not routed to risk via naive substring heuristics.
+        if lowered.startswith(
+            (
+                "что сделано:",
+                "что сделано -",
+                "что сделано —",
+                "сделано:",
+            )
+        ):
+            done_lines.append(value)
+            continue
+        if lowered.startswith(("план:", "планы:", "план -", "план —")):
+            plan_lines.append(value)
+            continue
+        if lowered.startswith(("риск:", "риски:", "риск -", "риск —")):
+            risk_lines.append(value)
+            continue
+        if lowered.startswith(("блокер:", "блокеры:", "блокер -", "блокер —")):
+            risk_lines.append(value)
+            continue
+
         if any(token in lowered for token in ("план", "завтра", "дальше", "следующ", "next")):
             plan_lines.append(value)
             continue
-        if any(token in lowered for token in ("риск", "блокер", "завис", "проблем", "пауз")):
+        # Do not treat "проблема" alone as risk (explanatory "проблема в SDK…").
+        if any(token in lowered for token in ("риск", "блокер", "завис", "пауз")):
             risk_lines.append(value)
             continue
         done_lines.append(value)

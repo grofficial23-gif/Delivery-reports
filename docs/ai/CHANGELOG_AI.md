@@ -245,6 +245,23 @@ The `Project.aliases` column already supports any list of strings; no schema cha
 
 ---
 
+## 2026-04-28 — v2.25.5: False risk classification + cross-section dedup (Step 33)
+
+**Task:** Stop routing explanatory “проблема…” text into risks; tighten long-update decision vs risk; dedupe identical bullets across draft sections for one project.
+
+**Root cause:** `_split_by_intent` sent any line containing substring `«проблем»` to `risk_lines`, including atomic lines prefixed with `Что сделано: … статус по проблеме …`, so the same content could appear under both done and risks after prefix stripping.
+
+**Files changed:**
+- `src/delivery_reports/services/parsing.py` — `_split_by_intent`: after metadata skip, honor explicit prefixes first (`что сделано:`, `план:`, `риск:`, `блокер:`). Removed naive `«проблем»` token from the risk heuristic (keep `риск` / `блокер` / `завис` / `пауз`).
+- `src/delivery_reports/services/long_update_split.py` — expanded `_STRONG_DECISION_PATTERNS` (`не будем`, `решили не`, `чтобы не сломать`, `можем сломать`); expanded `_STRONG_RISK_PATTERNS` (`есть риск`, `может задержаться`, `можем не успеть`); done verbs: `закрыли`, `проверили`, `выяснили`.
+- `src/delivery_reports/services/draft_builder.py` — `_cross_section_norm_key`, `_dedupe_sections_in_priority_order` (blocker > risk > decision > done > plan > question) applied in `_render_project_block` after limit/compact/clean. Added `import re`.
+- `src/delivery_reports/config.py` — `app_version` v2.25.4 → v2.25.5.
+- `tests/test_step33_intent_dedup.py` — 6 tests (classification + MyID-style draft + cross-section dedup).
+
+**Tests:** 151 passed (was 145), `compileall` clean.
+
+---
+
 ## 2026-04-28 — v2.25.4: Bulk inbox HTML5 validation hotfix (Step 32B)
 
 **Task:** Fix native browser validation blocking bulk submit ("Выберите один из пунктов списка") caused by invalid nested forms: per-card `v2-inbox-bind` forms lived inside the bulk form, so the browser treated empty `required` per-card selects as part of the bulk submit.
