@@ -431,6 +431,42 @@
           <!-- Draft "paper" -->
           <article class="v2-draft-paper" id="v2-draft-paper" data-draft-text aria-label="Текст черновика" role="region" tabindex="0">{{ draft_plain }}</article>
 
+          {% if smart_compose.show_fallback_warning %}
+          <div class="v2-compose-warning" role="status">
+            Использован базовый сборщик ({{ smart_compose.fallback_reason }}).
+          </div>
+          {% endif %}
+
+          {% if smart_compose.excluded_count > 0 %}
+          <details class="v2-compose-excluded">
+            <summary>
+              <span>Не вошло в отчёт ({{ smart_compose.excluded_count }})</span>
+              <span class="v2-compose-chevron" aria-hidden="true">⌄</span>
+            </summary>
+            <div class="v2-compose-excluded-body">
+              {% for group in smart_compose.excluded_groups %}
+              <section class="v2-compose-excluded-group">
+                <h4>{{ group.label }} ({{ group.count }})</h4>
+                <ul>
+                  {% for item in group.items %}
+                  <li>
+                    {% if item.reason == "duplicate" and item.duplicate_text %}
+                    «{{ item.text }}» — похоже на «{{ item.duplicate_text }}»
+                    {% else %}
+                    «{{ item.text }}»
+                    {% endif %}
+                    {% if item.note %}
+                    <span>{{ item.note }}</span>
+                    {% endif %}
+                  </li>
+                  {% endfor %}
+                </ul>
+              </section>
+              {% endfor %}
+            </div>
+          </details>
+          {% endif %}
+
           {% if summary.draft_chunks and summary.draft_chunks > 1 %}
           <div class="v2-draft-paper-foot" aria-label="Длина отчёта в Telegram">
             📨 В Telegram отправится {{ summary.draft_chunks }} сообщений — длинный черновик режется автоматически.

@@ -18,6 +18,7 @@ from telegram.error import TelegramError
 from .config import Settings, load_settings
 from .db import Database
 from .repository import NewPMTask, Repository, UserProfile
+from .llm.compose import notes_for_renderer, serialize_compose_result, smart_compose
 from .services.mini_app_auth import (
     issue_session_token,
     read_session_user_id,
@@ -48,7 +49,8 @@ from .services.report_preferences import (
     selected_template_key,
     set_selected_template_key,
 )
-from .services.reporting import build_and_store_daily_draft, finalize_daily_report
+from .services.draft_builder import build_daily_draft
+from .services.reporting import finalize_daily_report
 from .shared import task_status_label, today_date
 
 
@@ -63,6 +65,7 @@ def build_web_app(settings: Settings, repository: Repository) -> FastAPI:
     app = FastAPI(title="Delivery Reports Mini App")
     app.state.settings = settings
     app.state.repository = repository
+    app.state.smart_compose_results = {}
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
     templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
@@ -274,13 +277,15 @@ def build_web_app(settings: Settings, repository: Repository) -> FastAPI:
             notice += f"\nНужно уточнить: {len(unresolved_note_ids)}."
         if payload.get("action", "").strip() == "save_build":
             style = resolve_style_for_user(repository, user.telegram_user_id)
-            build_and_store_daily_draft(
+            target_date = _today(settings)
+            _content, compose_meta = _build_and_store_daily_draft_for_web(
                 repository,
                 settings,
-                _today(settings),
-                user_id=user.telegram_user_id,
+                target_date,
+                user,
                 style=style,
             )
+            _store_smart_compose_result(request, user.telegram_user_id, target_date, compose_meta)
             notice += "\nЧерновик обновлен."
         notice += f"\n\n{_day_progress_message(repository, settings, user)}"
         return _redirect_with_notice(notice)
@@ -314,14 +319,25 @@ def build_web_app(settings: Settings, repository: Repository) -> FastAPI:
         if user is None:
             return _redirect_with_notice("Откройте приложение из Telegram.")
         repository.log_event(user.telegram_user_id, "web_build_draft")
+        target_date = _today(settings)
         style = resolve_style_for_user(repository, user.telegram_user_id)
-        build_and_store_daily_draft(
+        content, compose_meta = _build_and_store_daily_draft_for_web(
             repository,
             settings,
-            _today(settings),
-            user_id=user.telegram_user_id,
+            target_date,
+            user,
             style=style,
         )
+        _store_smart_compose_result(request, user.telegram_user_id, target_date, compose_meta)
+        if _wants_json(request):
+            return JSONResponse(
+                {
+                    "text": content,
+                    "excluded": compose_meta.get("excluded", []),
+                    "used_llm": bool(compose_meta.get("used_llm", False)),
+                    "fallback_reason": compose_meta.get("fallback_reason"),
+                }
+            )
         return _redirect_with_notice("Черновик собран.")
 
     @app.post("/draft/revise")
@@ -347,13 +363,23 @@ def build_web_app(settings: Settings, repository: Repository) -> FastAPI:
         if not draft:
             return _redirect_with_notice("Сначала соберите черновик")
 
-        build_and_store_daily_draft(
+        content, compose_meta = _build_and_store_daily_draft_for_web(
             repository,
             settings,
             target_date,
-            user_id=user.telegram_user_id,
+            user,
             style=revision.style,
         )
+        _store_smart_compose_result(request, user.telegram_user_id, target_date, compose_meta)
+        if _wants_json(request):
+            return JSONResponse(
+                {
+                    "text": content,
+                    "excluded": compose_meta.get("excluded", []),
+                    "used_llm": bool(compose_meta.get("used_llm", False)),
+                    "fallback_reason": compose_meta.get("fallback_reason"),
+                }
+            )
         return _redirect_with_notice("Черновик обновлён")
 
     @app.post("/draft/finalize")
@@ -365,13 +391,14 @@ def build_web_app(settings: Settings, repository: Repository) -> FastAPI:
         style = resolve_style_for_user(repository, user.telegram_user_id)
         draft = repository.get_latest_draft_for_date(target_date, owner_user_id=user.telegram_user_id)
         if not draft:
-            draft = build_and_store_daily_draft(
+            draft, compose_meta = _build_and_store_daily_draft_for_web(
                 repository,
                 settings,
                 target_date,
-                user_id=user.telegram_user_id,
+                user,
                 style=style,
             )
+            _store_smart_compose_result(request, user.telegram_user_id, target_date, compose_meta)
         finalize_daily_report(
             repository,
             target_date,
@@ -392,13 +419,14 @@ def build_web_app(settings: Settings, repository: Repository) -> FastAPI:
         style = resolve_style_for_user(repository, user.telegram_user_id)
         draft = repository.get_latest_draft_for_date(target_date, owner_user_id=user.telegram_user_id)
         if not draft:
-            draft = build_and_store_daily_draft(
+            draft, compose_meta = _build_and_store_daily_draft_for_web(
                 repository,
                 settings,
                 target_date,
-                user_id=user.telegram_user_id,
+                user,
                 style=style,
             )
+            _store_smart_compose_result(request, user.telegram_user_id, target_date, compose_meta)
         try:
             await _send_report_to_telegram(settings, user, draft)
         except RuntimeError as error:
@@ -547,6 +575,105 @@ def create_default_web_app() -> FastAPI:
     return build_web_app(settings, repository)
 
 
+def _build_and_store_daily_draft_for_web(
+    repository: Repository,
+    settings: Settings,
+    target_date: date,
+    user: UserProfile,
+    style: str,
+) -> tuple[str, dict[str, Any]]:
+    notes = repository.list_notes_for_user_on_date(user.telegram_user_id, target_date)
+    projects = repository.list_projects(owner_user_id=user.telegram_user_id)
+    header_manager = (
+        user.default_manager_name
+        or user.display_name
+        or user.telegram_full_name
+        or settings.default_manager_name
+    )
+    header_lead = user.default_lead_name or settings.default_lead_name
+
+    compose_result = smart_compose(notes, style)
+    render_notes = notes_for_renderer(notes, compose_result)
+    content = build_daily_draft(
+        target_date=target_date,
+        notes=render_notes,
+        projects=projects,
+        default_manager_name=header_manager,
+        default_lead_name=header_lead,
+        style=style,
+    )
+    repository.save_draft(target_date, content, owner_user_id=user.telegram_user_id)
+    return content, serialize_compose_result(compose_result, notes)
+
+
+def _empty_smart_compose_meta() -> dict[str, Any]:
+    return {"excluded": [], "used_llm": False, "fallback_reason": "feature_flag_off"}
+
+
+def _smart_compose_key(user_id: int, target_date: date) -> str:
+    return f"{user_id}:{target_date.isoformat()}"
+
+
+def _store_smart_compose_result(request: Request, user_id: int, target_date: date, meta: dict[str, Any]) -> None:
+    store = getattr(request.app.state, "smart_compose_results", None)
+    if not isinstance(store, dict):
+        request.app.state.smart_compose_results = {}
+        store = request.app.state.smart_compose_results
+    store[_smart_compose_key(user_id, target_date)] = meta
+
+
+def _load_smart_compose_result(request: Request, user_id: int, target_date: date) -> dict[str, Any]:
+    store = getattr(request.app.state, "smart_compose_results", {})
+    if not isinstance(store, dict):
+        return _empty_smart_compose_meta()
+    meta = store.get(_smart_compose_key(user_id, target_date))
+    return meta if isinstance(meta, dict) else _empty_smart_compose_meta()
+
+
+def _smart_compose_view(meta: dict[str, Any]) -> dict[str, Any]:
+    reason_labels = {
+        "duplicate": "Дубликаты",
+        "low_signal": "Низкая значимость",
+        "false_risk": "Ложные риски",
+        "false_blocker": "Ложные блокеры",
+        "off_topic": "Не по теме",
+        "incomplete": "Не поместилось",
+    }
+    order = ["duplicate", "low_signal", "false_risk", "false_blocker", "off_topic", "incomplete"]
+    excluded = [item for item in meta.get("excluded", []) if isinstance(item, dict)]
+    groups: list[dict[str, Any]] = []
+    for reason in order:
+        items = [item for item in excluded if item.get("reason") == reason]
+        if not items:
+            continue
+        groups.append(
+            {
+                "reason": reason,
+                "label": reason_labels.get(reason, reason),
+                "count": len(items),
+                "items": items,
+            }
+        )
+    fallback_reason = meta.get("fallback_reason")
+    return {
+        "excluded": excluded,
+        "excluded_count": len(excluded),
+        "excluded_groups": groups,
+        "used_llm": bool(meta.get("used_llm", False)),
+        "fallback_reason": fallback_reason,
+        "show_fallback_warning": bool(
+            fallback_reason and fallback_reason not in {"feature_flag_off", "None"} and not meta.get("used_llm", False)
+        ),
+    }
+
+
+def _wants_json(request: Request) -> bool:
+    return (
+        request.query_params.get("format", "").lower() == "json"
+        or "application/json" in request.headers.get("accept", "").lower()
+    )
+
+
 def _build_dashboard_context(request: Request, repository: Repository, settings: Settings) -> dict[str, Any]:
     target_date = _today(settings)
     user = _authenticated_user(request, repository, settings)
@@ -601,6 +728,7 @@ def _build_dashboard_context(request: Request, repository: Repository, settings:
             "template_buttons": _template_ui_options(repository.list_report_templates(active_only=True)),
             "current_template_key": "team",
             "preview_date": request.query_params.get("date", target_date.isoformat()),
+            "smart_compose": _smart_compose_view(_empty_smart_compose_meta()),
             "show_onboarding": False,
             "status_suggestions": _default_status_suggestions(),
             "epic_suggestions": [],
@@ -809,6 +937,7 @@ def _build_dashboard_context(request: Request, repository: Repository, settings:
         "template_buttons": _template_ui_options(templates),
         "current_template_key": current_template_key,
         "preview_date": request.query_params.get("date", target_date.isoformat()),
+        "smart_compose": _smart_compose_view(_load_smart_compose_result(request, user.telegram_user_id, target_date)),
         "show_onboarding": repository.get_state(_onboarding_key(user.telegram_user_id)) != "1",
         "status_suggestions": _status_suggestions(notes),
         "epic_suggestions": _epic_suggestions(repository, notes, user.telegram_user_id),
