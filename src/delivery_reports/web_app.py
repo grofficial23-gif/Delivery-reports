@@ -17,7 +17,7 @@ from telegram.error import TelegramError
 
 from .config import Settings, load_settings
 from .db import Database
-from .repository import NewPMTask, Repository, UserProfile
+from .repository import NewPMTask, Project, Repository, UserProfile
 from .llm.compose import notes_for_renderer, serialize_compose_result, smart_compose
 from .services.mini_app_auth import (
     issue_session_token,
@@ -63,6 +63,90 @@ SESSION_COOKIE_NAME = "delivery_reports_session"
 
 def _chat_dump_enabled() -> bool:
     return os.getenv("ENABLE_CHAT_DUMP", "").strip().lower() in ("1", "true", "yes")
+
+
+_CHAT_DUMP_ITEM_TYPES = frozenset({"done", "plan", "risk", "blocker", "decision", "question", "note"})
+
+_CHAT_DUMP_LINE_PREFIX: dict[str, str] = {
+    "done": "Сделано: ",
+    "plan": "План: ",
+    "risk": "Риск: ",
+    "blocker": "Блокер: ",
+    "decision": "Решение: ",
+    "question": "Вопрос: ",
+    "note": "Заметка: ",
+}
+
+
+def _build_chat_dump_raw_text(item_type: str, text: str, project: Project | None) -> str:
+    line = f"{_CHAT_DUMP_LINE_PREFIX[item_type]}{text.strip()}"
+    if project is not None:
+        return f"Проект: {project.name}\n{line}"
+    return line
+
+
+def _normalize_chat_dump_items(raw_items: Any) -> list[dict[str, Any]]:
+    if not isinstance(raw_items, list) or len(raw_items) == 0:
+        raise ValueError("invalid_items")
+    out: list[dict[str, Any]] = []
+    for it in raw_items:
+        if not isinstance(it, dict) or "project_id" not in it:
+            raise ValueError("invalid_items")
+        cid = it.get("client_id")
+        if not isinstance(cid, str) or not cid.strip():
+            raise ValueError("invalid_items")
+        typ = it.get("type")
+        if typ not in _CHAT_DUMP_ITEM_TYPES:
+            raise ValueError("invalid_items")
+        txt = it.get("text")
+        if not isinstance(txt, str) or not txt.strip():
+            raise ValueError("invalid_items")
+        pid = it["project_id"]
+        if pid is not None and (not isinstance(pid, int) or isinstance(pid, bool)):
+            raise ValueError("invalid_items")
+        out.append(
+            {
+                "client_id": cid.strip(),
+                "type": typ,
+                "text": txt.strip(),
+                "project_id": pid,
+            }
+        )
+    return out
+
+
+def _chat_dump_save_items(
+    repository: Repository,
+    settings: Settings,
+    user: UserProfile,
+    raw_items: Any,
+    *,
+    note_date: str,
+) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
+    items = _normalize_chat_dump_items(raw_items)
+    created: list[dict[str, Any]] = []
+    errors: list[dict[str, str]] = []
+    for it in items:
+        pid = it["project_id"]
+        project: Project | None = None
+        if pid is not None:
+            project = repository.get_project(pid, owner_user_id=user.telegram_user_id)
+            if project is None:
+                raise ValueError("unknown_project")
+        raw_text = _build_chat_dump_raw_text(it["type"], it["text"], project)
+        results, _ignored = capture_notes(
+            repository,
+            settings,
+            raw_text,
+            note_date,
+            "chat_dump",
+            user,
+            "",
+        )
+        if len(results) != 1:
+            raise ValueError("invalid_items")
+        created.append({"client_id": it["client_id"], "update_id": results[0].note_id})
+    return created, errors
 
 
 def build_web_app(settings: Settings, repository: Repository) -> FastAPI:
@@ -280,7 +364,30 @@ def build_web_app(settings: Settings, repository: Repository) -> FastAPI:
     async def chat_dump_save(request: Request) -> JSONResponse:
         if not _chat_dump_enabled():
             return JSONResponse({"error": "chat_dump_disabled"}, status_code=404)
-        return JSONResponse({"error": "not_implemented"}, status_code=501)
+        user = _authenticated_user(request, repository, settings)
+        if user is None:
+            return JSONResponse({"error": "auth_required"}, status_code=401)
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        try:
+            created, errors = _chat_dump_save_items(
+                repository,
+                settings,
+                user,
+                body.get("items"),
+                note_date=_today(settings).isoformat(),
+            )
+        except ValueError as exc:
+            reason = str(exc) if exc.args else "invalid_items"
+            if reason == "unknown_project":
+                return JSONResponse({"error": "unknown_project"}, status_code=400)
+            return JSONResponse({"error": "invalid_items"}, status_code=400)
+        repository.log_event(user.telegram_user_id, "web_chat_dump_save", f"saved={len(created)}")
+        return JSONResponse({"created": created, "errors": errors})
 
     @app.post("/auth/telegram")
     async def auth_telegram(request: Request) -> JSONResponse:

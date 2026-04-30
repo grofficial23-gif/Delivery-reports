@@ -55,6 +55,20 @@ Tests: `python -m compileall src/delivery_reports scripts` clean; `pytest -q` 21
 
 ---
 
+## 2026-04-30 — Chat Dump save via `store_notes` (Step 42B-1)
+
+**Task:** Implement `POST /api/notes/dump_save` when `ENABLE_CHAT_DUMP=true`: validate `items`, build parser-friendly `raw_text` per type (optional `Проект:` line when `project_id` set), save each row via existing `capture_notes`/`store_notes`; inbox = `project_id` null → `needs_review`; return `{created, errors}`.
+
+**Files changed:**
+- `src/delivery_reports/web_app.py` — `_build_chat_dump_raw_text`, `_chat_dump_save_items`, real `dump_save` handler (no `Repository.add_note` bypass)
+- `tests/test_chat_dump_endpoints.py` — flag-off, validation, inbox, capture wrapper assertion, client_id order, single-item save count
+
+**Reason:** Same persistence and project resolution semantics as Telegram/Mini App notes.
+
+**Rollback notes:** Disable flag or revert `web_app.py` handler/helpers and tests. `chat_dump/save.py` if present is unused by this route.
+
+---
+
 ## 2025-05-?? — V2 Standalone Prototype (initial)
 
 **Task:** Create standalone V2 prototype HTML with DNA spiral, glass cards, dark/light/wave-blue themes.
