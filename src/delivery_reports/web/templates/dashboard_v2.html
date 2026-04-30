@@ -373,24 +373,57 @@
               </span>
               <span class="v2-draft-meta-sep" aria-hidden="true">·</span>
               <span class="v2-draft-meta-item" title="Куда уйдёт отчёт">📤 Получатель: <strong>вы → Telegram</strong></span>
-              <span class="v2-draft-meta-sep" aria-hidden="true">·</span>
-              <form method="post" action="/template" class="v2-template-inline-form" aria-label="Шаблон отчёта">
-                <label for="template-select" class="v2-draft-meta-item v2-draft-meta-label">📋 Шаблон:</label>
-                <select id="template-select" name="template_key" class="v2-select v2-select-sm" aria-label="Шаблон отчёта">
-                  {% for t in templates %}
-                  <option value="{{ t.template_key }}" {% if t.template_key == current_template_key %}selected{% endif %}>
-                    {{ t.title }}
-                  </option>
-                  {% endfor %}
-                </select>
-                <button type="submit" class="v2-btn ghost v2-btn-xs">Применить</button>
-              </form>
             </div>
-            <div class="v2-template-help" aria-live="polite">
-              <b>Баланс</b> — полный отчёт: сделано, планы, риски, вопросы.<br/>
-              <b>Только главное</b> — короткая версия для быстрого чтения.<br/>
-              <b>Для руководителя</b> — сначала риски, блокеры, решения.<br/>
-              <b>Для команды</b> — рабочий порядок: сделано → план → что мешает.
+
+            <section
+              class="v2-report-preview"
+              id="v2-report-preview"
+              data-preview-date="{{ preview_date }}"
+              aria-label="Что войдёт в отчёт"
+            >
+              <div class="v2-report-preview-top">
+                <div>
+                  <div class="v2-report-preview-eyebrow">Что войдёт в отчёт</div>
+                  <h3 class="v2-report-preview-title" data-preview-title>Загружаю превью…</h3>
+                </div>
+                <button type="button" class="v2-btn ghost v2-btn-xs" data-preview-refresh>Обновить</button>
+              </div>
+              <div class="v2-report-preview-warnings" data-preview-warnings hidden></div>
+              <div class="v2-report-preview-empty" data-preview-empty hidden>
+                <div class="v2-report-preview-empty-title">На сегодня заметок нет</div>
+                <button type="button" class="v2-btn ghost" data-preview-yesterday>Сделать отчёт за вчера</button>
+              </div>
+              <div class="v2-report-preview-inbox" data-preview-inbox hidden>
+                <span data-preview-inbox-text></span>
+                <a href="#inbox" class="v2-btn ghost v2-btn-xs">Разобрать</a>
+              </div>
+              <div class="v2-report-preview-projects" data-preview-projects></div>
+            </section>
+
+        <div class="v2-template-picker" data-legacy-class="v2-template-help" aria-label="Шаблон отчёта">
+              <div class="v2-template-picker-head">
+                <span class="v2-draft-meta-item v2-draft-meta-label">📋 Шаблон отчёта</span>
+                <span class="v2-template-picker-note">Выбор влияет только на генерацию после клика «Собрать черновик».</span>
+              </div>
+              <div class="v2-template-buttons">
+                {% for option in template_buttons %}
+                <form method="post" action="/template" class="v2-template-button-form">
+                  <input type="hidden" name="template_key" value="{{ option.key }}" />
+                  <button
+                    type="submit"
+                    class="v2-template-button {% if option.key == current_template_key %}active{% endif %}"
+                    data-legacy-title="{{ option.legacy_title }}"
+                    aria-pressed="{% if option.key == current_template_key %}true{% else %}false{% endif %}"
+                  >
+                    <span class="v2-template-button-title">{{ option.label }}</span>
+                    <span class="v2-template-button-desc">{{ option.description }}</span>
+                  </button>
+                </form>
+                {% endfor %}
+                {% if not template_buttons|selectattr("key", "equalto", "team")|list %}
+                <template data-hidden-template="team" data-legacy-title="Для команды"></template>
+                {% endif %}
+              </div>
             </div>
           </div>
 
@@ -932,6 +965,145 @@
       if (form) form.submit();
     });
   })();
+  </script>
+
+  <!-- Step 39 — Report preview: read-only "what goes into the report" panel -->
+  <script>
+  (function () {
+    var root = document.getElementById("v2-report-preview");
+    if (!root) return;
+
+    var titleEl = root.querySelector("[data-preview-title]");
+    var warningsEl = root.querySelector("[data-preview-warnings]");
+    var emptyEl = root.querySelector("[data-preview-empty]");
+    var inboxEl = root.querySelector("[data-preview-inbox]");
+    var inboxTextEl = root.querySelector("[data-preview-inbox-text]");
+    var projectsEl = root.querySelector("[data-preview-projects]");
+    var refreshBtn = root.querySelector("[data-preview-refresh]");
+    var yesterdayBtn = root.querySelector("[data-preview-yesterday]");
+    var lastDate = "";
+
+    function esc(text) {
+      return String(text == null ? "" : text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function loadPreview(dateValue) {
+      var url = "/api/report/preview";
+      if (dateValue) url += "?date=" + encodeURIComponent(dateValue);
+      if (titleEl) titleEl.textContent = "Загружаю превью…";
+      fetch(url, { headers: { "Accept": "application/json" } })
+        .then(function (response) {
+          if (!response.ok) throw new Error("preview_failed");
+          return response.json();
+        })
+        .then(renderPreview)
+        .catch(function () {
+          if (titleEl) titleEl.textContent = "Не удалось загрузить превью";
+        });
+    }
+
+    function renderPreview(data) {
+      lastDate = data.date || root.dataset.previewDate || "";
+      root.dataset.loadedDate = lastDate;
+      if (titleEl) {
+        titleEl.textContent = "За " + lastDate + " — " + data.total_updates + " заметок из " + data.projects.length + " проектов";
+      }
+
+      renderWarnings(data.warnings || []);
+      renderInbox(data.inbox || { count: 0, items: [] });
+      renderProjects(data.projects || []);
+
+      if (emptyEl) {
+        emptyEl.hidden = Number(data.total_updates || 0) !== 0;
+      }
+    }
+
+    function renderWarnings(warnings) {
+      if (!warningsEl) return;
+      var messages = [];
+      if (warnings.indexOf("timezone_missing") !== -1) {
+        messages.push("Не задан timezone пользователя — дата превью рассчитана по UTC.");
+      }
+      warningsEl.hidden = messages.length === 0;
+      warningsEl.textContent = messages.join(" ");
+    }
+
+    function renderInbox(inbox) {
+      if (!inboxEl || !inboxTextEl) return;
+      var count = Number(inbox.count || 0);
+      inboxEl.hidden = count <= 0;
+      if (count > 0) {
+        inboxTextEl.textContent = count + " заметок не привязаны к проекту — они НЕ войдут в отчёт";
+      }
+    }
+
+    function renderProjects(projects) {
+      if (!projectsEl) return;
+      if (!projects.length) {
+        projectsEl.innerHTML = "";
+        return;
+      }
+      projectsEl.innerHTML = projects.map(function (project, idx) {
+        var items = (project.items || []).map(function (item) {
+          var dup = item.possible_duplicate_of;
+          var marker = dup
+            ? '<button type="button" class="v2-preview-duplicate" data-duplicate-of="' + esc(dup) + '" data-note-id="' + esc(item.id) + '">возможный дубликат</button>'
+            : "";
+          return (
+            '<li class="v2-preview-item" data-preview-note-id="' + esc(item.id) + '">' +
+              '<span class="v2-preview-type">' + esc(item.type || "note") + '</span>' +
+              '<span class="v2-preview-text">' + esc(item.text_short || "") + '</span>' +
+              marker +
+            '</li>'
+          );
+        }).join("");
+        return (
+          '<details class="v2-preview-project" ' + (idx === 0 ? "open" : "") + '>' +
+            '<summary><span>' + esc(project.name) + '</span><b>' + esc(project.count) + '</b></summary>' +
+            '<ul>' + items + '</ul>' +
+          '</details>'
+        );
+      }).join("");
+    }
+
+    function previousDate(value) {
+      var date = value ? new Date(value + "T00:00:00Z") : new Date();
+      date.setUTCDate(date.getUTCDate() - 1);
+      return date.toISOString().slice(0, 10);
+    }
+
+    if (refreshBtn) {
+      refreshBtn.addEventListener("click", function () {
+        loadPreview(lastDate || new URLSearchParams(window.location.search).get("date") || "");
+      });
+    }
+    if (yesterdayBtn) {
+      yesterdayBtn.addEventListener("click", function () {
+        var nextDate = previousDate(lastDate || root.dataset.previewDate || "");
+        var params = new URLSearchParams(window.location.search);
+        params.set("date", nextDate);
+        window.history.replaceState({}, "", window.location.pathname + "?" + params.toString() + window.location.hash);
+        loadPreview(nextDate);
+      });
+    }
+    root.addEventListener("click", function (event) {
+      var marker = event.target && event.target.closest(".v2-preview-duplicate");
+      if (!marker) return;
+      root.querySelectorAll(".v2-preview-item.highlight").forEach(function (node) {
+        node.classList.remove("highlight");
+      });
+      [marker.dataset.noteId, marker.dataset.duplicateOf].forEach(function (id) {
+        var item = root.querySelector('[data-preview-note-id="' + id + '"]');
+        if (item) item.classList.add("highlight");
+      });
+    });
+
+    loadPreview(new URLSearchParams(window.location.search).get("date") || "");
+  }());
   </script>
 
   <!-- Telegram Mini App auth bootstrap (mirrors V1 pattern) -->

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime, timezone
+from difflib import SequenceMatcher
+import os
 from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, quote_plus
@@ -202,6 +204,29 @@ def build_web_app(settings: Settings, repository: Repository) -> FastAPI:
         context = _build_dashboard_context(request, repository, settings)
         template_name = "dashboard_v2.html" if settings.dashboard_ui_version == "v2" else "index.html"
         return templates.TemplateResponse(request=request, name=template_name, context=context)
+
+    @app.get("/api/report/preview")
+    async def report_preview(request: Request) -> JSONResponse:
+        user = _authenticated_user(request, repository, settings)
+        if user is None:
+            return JSONResponse({"ok": False, "error": "auth_required"}, status_code=401)
+        date_param = request.query_params.get("date", "").strip()
+        user_timezone, warnings = _preview_user_timezone(repository, user.telegram_user_id)
+        if date_param:
+            try:
+                target_date = date.fromisoformat(date_param)
+            except ValueError:
+                return JSONResponse({"ok": False, "error": "invalid_date"}, status_code=400)
+        else:
+            target_date = _preview_today(user_timezone)
+        payload = _build_report_preview_payload(
+            repository=repository,
+            user=user,
+            target_date=target_date,
+            user_timezone=user_timezone,
+            warnings=warnings,
+        )
+        return JSONResponse(payload)
 
     @app.post("/auth/telegram")
     async def auth_telegram(request: Request) -> JSONResponse:
@@ -573,7 +598,9 @@ def _build_dashboard_context(request: Request, repository: Repository, settings:
             "final_plain": "",
             "recent_report_history": [],
             "templates": repository.list_report_templates(active_only=True),
+            "template_buttons": _template_ui_options(repository.list_report_templates(active_only=True)),
             "current_template_key": "team",
+            "preview_date": request.query_params.get("date", target_date.isoformat()),
             "show_onboarding": False,
             "status_suggestions": _default_status_suggestions(),
             "epic_suggestions": [],
@@ -779,11 +806,164 @@ def _build_dashboard_context(request: Request, repository: Repository, settings:
         "final_plain": final_plain,
         "recent_report_history": recent_report_history,
         "templates": templates,
+        "template_buttons": _template_ui_options(templates),
         "current_template_key": current_template_key,
+        "preview_date": request.query_params.get("date", target_date.isoformat()),
         "show_onboarding": repository.get_state(_onboarding_key(user.telegram_user_id)) != "1",
         "status_suggestions": _status_suggestions(notes),
         "epic_suggestions": _epic_suggestions(repository, notes, user.telegram_user_id),
     }
+
+
+def _build_report_preview_payload(
+    *,
+    repository: Repository,
+    user: UserProfile,
+    target_date: date,
+    user_timezone: str,
+    warnings: list[str],
+) -> dict[str, Any]:
+    notes = repository.list_notes_for_user_on_date(user.telegram_user_id, target_date)
+    project_map = {
+        project.id: project
+        for project in repository.list_projects(owner_user_id=user.telegram_user_id)
+    }
+    grouped: dict[int, dict[str, Any]] = {}
+    inbox_items: list[dict[str, Any]] = []
+
+    for note in notes:
+        if note.needs_review or note.project_id is None:
+            inbox_items.append({
+                "id": note.id,
+                "text_short": _preview_text_short(note.raw_text),
+            })
+            continue
+
+        project = project_map.get(note.project_id)
+        project_name = project.name if project is not None else f"Проект #{note.project_id}"
+        bucket = grouped.setdefault(
+            note.project_id,
+            {
+                "id": note.project_id,
+                "name": project_name,
+                "count": 0,
+                "items": [],
+                "_seen": [],
+            },
+        )
+        normalized = _preview_normalize_text(note.raw_text)
+        duplicate_of = None
+        for previous_id, previous_text in bucket["_seen"]:
+            if normalized and previous_text and SequenceMatcher(None, normalized, previous_text).ratio() > 0.7:
+                duplicate_of = previous_id
+                break
+        bucket["_seen"].append((note.id, normalized))
+        bucket["count"] += 1
+        bucket["items"].append(
+            {
+                "id": note.id,
+                "type": _preview_note_type(note),
+                "text_short": _preview_text_short(note.raw_text),
+                "possible_duplicate_of": duplicate_of,
+            }
+        )
+
+    projects: list[dict[str, Any]] = []
+    for bucket in grouped.values():
+        bucket.pop("_seen", None)
+        projects.append(bucket)
+    projects.sort(key=lambda item: (str(item["name"]).lower(), int(item["id"])))
+
+    result_warnings = list(warnings)
+    if len(notes) == 0:
+        result_warnings.append("empty_day")
+
+    return {
+        "date": target_date.isoformat(),
+        "user_timezone": user_timezone,
+        "total_updates": len(notes),
+        "projects": projects,
+        "inbox": {
+            "count": len(inbox_items),
+            "items": inbox_items,
+        },
+        "warnings": result_warnings,
+    }
+
+
+def _preview_user_timezone(repository: Repository, user_id: int) -> tuple[str, list[str]]:
+    with repository.db.connect() as conn:
+        columns = {row["name"] for row in conn.execute("PRAGMA table_info(users)").fetchall()}
+        if "timezone" not in columns:
+            return "UTC", ["timezone_missing"]
+        row = conn.execute("SELECT timezone FROM users WHERE telegram_user_id = ?", (user_id,)).fetchone()
+    value = str(row["timezone"] if row else "").strip()
+    if not value:
+        return "UTC", ["timezone_missing"]
+    try:
+        ZoneInfo(value)
+    except Exception:
+        return "UTC", ["timezone_missing"]
+    return value, []
+
+
+def _preview_today(user_timezone: str) -> date:
+    now = _utcnow()
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    return now.astimezone(ZoneInfo(user_timezone)).date()
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _preview_text_short(text: str) -> str:
+    compact = " ".join((text or "").split())
+    if len(compact) <= 80:
+        return compact
+    return compact[:80].rstrip() + "…"
+
+
+def _preview_normalize_text(text: str) -> str:
+    return " ".join((text or "").lower().split())
+
+
+def _preview_note_type(note) -> str:
+    kind = infer_intent_kind(
+        done_text=note.done_text,
+        plan_text=note.plan_text,
+        risk_text=note.risk_text,
+        needs_review=bool(note.needs_review),
+    )
+    return "note" if kind == "other" else kind
+
+
+def _template_ui_options(templates: list) -> list[dict[str, str]]:
+    show_team = os.getenv("SHOW_TEAM_TEMPLATE", "").strip().lower() in {"1", "true", "yes", "on"}
+    label_map = {
+        "concise": ("Коротко", "3–5 буллетов, без деталей"),
+        "risk_focus": ("Для руководителя", "Что сделано / Планы / Риски"),
+        "standard": ("Полный", "Все типы заметок, развёрнуто"),
+        "team": ("Для команды", "Рабочий порядок для команды"),
+    }
+    order = {"concise": 0, "risk_focus": 1, "standard": 2, "team": 3}
+    options: list[dict[str, str]] = []
+    for template in templates:
+        key = template.template_key
+        if key == "team" and not show_team:
+            continue
+        label, description = label_map.get(key, (template.title, template.description))
+        options.append(
+            {
+                "key": key,
+                "label": label,
+                "description": description,
+                "legacy_title": template.title,
+            }
+        )
+    options.sort(key=lambda item: order.get(item["key"], 99))
+    return options
 
 
 async def _parse_payload(request: Request) -> dict[str, str]:
