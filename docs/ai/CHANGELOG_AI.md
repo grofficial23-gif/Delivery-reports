@@ -37,6 +37,24 @@
 
 ---
 
+## 2026-04-30 — Chat Dump extraction backend (Step 42A)
+
+**Task:** Feature-flagged backend for manager-style chat/status dumps: preprocess pipeline, LLM fact extraction via existing providers, `/api/notes/dump_extract` and placeholder `/api/notes/dump_save`, without UI or DB writes on extract.
+
+**Files changed:**
+- `.env.example` — `ENABLE_CHAT_DUMP`, `CHAT_DUMP_MAX_INPUT_CHARS`, `CHAT_DUMP_TIMEOUT_SECONDS`
+- `src/delivery_reports/chat_dump/*` — package: preprocess, prompts/schema, extractor (dataclasses + `extract_facts`), errors placeholder
+- `src/delivery_reports/web_app.py` — gated POST endpoints, 404/`chat_dump_disabled`, 422 `llm_unavailable` with reason
+- `tests/test_chat_dump_preprocessor.py`, `tests/test_chat_dump_extractor.py`, `tests/test_chat_dump_endpoints.py` — coverage for spec behaviors
+
+Tests: `python -m compileall src/delivery_reports scripts` clean; `pytest -q` 214 passed; `git diff --check` clean.
+
+**Reason:** Separate code path from the report composer; save flow deferred to Step 42B.
+
+**Rollback notes:** Set `ENABLE_CHAT_DUMP=false` or remove the env vars; revert the new package and routes if needed. No schema changes.
+
+---
+
 ## 2025-05-?? — V2 Standalone Prototype (initial)
 
 **Task:** Create standalone V2 prototype HTML with DNA spiral, glass cards, dark/light/wave-blue themes.

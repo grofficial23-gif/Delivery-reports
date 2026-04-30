@@ -61,6 +61,10 @@ STATIC_DIR = BASE_DIR / "web" / "static"
 SESSION_COOKIE_NAME = "delivery_reports_session"
 
 
+def _chat_dump_enabled() -> bool:
+    return os.getenv("ENABLE_CHAT_DUMP", "").strip().lower() in ("1", "true", "yes")
+
+
 def build_web_app(settings: Settings, repository: Repository) -> FastAPI:
     app = FastAPI(title="Delivery Reports Mini App")
     app.state.settings = settings
@@ -230,6 +234,53 @@ def build_web_app(settings: Settings, repository: Repository) -> FastAPI:
             warnings=warnings,
         )
         return JSONResponse(payload)
+
+    @app.post("/api/notes/dump_extract")
+    async def chat_dump_extract(request: Request) -> JSONResponse:
+        if not _chat_dump_enabled():
+            return JSONResponse({"error": "chat_dump_disabled"}, status_code=404)
+        user = _authenticated_user(request, repository, settings)
+        if user is None:
+            return JSONResponse({"error": "auth_required"}, status_code=401)
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+        if not isinstance(body, dict):
+            body = {}
+        raw = body.get("raw_text")
+        raw_text = raw.strip() if isinstance(raw, str) else ""
+        if len(raw_text) < 10:
+            return JSONResponse({"error": "too_short"}, status_code=400)
+        from .chat_dump.extractor import extract_facts
+        from .chat_dump.preprocessor import preprocess
+
+        cleaned = preprocess(raw_text)
+        result = extract_facts(cleaned, user_lang="ru")
+        if not result.used_llm:
+            return JSONResponse(
+                {"error": "llm_unavailable", "reason": result.fallback_reason or "no_api_key"},
+                status_code=422,
+            )
+        extracted = [
+            {
+                "client_id": f.client_id,
+                "type": f.type,
+                "text": f.text,
+                "confidence": f.confidence,
+                "project_hint": f.project_hint,
+                "suggested_project_id": f.suggested_project_id,
+            }
+            for f in result.facts
+        ]
+        skipped = [{"reason": s.reason, "snippet": s.snippet} for s in result.skipped]
+        return JSONResponse({"extracted": extracted, "skipped": skipped, "warnings": result.warnings})
+
+    @app.post("/api/notes/dump_save")
+    async def chat_dump_save(request: Request) -> JSONResponse:
+        if not _chat_dump_enabled():
+            return JSONResponse({"error": "chat_dump_disabled"}, status_code=404)
+        return JSONResponse({"error": "not_implemented"}, status_code=501)
 
     @app.post("/auth/telegram")
     async def auth_telegram(request: Request) -> JSONResponse:
